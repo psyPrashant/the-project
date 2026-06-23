@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell.exe -File \".claude/hooks/log-prompt-hook.ps1\""
+          }
+        ]
+      }
+    ]
+  }
+}
