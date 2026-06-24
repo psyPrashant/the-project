@@ -5,29 +5,34 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 /**
  * Base class for backend integration/smoke tests.
  *
  * <p>Boots the full Spring context against a real PostgreSQL instance running
- * inside a Testcontainers Docker container (story F2). The container is started
- * once per test class. To share a single container across classes (faster
- * suites), set {@code testcontainers.reuse.enable=true} in
- * {@code ~/.testcontainers.properties} and flip {@code withReuse(true)} on below.
+ * inside a Testcontainers Docker container (story F2).
  *
- * <p>Subclasses get {@link org.springframework.boot.test.web.client.TestRestTemplate}
- * autowired for API-level checks.
+ * <p>The container is a <em>shared singleton</em>: started once in a static
+ * initializer when the base class is first loaded and kept alive for the whole
+ * test run. This is the pattern recommended by the Spring Boot + Testcontainers
+ * docs, because it gives every test context the same, stable JDBC URL. With a
+ * per-class {@code @Container} the random port changes between classes while
+ * Spring's test context cache can hold on to the previous (now-stopped)
+ * container's URL, causing connection-refused failures.
+ *
+ * <p>To share the container across separate JVM runs as well, set
+ * {@code testcontainers.reuse.enable=true} in {@code ~/.testcontainers.properties}
+ * and flip {@code withReuse(true)} on below.
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-@Testcontainers
 public abstract class AbstractIntegrationTest {
 
-	@Container
-	static final PostgreSQLContainer<?> POSTGRES =
-			new PostgreSQLContainer<>("postgres:16-alpine");
+	private static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>("postgres:16-alpine");
+
+	static {
+		POSTGRES.start();
+	}
 
 	@DynamicPropertySource
 	static void postgresProperties(DynamicPropertyRegistry registry) {
