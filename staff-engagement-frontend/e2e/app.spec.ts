@@ -7,7 +7,9 @@ import { test, expect } from '@playwright/test';
  * (`ng serve`, started by Playwright's webServer) and the backend + Postgres to be running
  * so /api/auth/login resolves. Seeded demo account: admin@psybergate.com / password123.
  *
- * CI runs only Vitest (`npm test`); this e2e is run locally with the full stack up.
+ * In CI the e2e job stands up Postgres as a service container and runs the backend jar,
+ * so these tests exercise the full stack. Locally, run `docker compose up -d db`,
+ * `./mvnw spring-boot:run`, then `npm run e2e`.
  */
 const SEED_EMAIL = 'admin@psybergate.com';
 const SEED_PASSWORD = 'password123';
