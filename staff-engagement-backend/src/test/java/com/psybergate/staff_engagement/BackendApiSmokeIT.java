@@ -11,14 +11,15 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * API-level smoke test (story F2).
+ * API-level smoke integration test (story F2).
  *
  * <p>Boots the application against a real PostgreSQL via Testcontainers (see
- * {@link AbstractIntegrationTest}) and asserts the Actuator health endpoint
+ * {@link IntegrationTestBase}) and asserts the Actuator health endpoint
  * responds {@code 200 UP}, proving the web layer, the Spring context, and the
- * datasource all wire together end to end.
+ * datasource all wire together end to end. Named {@code *IT} so Maven Failsafe
+ * runs it on {@code mvn verify}.
  */
-class BackendApiSmokeTest extends AbstractIntegrationTest {
+class BackendApiSmokeIT extends IntegrationTestBase {
 
 	@Autowired
 	private TestRestTemplate restTemplate;
