@@ -8,6 +8,19 @@ schema: spec-driven
 #     Tech stack: TypeScript, React, Node.js
 #     We use conventional commits
 #     Domain: e-commerce platform
+context: |
+  Project: Staff Engagement POC — a modular monolith for logging staff interactions, follow-up tasks, and employee portfolios/skills.
+  Backend: Spring Boot 3.5.15, Java 17, Maven, Lombok. Base package com.psybergate.staff_engagement.
+    Modular monolith modules = employee, interaction, task, portfolio, skills. Each module: Controller → Service(interface) → ServiceImpl → Repository. Cross-module calls go through SERVICE INTERFACES only, never repositories.
+    Constructor injection via Lombok @RequiredArgsConstructor. Validation at controller boundary (@Valid + Bean Validation). DTOs never expose entities. spring.jpa.open-in-view=false.
+    Tests: JUnit5 + Mockito unit tests (*Test, Surefire); @SpringBootTest integration tests (*IT, Failsafe) against a real Testcontainers PostgreSQL 16 container (NOT H2). BIG focus on testing incl. negative/edge paths.
+  Frontend: Angular 21, TypeScript 5.9, Tailwind CSS 4, Vitest + jsdom, Playwright e2e.
+    Angular conventions: standalone components only (never set standalone:true), signals + computed, OnPush, native control flow (@if/@for/@switch), inject() over constructor injection, input()/output() functions, reactive forms over template-driven, providedIn:'root' services, no ngClass/ngStyle, WCAG AA accessibility required.
+  Design decisions:
+    D3 — Every user is an Employee. Auth resolves the caller to an Employee. Logging against yourself is allowed.
+    D4 — Permissions (POC): any authenticated user may create/edit/view employees & portfolios; interaction edit/delete restricted to author; tasks updatable by subject or creator. No RBAC beyond this.
+    D6 — Out of scope for POC: pagination, RBAC, account self-service, audit history beyond createdBy/timestamps, notifications.
+  CI: GitHub Actions — frontend job (npm ci, build, test) + backend job (mvn -B -ntp verify). Both must pass to merge.
 
 # Per-artifact rules (optional)
 # Add custom rules for specific artifacts.
