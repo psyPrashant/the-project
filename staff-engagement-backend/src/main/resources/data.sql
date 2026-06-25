@@ -12,3 +12,6 @@ ON CONFLICT (email) DO NOTHING;
 INSERT INTO employees (first_name, last_name, email, password_hash) VALUES
   ('John', 'Smith', 'john.smith@psybergate.com', '$2a$10$D3HhezptGwXreO7ey1GHKuxYlhZQ8cVy/p0A2pobAkBmXUG7wwEQm')
 ON CONFLICT (email) DO NOTHING;
+
+-- Backfill archived=false for any rows added before the column existed (ddl-auto=update safety net)
+UPDATE employees SET archived = false WHERE archived IS NULL;

@@ -124,6 +124,11 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-failsafe-plugin</artifactId>
+				<configuration>
+					<!-- Force IPv4 loopback on Windows — avoids SocketException: Invalid argument: connect
+					     when the test JVM resolves "localhost" to ::1 but the server binds to 127.0.0.1. -->
+					<argLine>-Djava.net.preferIPv4Stack=true</argLine>
+				</configuration>
 				<executions>
 					<execution>
 						<goals>

@@ -41,6 +41,19 @@ public class Employee {
 	private String email;
 
 	/** BCrypt hash — never plaintext, never logged, never serialized over the API. */
-	@Column(nullable = false)
+	@Column
 	private String passwordHash;
+
+	@Column
+	private String jobTitle;
+
+	@Column
+	private String department;
+
+	@Column
+	private String phone;
+
+	/** Soft-delete flag: archived employees are excluded from default lists but their history remains. */
+	@Column(columnDefinition = "boolean default false")
+	private boolean archived;
 }

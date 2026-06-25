@@ -1,0 +1,12 @@
+# Claude Code local MCP config (contains secrets)
+.mcp.json
+
+# IDE / OS
+.vscode/settings.json
+.idea/
+*.iml
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
