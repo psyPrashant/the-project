@@ -1,7 +1,8 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpClient, provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { provideRouter } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
+import { vi } from 'vitest';
 
 import { authInterceptor } from './auth.interceptor';
 import { AuthService } from './auth.service';
@@ -54,5 +55,21 @@ describe('authInterceptor', () => {
     const req = httpTesting.expectOne('http://localhost:8080/api/auth/login');
     expect(req.request.headers.has('Authorization')).toBe(false);
     req.flush({}, { status: 401, statusText: 'Unauthorized' });
+  });
+
+  it('logs out and redirects to /login on a 401', () => {
+    localStorage.setItem('se_token', 'jwt-token');
+    expect(localStorage.getItem('se_token')).toBe('jwt-token'); // precondition: authenticated
+
+    const router = TestBed.inject(Router);
+    const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+    http.get('http://localhost:8080/api/employees').subscribe({ error: () => {} });
+    httpTesting.expectOne('http://localhost:8080/api/employees')
+      .flush('unauthorized', { status: 401, statusText: 'Unauthorized' });
+
+    // The 401 branch must log out (clearing the token) and redirect to /login.
+    expect(localStorage.getItem('se_token')).toBeNull();
+    expect(navigateSpy).toHaveBeenCalledWith(['/login']);
   });
 });

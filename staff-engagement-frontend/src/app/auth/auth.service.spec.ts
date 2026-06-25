@@ -67,10 +67,12 @@ describe('AuthService', () => {
 
   it('clears token and user on logout', () => {
     localStorage.setItem('se_token', 'jwt-token');
+
     service.logout();
 
     expect(localStorage.getItem('se_token')).toBeNull();
     expect(service.isAuthenticated()).toBe(false);
+    expect(service.currentUser()).toBeNull();
   });
 });
 

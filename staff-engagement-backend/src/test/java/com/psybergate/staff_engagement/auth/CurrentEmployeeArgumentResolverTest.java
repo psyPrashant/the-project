@@ -6,6 +6,7 @@ import static org.mockito.Mockito.when;
 
 import com.psybergate.staff_engagement.employee.Employee;
 import com.psybergate.staff_engagement.employee.EmployeeService;
+import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -54,5 +55,19 @@ class CurrentEmployeeArgumentResolverTest {
 				new UsernamePasswordAuthenticationToken("not-an-employee", null, java.util.List.of()));
 		assertThatThrownBy(() -> resolver.resolveArgument(null, null, null, null))
 				.isInstanceOf(JwtAuthException.class);
+	}
+
+	@Test
+	void throwsJwtAuthExceptionWhenEmployeeNoLongerExists() {
+		// A valid principal whose Employee has been deleted must surface as an auth failure (401 via
+		// JwtAuthException), not let EntityNotFoundException bubble up as a 404 that leaks existence.
+		EmployeePrincipal principal = new EmployeePrincipal(7L, "jane@psybergate.com", "$2a$10$hash");
+		SecurityContextHolder.getContext().setAuthentication(
+				new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities()));
+		when(employeeService.findById(7L)).thenThrow(new EntityNotFoundException("Employee not found: 7"));
+
+		assertThatThrownBy(() -> resolver.resolveArgument(null, null, null, null))
+				.isInstanceOf(JwtAuthException.class)
+				.hasCauseInstanceOf(EntityNotFoundException.class);
 	}
 }

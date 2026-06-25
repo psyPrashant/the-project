@@ -51,14 +51,18 @@ class JwtServiceTest {
 
 	@Test
 	void expiredTokenIsInvalid() {
-		// Issued in the far past with a short expiry → genuinely expired relative to the system clock.
+		// Token issued in the past (fixed clock) with a short expiry, validated against a later
+		// fixed clock — fully deterministic, no reliance on the wall clock.
 		JwtService pastService = new JwtService(SECRET, ISSUER, 60,
 				Clock.fixed(Instant.parse("2020-01-01T00:00:00Z"), ZoneOffset.UTC));
 		String token = pastService.generate(employee);
 
-		assertThat(jwtService.isValid(token)).isFalse();
+		JwtService nowService = new JwtService(SECRET, ISSUER, 480,
+				Clock.fixed(Instant.parse("2030-01-01T00:00:00Z"), ZoneOffset.UTC));
+
+		assertThat(nowService.isValid(token)).isFalse();
 		assertThat(org.junit.jupiter.api.Assertions.assertThrows(JwtException.class,
-				() -> jwtService.extractEmployeeId(token)))
+				() -> nowService.extractEmployeeId(token)))
 				.as("expired token should not yield a claim").isNotNull();
 	}
 
