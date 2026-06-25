@@ -8,7 +8,7 @@ Staff engagement platform for managing employees, their skills, interactions, ta
 |------------|-------------------------------------------------------------------|
 | Backend    | Spring Boot 3.5, Java 17, Maven, Lombok                          |
 | Frontend   | Angular 21, TypeScript 5.9, Tailwind CSS 4, Vitest               |
-| Database   | PostgreSQL 17 (Docker), H2 in-memory (tests)                     |
+| Database   | PostgreSQL 17 (Docker); Testcontainers Postgres 16 (integration tests) |
 | Tooling    | Node 24, npm 11, Docker Compose, GitHub Actions CI                |
 
 Base package: `com.psybergate.staff_engagement`
@@ -55,7 +55,7 @@ Cross-module calls go through **service interfaces**, never repositories. This k
 - Entities use JPA annotations; Lombok for boilerplate (`@Getter`, `@Setter`, `@Builder`, `@NoArgsConstructor`, `@AllArgsConstructor`).
 - Validation at the controller boundary (`@Valid`, Bean Validation annotations).
 - Use DTOs for API request/response; never expose entities directly.
-- Test with JUnit 5 + Mockito for unit tests; `@SpringBootTest` + H2 for integration tests in CI.
+- Test with JUnit 5 + Mockito for unit tests; `@SpringBootTest` against a real Testcontainers Postgres for integration tests (`*IT` classes extend `IntegrationTestBase`, run by Failsafe on `mvn verify`).
 - `spring.jpa.open-in-view=false` — no lazy-loading outside transactions.
 
 ### Frontend (Angular)
@@ -93,7 +93,7 @@ Both jobs must pass to merge.
 
 ## Definition of Done
 
-1. Unit + integration tests green; backend integration tests run against H2 in CI (Testcontainers planned).
+1. Unit + integration tests green; backend integration tests (`*IT`) run against a real PostgreSQL via Testcontainers in CI, extending `IntegrationTestBase`.
 2. At least one negative/edge path covered wherever there is validation, branching, or a permission rule.
 3. e2e smoke test (Playwright/Cypress) for any new user-facing flow.
 4. CI green; a failing test reds the pipeline and blocks merge.
