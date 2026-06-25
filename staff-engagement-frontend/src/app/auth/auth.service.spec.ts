@@ -55,9 +55,11 @@ describe('AuthService', () => {
   });
 
   it('populates the current user from /auth/me', () => {
-    localStorage.setItem('se_token', 'jwt-token');
-    service.loadCurrentUser().subscribe();
+    // Authenticate first so a token actually exists in the service's state.
+    service.login({ email: 'admin@psybergate.com', password: 'password123' }).subscribe();
+    httpTesting.expectOne('http://localhost:8080/api/auth/login').flush(authResponse);
 
+    service.loadCurrentUser().subscribe();
     httpTesting.expectOne('http://localhost:8080/api/auth/me').flush({
       id: 42, email: 'admin@psybergate.com', firstName: 'Admin', lastName: 'User'
     });
@@ -66,7 +68,10 @@ describe('AuthService', () => {
   });
 
   it('clears token and user on logout', () => {
-    localStorage.setItem('se_token', 'jwt-token');
+    // Establish an authenticated session through the real API path.
+    service.login({ email: 'admin@psybergate.com', password: 'password123' }).subscribe();
+    httpTesting.expectOne('http://localhost:8080/api/auth/login').flush(authResponse);
+    expect(service.isAuthenticated()).toBe(true); // precondition
 
     service.logout();
 
@@ -84,7 +89,7 @@ describe('AuthService (initial user on reload)', () => {
     localStorage.clear();
     // A token is already present (e.g. the user reloaded the page). The service must NOT
     // fabricate a placeholder user; the real one is resolved later by loadCurrentUser() via
-    // the app initializer.
+    // the app initializer. The token signal is seeded from localStorage at construction.
     localStorage.setItem('se_token', 'leftover-token');
     TestBed.configureTestingModule({
       providers: [provideHttpClient(), provideHttpClientTesting()]

@@ -8,23 +8,26 @@ import { AuthResponse, EmployeeResponse, LoginRequest } from './auth.models';
 const TOKEN_KEY = 'se_token';
 
 /**
- * Authentication state for the SPA (F6). Token persists in localStorage; the current user is
- * held in a signal. `providedIn: 'root'` singleton.
+ * Authentication state for the SPA (F6). The token is the source of truth and is held in a
+ * signal that is kept in sync with localStorage, so derived state (`isAuthenticated`) is
+ * reactive and never goes stale after login/logout. The current user is held in a separate
+ * signal, resolved from /auth/me during app initialization. `providedIn: 'root'` singleton.
  */
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = environment.apiUrl;
 
-  private readonly currentUserSignal = signal<EmployeeResponse | null>(this.restoreUser());
+  private readonly tokenSignal = signal<string | null>(localStorage.getItem(TOKEN_KEY));
+  private readonly currentUserSignal = signal<EmployeeResponse | null>(null);
 
   readonly currentUser = this.currentUserSignal.asReadonly();
-  readonly isAuthenticated = computed(() => this.getToken() !== null);
+  readonly isAuthenticated = computed(() => this.tokenSignal() !== null);
 
   login(credentials: LoginRequest): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${this.apiUrl}/auth/login`, credentials).pipe(
       tap(response => {
-        localStorage.setItem(TOKEN_KEY, response.token);
+        this.setToken(response.token);
         this.currentUserSignal.set({
           id: response.employeeId,
           email: response.email,
@@ -43,17 +46,16 @@ export class AuthService {
 
   logout(): void {
     localStorage.removeItem(TOKEN_KEY);
+    this.tokenSignal.set(null);
     this.currentUserSignal.set(null);
   }
 
   getToken(): string | null {
-    return localStorage.getItem(TOKEN_KEY);
+    return this.tokenSignal();
   }
 
-  private restoreUser(): EmployeeResponse | null {
-    // The real user is resolved from /auth/me by loadCurrentUser() during app initialization
-    // (see app.config.ts). Until then the signal is null (still loading / anonymous) — never a
-    // fabricated placeholder, which downstream code could mistake for a real employee (id 0).
-    return null;
+  private setToken(token: string): void {
+    localStorage.setItem(TOKEN_KEY, token);
+    this.tokenSignal.set(token);
   }
 }

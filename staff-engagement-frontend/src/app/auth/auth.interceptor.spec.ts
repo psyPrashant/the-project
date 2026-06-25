@@ -7,6 +7,14 @@ import { vi } from 'vitest';
 import { authInterceptor } from './auth.interceptor';
 import { AuthService } from './auth.service';
 
+const authResponse = {
+  token: 'jwt-token',
+  employeeId: 42,
+  email: 'admin@psybergate.com',
+  firstName: 'Admin',
+  lastName: 'User'
+};
+
 describe('authInterceptor', () => {
   let http: HttpClient;
   let httpTesting: HttpTestingController;
@@ -28,6 +36,13 @@ describe('authInterceptor', () => {
 
   afterEach(() => httpTesting.verify());
 
+  // Authenticates the service through its real login path so a token actually lives in its
+  // signal-backed state (setting localStorage directly no longer authenticates, by design).
+  function authenticate(): void {
+    authService.login({ email: 'admin@psybergate.com', password: 'password123' }).subscribe();
+    httpTesting.expectOne('http://localhost:8080/api/auth/login').flush(authResponse);
+  }
+
   it('does not add Authorization when there is no token', () => {
     http.get('http://localhost:8080/api/employees').subscribe({ error: () => {} });
 
@@ -37,7 +52,7 @@ describe('authInterceptor', () => {
   });
 
   it('adds Bearer token when authenticated', () => {
-    localStorage.setItem('se_token', 'jwt-token');
+    authenticate();
     expect(authService.isAuthenticated()).toBe(true);
 
     http.get('http://localhost:8080/api/employees').subscribe({ error: () => {} });
@@ -48,9 +63,10 @@ describe('authInterceptor', () => {
   });
 
   it('does not attach a token to the login request', () => {
-    localStorage.setItem('se_token', 'jwt-token');
+    // Even when a token already exists from a prior session, a login request must never carry it.
+    authenticate();
 
-    http.post('http://localhost:8080/api/auth/login', {}).subscribe({ error: () => {} });
+    authService.login({ email: 'other@psybergate.com', password: 'pw' }).subscribe({ error: () => {} });
 
     const req = httpTesting.expectOne('http://localhost:8080/api/auth/login');
     expect(req.request.headers.has('Authorization')).toBe(false);
@@ -58,8 +74,8 @@ describe('authInterceptor', () => {
   });
 
   it('logs out and redirects to /login on a 401', () => {
-    localStorage.setItem('se_token', 'jwt-token');
-    expect(localStorage.getItem('se_token')).toBe('jwt-token'); // precondition: authenticated
+    authenticate();
+    expect(authService.isAuthenticated()).toBe(true); // precondition: authenticated
 
     const router = TestBed.inject(Router);
     const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
@@ -68,8 +84,10 @@ describe('authInterceptor', () => {
     httpTesting.expectOne('http://localhost:8080/api/employees')
       .flush('unauthorized', { status: 401, statusText: 'Unauthorized' });
 
-    // The 401 branch must log out (clearing the token) and redirect to /login.
-    expect(localStorage.getItem('se_token')).toBeNull();
+    // The 401 branch must log out — clearing both the token and the reactive authenticated
+    // state — and redirect to /login.
+    expect(authService.isAuthenticated()).toBe(false);
+    expect(authService.getToken()).toBeNull();
     expect(navigateSpy).toHaveBeenCalledWith(['/login']);
   });
 });
