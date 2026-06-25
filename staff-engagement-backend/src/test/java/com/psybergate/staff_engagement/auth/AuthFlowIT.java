@@ -1,138 +1,124 @@
 package com.psybergate.staff_engagement.auth;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.psybergate.staff_engagement.IntegrationTestBase;
 import com.psybergate.staff_engagement.auth.dto.AuthResponse;
 import com.psybergate.staff_engagement.auth.dto.LoginRequest;
 import com.psybergate.staff_engagement.employee.Employee;
 import com.psybergate.staff_engagement.employee.EmployeeRepository;
-import com.psybergate.staff_engagement.employee.dto.EmployeeResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 
 /**
- * End-to-end auth flow (F6) against the real Testcontainers Postgres with seeded Employees.
+ * End-to-end auth flow against the real Testcontainers Postgres with seeded Employees.
  * Run by Failsafe on {@code mvn verify}.
  */
 class AuthFlowIT extends IntegrationTestBase {
 
-	@Autowired
-	private TestRestTemplate restTemplate;
+    @Autowired private MockMvc mockMvc;
+    @Autowired private ObjectMapper objectMapper;
+    @Autowired private EmployeeRepository employeeRepository;
+    @Autowired private JwtService jwtService;
 
-	@Autowired
-	private EmployeeRepository employeeRepository;
+    private AuthResponse login(String email, String password) throws Exception {
+        String body = objectMapper.writeValueAsString(new LoginRequest(email, password));
+        MvcResult result = mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isOk())
+                .andReturn();
+        return objectMapper.readValue(result.getResponse().getContentAsString(), AuthResponse.class);
+    }
 
-	@Autowired
-	private JwtService jwtService;
+    @Test
+    void validCredentialsReturnJwtAndEmployee() throws Exception {
+        AuthResponse auth = login("admin@psybergate.com", "password123");
 
-	@Test
-	void validCredentialsReturnJwtAndEmployee() {
-		ResponseEntity<AuthResponse> response = login("admin@psybergate.com", "password123");
+        assertThat(auth.token()).isNotBlank();
+        assertThat(auth.employeeId()).isNotNull();
+        assertThat(auth.email()).isEqualTo("admin@psybergate.com");
+        assertThat(auth.firstName()).isEqualTo("Admin");
+    }
 
-		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-		assertThat(response.getBody()).isNotNull();
-		assertThat(response.getBody().token()).isNotBlank();
-		assertThat(response.getBody().employeeId()).isNotNull();
-		assertThat(response.getBody().email()).isEqualTo("admin@psybergate.com");
-		assertThat(response.getBody().firstName()).isEqualTo("Admin");
-	}
+    @Test
+    void invalidPasswordIsRejected() throws Exception {
+        String body = objectMapper.writeValueAsString(new LoginRequest("admin@psybergate.com", "wrong-password"));
 
-	@Test
-	void invalidPasswordIsRejected() {
-		ResponseEntity<String> response = loginRaw("admin@psybergate.com", "wrong-password");
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.status").value(401));
+    }
 
-		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
-		assertThat(response.getBody()).contains("\"status\":401");
-	}
+    @Test
+    void unknownEmailIsRejected() throws Exception {
+        String body = objectMapper.writeValueAsString(new LoginRequest("nobody@psybergate.com", "password123"));
 
-	@Test
-	void unknownEmailIsRejected() {
-		ResponseEntity<String> response = loginRaw("nobody@psybergate.com", "password123");
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isUnauthorized());
+    }
 
-		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
-	}
+    @Test
+    void meReturnsCurrentEmployeeWithToken() throws Exception {
+        AuthResponse auth = login("admin@psybergate.com", "password123");
 
-	@Test
-	void meReturnsCurrentEmployeeWithToken() {
-		AuthResponse auth = login("admin@psybergate.com", "password123").getBody();
+        mockMvc.perform(get("/api/auth/me")
+                        .header("Authorization", "Bearer " + auth.token()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.email").value("admin@psybergate.com"))
+                .andExpect(jsonPath("$.id").value(auth.employeeId().intValue()));
+    }
 
-		HttpHeaders headers = new HttpHeaders();
-		headers.setBearerAuth(auth.token());
-		headers.setContentType(MediaType.APPLICATION_JSON);
+    @Test
+    void meRefusesRequestWithoutToken() throws Exception {
+        mockMvc.perform(get("/api/auth/me"))
+                .andExpect(status().isUnauthorized());
+    }
 
-		ResponseEntity<EmployeeResponse> response = restTemplate.exchange(
-				"/api/auth/me", HttpMethod.GET, new HttpEntity<>(headers), EmployeeResponse.class);
+    @Test
+    void meRefusesMalformedToken() throws Exception {
+        mockMvc.perform(get("/api/auth/me")
+                        .header("Authorization", "Bearer not-a-real-jwt"))
+                .andExpect(status().isUnauthorized());
+    }
 
-		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-		assertThat(response.getBody()).isNotNull();
-		assertThat(response.getBody().email()).isEqualTo("admin@psybergate.com");
-		assertThat(response.getBody().id()).isEqualTo(auth.employeeId());
-	}
+    @Test
+    void healthRemainsPublic() throws Exception {
+        mockMvc.perform(get("/actuator/health"))
+                .andExpect(status().isOk());
+    }
 
-	@Test
-	void meRefusesRequestWithoutToken() {
-		ResponseEntity<String> response = restTemplate.getForEntity("/api/auth/me", String.class);
-		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
-	}
+    @Test
+    void meReturns401WhenEmployeeNoLongerExists() throws Exception {
+        Employee ghost = employeeRepository.save(Employee.builder()
+                .email("ghost@psybergate.com").firstName("Ghost").lastName("User")
+                .passwordHash("$2a$10$hash").build());
+        String token = jwtService.generate(ghost);
+        employeeRepository.delete(ghost);
+        employeeRepository.flush();
 
-	@Test
-	void meRefusesMalformedToken() {
-		HttpHeaders headers = new HttpHeaders();
-		headers.setBearerAuth("not-a-real-jwt");
+        mockMvc.perform(get("/api/auth/me")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isUnauthorized());
+    }
 
-		ResponseEntity<String> response = restTemplate.exchange(
-				"/api/auth/me", HttpMethod.GET, new HttpEntity<>(headers), String.class);
-
-		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
-	}
-
-	@Test
-	void healthRemainsPublic() {
-		ResponseEntity<String> response = restTemplate.getForEntity("/actuator/health", String.class);
-		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-	}
-
-	@Test
-	void meReturns401WhenEmployeeNoLongerExists() {
-		// A token whose subject has been deleted between issuance and the next request must be
-		// treated as no longer valid (401) — not surface as a 500 from the filter (the advice does
-		// not catch filter exceptions) nor a 404 from the resolver (which would leak existence).
-		Employee ghost = employeeRepository.save(Employee.builder()
-				.email("ghost@psybergate.com").firstName("Ghost").lastName("User")
-				.passwordHash("$2a$10$hash").build());
-		String token = jwtService.generate(ghost);
-		employeeRepository.delete(ghost);
-		employeeRepository.flush();
-
-		HttpHeaders headers = new HttpHeaders();
-		headers.setBearerAuth(token);
-		ResponseEntity<String> response = restTemplate.exchange(
-				"/api/auth/me", HttpMethod.GET, new HttpEntity<>(headers), String.class);
-
-		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
-	}
-
-	@Test
-	void seededEmployeesExist() {
-		assertThat(employeeRepository.count()).isGreaterThanOrEqualTo(3);
-		assertThat(employeeRepository.findByEmail("admin@psybergate.com")).isPresent();
-		assertThat(employeeRepository.findByEmail("jane.doe@psybergate.com")).isPresent();
-		assertThat(employeeRepository.findByEmail("john.smith@psybergate.com")).isPresent();
-	}
-
-	private ResponseEntity<AuthResponse> login(String email, String password) {
-		return restTemplate.postForEntity("/api/auth/login", new LoginRequest(email, password), AuthResponse.class);
-	}
-
-	private ResponseEntity<String> loginRaw(String email, String password) {
-		return restTemplate.postForEntity("/api/auth/login", new LoginRequest(email, password), String.class);
-	}
+    @Test
+    void seededEmployeesExist() {
+        assertThat(employeeRepository.count()).isGreaterThanOrEqualTo(3);
+        assertThat(employeeRepository.findByEmail("admin@psybergate.com")).isPresent();
+        assertThat(employeeRepository.findByEmail("jane.doe@psybergate.com")).isPresent();
+        assertThat(employeeRepository.findByEmail("john.smith@psybergate.com")).isPresent();
+    }
 }

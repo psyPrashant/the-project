@@ -1,7 +1,14 @@
 package com.psybergate.staff_engagement.employee;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.psybergate.staff_engagement.IntegrationTestBase;
 import com.psybergate.staff_engagement.auth.dto.AuthResponse;
 import com.psybergate.staff_engagement.auth.dto.LoginRequest;
@@ -13,231 +20,263 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 
 class EmployeeCrudIT extends IntegrationTestBase {
 
-	@Autowired
-	private TestRestTemplate restTemplate;
+    @Autowired private MockMvc mockMvc;
+    @Autowired private ObjectMapper objectMapper;
 
-	private String token;
+    private String token;
 
-	@BeforeEach
-	void authenticate() {
-		ResponseEntity<AuthResponse> login = restTemplate.postForEntity("/api/auth/login",
-				new LoginRequest("admin@psybergate.com", "password123"), AuthResponse.class);
-		assertThat(login.getStatusCode()).isEqualTo(HttpStatus.OK);
-		assertThat(login.getBody()).isNotNull();
-		token = login.getBody().token();
-	}
+    @BeforeEach
+    void authenticate() throws Exception {
+        String body = objectMapper.writeValueAsString(new LoginRequest("admin@psybergate.com", "password123"));
+        MvcResult result = mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isOk())
+                .andReturn();
+        token = objectMapper.readValue(result.getResponse().getContentAsString(), AuthResponse.class).token();
+    }
 
-	private HttpHeaders authHeaders() {
-		HttpHeaders headers = new HttpHeaders();
-		headers.setBearerAuth(token);
-		headers.setContentType(MediaType.APPLICATION_JSON);
-		return headers;
-	}
+    private String uniqueEmail() {
+        return "test-" + UUID.randomUUID() + "@example.com";
+    }
 
-	private String uniqueEmail() {
-		return "test-" + UUID.randomUUID() + "@example.com";
-	}
+    private EmployeeProfileResponse createEmployee(String firstName, String lastName, String email) throws Exception {
+        String body = objectMapper.writeValueAsString(
+                new CreateEmployeeRequest(firstName, lastName, email, null, null, null));
+        MvcResult result = mockMvc.perform(post("/api/employees")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isCreated())
+                .andReturn();
+        return objectMapper.readValue(result.getResponse().getContentAsString(), EmployeeProfileResponse.class);
+    }
 
-	private EmployeeProfileResponse createEmployee(String firstName, String lastName, String email) {
-		return restTemplate.exchange("/api/employees", HttpMethod.POST,
-				new HttpEntity<>(new CreateEmployeeRequest(firstName, lastName, email, null, null, null), authHeaders()),
-				EmployeeProfileResponse.class).getBody();
-	}
+    // POST /api/employees
 
-	// POST /api/employees
+    @Test
+    void create_validRequest_returns201WithProfile() throws Exception {
+        String body = objectMapper.writeValueAsString(
+                new CreateEmployeeRequest("Test", "User", uniqueEmail(), "Dev", "Engineering", "555-0100"));
 
-	@Test
-	void create_validRequest_returns201WithProfile() {
-		CreateEmployeeRequest request = new CreateEmployeeRequest(
-				"Test", "User", uniqueEmail(), "Dev", "Engineering", "555-0100");
+        MvcResult result = mockMvc.perform(post("/api/employees")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isCreated())
+                .andReturn();
 
-		ResponseEntity<EmployeeProfileResponse> response = restTemplate.exchange(
-				"/api/employees", HttpMethod.POST,
-				new HttpEntity<>(request, authHeaders()), EmployeeProfileResponse.class);
+        EmployeeProfileResponse profile = objectMapper.readValue(
+                result.getResponse().getContentAsString(), EmployeeProfileResponse.class);
+        assertThat(profile.id()).isNotNull();
+        assertThat(profile.firstName()).isEqualTo("Test");
+        assertThat(profile.jobTitle()).isEqualTo("Dev");
+        assertThat(profile.archived()).isFalse();
+    }
 
-		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-		assertThat(response.getBody().id()).isNotNull();
-		assertThat(response.getBody().firstName()).isEqualTo("Test");
-		assertThat(response.getBody().jobTitle()).isEqualTo("Dev");
-		assertThat(response.getBody().archived()).isFalse();
-	}
+    @Test
+    void create_missingFirstName_returns400() throws Exception {
+        String body = objectMapper.writeValueAsString(
+                new CreateEmployeeRequest("", "User", uniqueEmail(), null, null, null));
 
-	@Test
-	void create_missingFirstName_returns400() {
-		ResponseEntity<String> response = restTemplate.exchange("/api/employees", HttpMethod.POST,
-				new HttpEntity<>(new CreateEmployeeRequest("", "User", uniqueEmail(), null, null, null), authHeaders()),
-				String.class);
+        mockMvc.perform(post("/api/employees")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isBadRequest());
+    }
 
-		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-	}
+    @Test
+    void create_duplicateEmail_returns409() throws Exception {
+        String email = uniqueEmail();
+        createEmployee("A", "B", email);
 
-	@Test
-	void create_duplicateEmail_returns409() {
-		String email = uniqueEmail();
-		createEmployee("A", "B", email);
+        String body = objectMapper.writeValueAsString(
+                new CreateEmployeeRequest("A", "B", email, null, null, null));
 
-		ResponseEntity<String> response = restTemplate.exchange("/api/employees", HttpMethod.POST,
-				new HttpEntity<>(new CreateEmployeeRequest("A", "B", email, null, null, null), authHeaders()),
-				String.class);
+        mockMvc.perform(post("/api/employees")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isConflict());
+    }
 
-		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
-	}
+    @Test
+    void create_unauthenticated_returns401() throws Exception {
+        String body = objectMapper.writeValueAsString(
+                new CreateEmployeeRequest("A", "B", uniqueEmail(), null, null, null));
 
-	@Test
-	void create_unauthenticated_returns401() {
-		ResponseEntity<String> response = restTemplate.postForEntity("/api/employees",
-				new CreateEmployeeRequest("A", "B", uniqueEmail(), null, null, null), String.class);
+        mockMvc.perform(post("/api/employees")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isUnauthorized());
+    }
 
-		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
-	}
+    // GET /api/employees/{id}
 
-	// GET /api/employees/{id}
+    @Test
+    void getProfile_existingEmployee_returns200() throws Exception {
+        String email = uniqueEmail();
+        EmployeeProfileResponse created = createEmployee("Get", "Me", email);
 
-	@Test
-	void getProfile_existingEmployee_returns200() {
-		String email = uniqueEmail();
-		EmployeeProfileResponse created = createEmployee("Get", "Me", email);
+        MvcResult result = mockMvc.perform(get("/api/employees/" + created.id())
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andReturn();
 
-		ResponseEntity<EmployeeProfileResponse> response = restTemplate.exchange(
-				"/api/employees/" + created.id(), HttpMethod.GET,
-				new HttpEntity<>(authHeaders()), EmployeeProfileResponse.class);
+        EmployeeProfileResponse profile = objectMapper.readValue(
+                result.getResponse().getContentAsString(), EmployeeProfileResponse.class);
+        assertThat(profile.email()).isEqualTo(email);
+    }
 
-		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-		assertThat(response.getBody().email()).isEqualTo(email);
-	}
+    @Test
+    void getProfile_unknownId_returns404() throws Exception {
+        mockMvc.perform(get("/api/employees/999999999")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isNotFound());
+    }
 
-	@Test
-	void getProfile_unknownId_returns404() {
-		ResponseEntity<String> response = restTemplate.exchange(
-				"/api/employees/999999999", HttpMethod.GET,
-				new HttpEntity<>(authHeaders()), String.class);
+    // GET /api/employees (list & search)
 
-		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
-	}
+    @Test
+    void list_includesCreatedEmployee() throws Exception {
+        String email = uniqueEmail();
+        createEmployee("Listed", "User", email);
 
-	// GET /api/employees (list & search)
+        MvcResult result = mockMvc.perform(get("/api/employees")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andReturn();
 
-	@Test
-	void list_includesCreatedEmployee() {
-		String email = uniqueEmail();
-		createEmployee("Listed", "User", email);
+        List<EmployeeProfileResponse> list = objectMapper.readValue(
+                result.getResponse().getContentAsString(),
+                new TypeReference<List<EmployeeProfileResponse>>() {});
+        assertThat(list).extracting(EmployeeProfileResponse::email).contains(email);
+    }
 
-		ResponseEntity<List<EmployeeProfileResponse>> response = restTemplate.exchange(
-				"/api/employees", HttpMethod.GET,
-				new HttpEntity<>(authHeaders()),
-				new ParameterizedTypeReference<>() {});
+    @Test
+    void search_byName_returnsMatchingEmployee() throws Exception {
+        String uniqueFirst = "Zyx" + UUID.randomUUID().toString().replace("-", "").substring(0, 6);
+        String email = uniqueEmail();
+        createEmployee(uniqueFirst, "SearchTest", email);
 
-		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-		assertThat(response.getBody()).extracting(EmployeeProfileResponse::email).contains(email);
-	}
+        MvcResult result = mockMvc.perform(get("/api/employees")
+                        .param("search", uniqueFirst)
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andReturn();
 
-	@Test
-	void search_byName_returnsMatchingEmployee() {
-		String uniqueFirst = "Zyx" + UUID.randomUUID().toString().replace("-", "").substring(0, 6);
-		String email = uniqueEmail();
-		createEmployee(uniqueFirst, "SearchTest", email);
+        List<EmployeeProfileResponse> list = objectMapper.readValue(
+                result.getResponse().getContentAsString(),
+                new TypeReference<List<EmployeeProfileResponse>>() {});
+        assertThat(list).extracting(EmployeeProfileResponse::email).contains(email);
+    }
 
-		ResponseEntity<List<EmployeeProfileResponse>> response = restTemplate.exchange(
-				"/api/employees?search=" + uniqueFirst, HttpMethod.GET,
-				new HttpEntity<>(authHeaders()),
-				new ParameterizedTypeReference<>() {});
+    @Test
+    void search_noMatches_returnsEmptyArray() throws Exception {
+        MvcResult result = mockMvc.perform(get("/api/employees")
+                        .param("search", "ZzZzZzZzZzZzNomatch99x")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andReturn();
 
-		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-		assertThat(response.getBody()).extracting(EmployeeProfileResponse::email).contains(email);
-	}
+        List<EmployeeProfileResponse> list = objectMapper.readValue(
+                result.getResponse().getContentAsString(),
+                new TypeReference<List<EmployeeProfileResponse>>() {});
+        assertThat(list).isEmpty();
+    }
 
-	@Test
-	void search_noMatches_returnsEmptyArray() {
-		ResponseEntity<List<EmployeeProfileResponse>> response = restTemplate.exchange(
-				"/api/employees?search=ZzZzZzZzZzZzNomatch99x", HttpMethod.GET,
-				new HttpEntity<>(authHeaders()),
-				new ParameterizedTypeReference<>() {});
+    // PUT /api/employees/{id}
 
-		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-		assertThat(response.getBody()).isEmpty();
-	}
+    @Test
+    void update_validRequest_returns200WithUpdatedProfile() throws Exception {
+        EmployeeProfileResponse created = createEmployee("Old", "Name", uniqueEmail());
 
-	// PUT /api/employees/{id}
+        String body = objectMapper.writeValueAsString(
+                new UpdateEmployeeRequest("New", "Name", uniqueEmail(), "Manager", null, null));
 
-	@Test
-	void update_validRequest_returns200WithUpdatedProfile() {
-		EmployeeProfileResponse created = createEmployee("Old", "Name", uniqueEmail());
+        MvcResult result = mockMvc.perform(put("/api/employees/" + created.id())
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isOk())
+                .andReturn();
 
-		UpdateEmployeeRequest updateReq = new UpdateEmployeeRequest(
-				"New", "Name", uniqueEmail(), "Manager", null, null);
-		ResponseEntity<EmployeeProfileResponse> response = restTemplate.exchange(
-				"/api/employees/" + created.id(), HttpMethod.PUT,
-				new HttpEntity<>(updateReq, authHeaders()), EmployeeProfileResponse.class);
+        EmployeeProfileResponse profile = objectMapper.readValue(
+                result.getResponse().getContentAsString(), EmployeeProfileResponse.class);
+        assertThat(profile.firstName()).isEqualTo("New");
+        assertThat(profile.jobTitle()).isEqualTo("Manager");
+    }
 
-		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-		assertThat(response.getBody().firstName()).isEqualTo("New");
-		assertThat(response.getBody().jobTitle()).isEqualTo("Manager");
-	}
+    @Test
+    void update_blankLastName_returns400() throws Exception {
+        EmployeeProfileResponse created = createEmployee("Valid", "Name", uniqueEmail());
 
-	@Test
-	void update_blankLastName_returns400() {
-		EmployeeProfileResponse created = createEmployee("Valid", "Name", uniqueEmail());
+        String body = objectMapper.writeValueAsString(
+                new UpdateEmployeeRequest("Valid", "", uniqueEmail(), null, null, null));
 
-		ResponseEntity<String> response = restTemplate.exchange(
-				"/api/employees/" + created.id(), HttpMethod.PUT,
-				new HttpEntity<>(new UpdateEmployeeRequest("Valid", "", uniqueEmail(), null, null, null), authHeaders()),
-				String.class);
+        mockMvc.perform(put("/api/employees/" + created.id())
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isBadRequest());
+    }
 
-		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-	}
+    @Test
+    void update_unknownEmployee_returns404() throws Exception {
+        String body = objectMapper.writeValueAsString(
+                new UpdateEmployeeRequest("A", "B", uniqueEmail(), null, null, null));
 
-	@Test
-	void update_unknownEmployee_returns404() {
-		ResponseEntity<String> response = restTemplate.exchange(
-				"/api/employees/999999999", HttpMethod.PUT,
-				new HttpEntity<>(new UpdateEmployeeRequest("A", "B", uniqueEmail(), null, null, null), authHeaders()),
-				String.class);
+        mockMvc.perform(put("/api/employees/999999999")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isNotFound());
+    }
 
-		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
-	}
+    // PATCH /api/employees/{id}/archive
 
-	// PATCH /api/employees/{id}/archive
+    @Test
+    void archive_returns204AndEmployeeAbsentFromList() throws Exception {
+        String email = uniqueEmail();
+        EmployeeProfileResponse created = createEmployee("Archive", "Me", email);
 
-	@Test
-	void archive_returns204AndEmployeeAbsentFromList() {
-		String email = uniqueEmail();
-		EmployeeProfileResponse created = createEmployee("Archive", "Me", email);
+        mockMvc.perform(patch("/api/employees/" + created.id() + "/archive")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isNoContent());
 
-		ResponseEntity<Void> archiveResponse = restTemplate.exchange(
-				"/api/employees/" + created.id() + "/archive", HttpMethod.PATCH,
-				new HttpEntity<>(authHeaders()), Void.class);
+        MvcResult result = mockMvc.perform(get("/api/employees")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andReturn();
 
-		assertThat(archiveResponse.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+        List<EmployeeProfileResponse> list = objectMapper.readValue(
+                result.getResponse().getContentAsString(),
+                new TypeReference<List<EmployeeProfileResponse>>() {});
+        assertThat(list).extracting(EmployeeProfileResponse::email).doesNotContain(email);
+    }
 
-		List<EmployeeProfileResponse> list = restTemplate.exchange(
-				"/api/employees", HttpMethod.GET,
-				new HttpEntity<>(authHeaders()),
-				new ParameterizedTypeReference<List<EmployeeProfileResponse>>() {}).getBody();
-		assertThat(list).extracting(EmployeeProfileResponse::email).doesNotContain(email);
-	}
+    @Test
+    void archive_profileStillAccessibleByIdWithArchivedTrue() throws Exception {
+        EmployeeProfileResponse created = createEmployee("Archived", "Profile", uniqueEmail());
 
-	@Test
-	void archive_profileStillAccessibleByIdWithArchivedTrue() {
-		EmployeeProfileResponse created = createEmployee("Archived", "Profile", uniqueEmail());
-		restTemplate.exchange("/api/employees/" + created.id() + "/archive", HttpMethod.PATCH,
-				new HttpEntity<>(authHeaders()), Void.class);
+        mockMvc.perform(patch("/api/employees/" + created.id() + "/archive")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isNoContent());
 
-		ResponseEntity<EmployeeProfileResponse> profile = restTemplate.exchange(
-				"/api/employees/" + created.id(), HttpMethod.GET,
-				new HttpEntity<>(authHeaders()), EmployeeProfileResponse.class);
+        MvcResult result = mockMvc.perform(get("/api/employees/" + created.id())
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andReturn();
 
-		assertThat(profile.getStatusCode()).isEqualTo(HttpStatus.OK);
-		assertThat(profile.getBody().archived()).isTrue();
-	}
+        EmployeeProfileResponse profile = objectMapper.readValue(
+                result.getResponse().getContentAsString(), EmployeeProfileResponse.class);
+        assertThat(profile.archived()).isTrue();
+    }
 }

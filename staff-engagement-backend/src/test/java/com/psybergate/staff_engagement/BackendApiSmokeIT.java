@@ -1,17 +1,15 @@
 package com.psybergate.staff_engagement;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.springframework.test.web.servlet.MockMvc;
 
 /**
- * API-level smoke integration test (story F2).
+ * API-level smoke integration test.
  *
  * <p>Boots the application against a real PostgreSQL via Testcontainers (see
  * {@link IntegrationTestBase}) and asserts the Actuator health endpoint
@@ -21,16 +19,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 class BackendApiSmokeIT extends IntegrationTestBase {
 
-	@Autowired
-	private TestRestTemplate restTemplate;
+    @Autowired
+    private MockMvc mockMvc;
 
-	@Test
-	void healthEndpointIsUp() {
-		ResponseEntity<String> response = restTemplate.getForEntity("/actuator/health", String.class);
-
-		assertEquals(HttpStatus.OK, response.getStatusCode());
-		assertNotNull(response.getBody());
-		assertTrue(response.getBody().contains("\"status\":\"UP\""),
-				"Health body should report UP, was: " + response.getBody());
-	}
+    @Test
+    void healthEndpointIsUp() throws Exception {
+        mockMvc.perform(get("/actuator/health"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("UP"));
+    }
 }
