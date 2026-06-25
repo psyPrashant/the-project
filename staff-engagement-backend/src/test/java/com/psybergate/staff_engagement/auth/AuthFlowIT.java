@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.psybergate.staff_engagement.IntegrationTestBase;
 import com.psybergate.staff_engagement.auth.dto.AuthResponse;
 import com.psybergate.staff_engagement.auth.dto.LoginRequest;
+import com.psybergate.staff_engagement.employee.Employee;
 import com.psybergate.staff_engagement.employee.EmployeeRepository;
 import com.psybergate.staff_engagement.employee.dto.EmployeeResponse;
 import org.junit.jupiter.api.Test;
@@ -28,6 +29,9 @@ class AuthFlowIT extends IntegrationTestBase {
 
 	@Autowired
 	private EmployeeRepository employeeRepository;
+
+	@Autowired
+	private JwtService jwtService;
 
 	@Test
 	void validCredentialsReturnJwtAndEmployee() {
@@ -94,6 +98,26 @@ class AuthFlowIT extends IntegrationTestBase {
 	void healthRemainsPublic() {
 		ResponseEntity<String> response = restTemplate.getForEntity("/actuator/health", String.class);
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+	}
+
+	@Test
+	void meReturns401WhenEmployeeNoLongerExists() {
+		// A token whose subject has been deleted between issuance and the next request must be
+		// treated as no longer valid (401) — not surface as a 500 from the filter (the advice does
+		// not catch filter exceptions) nor a 404 from the resolver (which would leak existence).
+		Employee ghost = employeeRepository.save(Employee.builder()
+				.email("ghost@psybergate.com").firstName("Ghost").lastName("User")
+				.passwordHash("$2a$10$hash").build());
+		String token = jwtService.generate(ghost);
+		employeeRepository.delete(ghost);
+		employeeRepository.flush();
+
+		HttpHeaders headers = new HttpHeaders();
+		headers.setBearerAuth(token);
+		ResponseEntity<String> response = restTemplate.exchange(
+				"/api/auth/me", HttpMethod.GET, new HttpEntity<>(headers), String.class);
+
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
 	}
 
 	@Test

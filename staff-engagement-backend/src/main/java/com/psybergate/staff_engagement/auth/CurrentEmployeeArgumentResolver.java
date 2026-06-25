@@ -2,6 +2,7 @@ package com.psybergate.staff_engagement.auth;
 
 import com.psybergate.staff_engagement.employee.Employee;
 import com.psybergate.staff_engagement.employee.EmployeeService;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.MethodParameter;
 import org.springframework.security.core.Authentication;
@@ -35,6 +36,13 @@ public class CurrentEmployeeArgumentResolver implements HandlerMethodArgumentRes
 		if (auth == null || !(auth.getPrincipal() instanceof EmployeePrincipal principal)) {
 			throw new JwtAuthException("No authenticated employee on the request");
 		}
-		return employeeService.findById(principal.employeeId());
+		try {
+			return employeeService.findById(principal.employeeId());
+		} catch (EntityNotFoundException e) {
+			// A valid token whose subject no longer exists is an auth failure (401), not a 404 —
+			// returning 404 would leak that the id is valid-but-gone. Same semantics as the no-principal
+			// branch above.
+			throw new JwtAuthException("Authenticated employee no longer exists", e);
+		}
 	}
 }

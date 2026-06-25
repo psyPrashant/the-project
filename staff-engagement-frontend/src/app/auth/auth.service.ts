@@ -51,6 +51,9 @@ export class AuthService {
   }
 
   private restoreUser(): EmployeeResponse | null {
-    return this.getToken() !== null ? { id: 0, email: '', firstName: '', lastName: '' } : null;
+    // The real user is resolved from /auth/me by loadCurrentUser() during app initialization
+    // (see app.config.ts). Until then the signal is null (still loading / anonymous) — never a
+    // fabricated placeholder, which downstream code could mistake for a real employee (id 0).
+    return null;
   }
 }

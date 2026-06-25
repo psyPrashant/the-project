@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 
@@ -16,6 +17,7 @@ export class LoginComponent {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly fb = inject(FormBuilder);
+  private readonly destroyRef = inject(DestroyRef);
 
   protected readonly submitting = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
@@ -34,15 +36,17 @@ export class LoginComponent {
     this.submitting.set(true);
     this.errorMessage.set(null);
 
-    this.authService.login(this.form.getRawValue()).subscribe({
-      next: () => {
-        const redirect = this.route.snapshot.queryParamMap.get('redirect') ?? '/home';
-        void this.router.navigateByUrl(redirect);
-      },
-      error: () => {
-        this.errorMessage.set('Invalid email or password.');
-        this.submitting.set(false);
-      }
-    });
+    this.authService.login(this.form.getRawValue())
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          const redirect = this.route.snapshot.queryParamMap.get('redirect') ?? '/home';
+          void this.router.navigateByUrl(redirect);
+        },
+        error: () => {
+          this.errorMessage.set('Invalid email or password.');
+          this.submitting.set(false);
+        }
+      });
   }
 }

@@ -73,3 +73,31 @@ describe('AuthService', () => {
     expect(service.isAuthenticated()).toBe(false);
   });
 });
+
+describe('AuthService (initial user on reload)', () => {
+  let service: AuthService;
+  let httpTesting: HttpTestingController;
+
+  beforeEach(() => {
+    localStorage.clear();
+    // A token is already present (e.g. the user reloaded the page). The service must NOT
+    // fabricate a placeholder user; the real one is resolved later by loadCurrentUser() via
+    // the app initializer.
+    localStorage.setItem('se_token', 'leftover-token');
+    TestBed.configureTestingModule({
+      providers: [provideHttpClient(), provideHttpClientTesting()]
+    });
+    service = TestBed.inject(AuthService);
+    httpTesting = TestBed.inject(HttpTestingController);
+  });
+
+  afterEach(() => {
+    httpTesting.verify();
+    localStorage.clear();
+  });
+
+  it('starts with a null current user even when a token is already present', () => {
+    expect(service.isAuthenticated()).toBe(true);
+    expect(service.currentUser()).toBeNull();
+  });
+});

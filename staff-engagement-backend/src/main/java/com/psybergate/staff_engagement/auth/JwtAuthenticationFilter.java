@@ -3,6 +3,7 @@ package com.psybergate.staff_engagement.auth;
 import com.psybergate.staff_engagement.employee.Employee;
 import com.psybergate.staff_engagement.employee.EmployeeService;
 import io.jsonwebtoken.JwtException;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -20,8 +21,12 @@ import org.springframework.web.filter.OncePerRequestFilter;
  * identity is authoritative on every request), and populates the {@link SecurityContextHolder}.
  *
  * <p>On any token problem the context is simply left empty so the authorization filter returns
- * 401. Resolution goes through the service interface (never the repository) and runs inside the
- * service's transaction, keeping {@code open-in-view=false} safe.
+ * 401. A subject that no longer maps to an Employee (deleted between issuance and this request)
+ * is treated the same way — the token is no longer proof of a valid identity. Note that
+ * {@code @RestControllerAdvice} does not catch exceptions thrown from filters, so this must be
+ * handled here, not in {@code GlobalExceptionHandler}. Resolution goes through the service interface
+ * (never the repository) and runs inside the service's transaction, keeping
+ * {@code open-in-view=false} safe.
  */
 @Component
 @RequiredArgsConstructor
@@ -46,8 +51,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 				UsernamePasswordAuthenticationToken auth =
 						new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities());
 				SecurityContextHolder.getContext().setAuthentication(auth);
-			} catch (JwtException | IllegalArgumentException e) {
-				// Invalid/expired token — leave context empty; authorization filter will 401.
+			} catch (JwtException | IllegalArgumentException | EntityNotFoundException e) {
+				// Invalid/expired token, or a subject that no longer resolves to an Employee —
+				// leave context empty; the authorization filter will return 401.
 				SecurityContextHolder.clearContext();
 			}
 		}
