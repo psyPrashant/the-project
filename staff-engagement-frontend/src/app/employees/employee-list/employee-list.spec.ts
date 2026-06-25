@@ -61,7 +61,7 @@ describe('EmployeeListComponent', () => {
     vi.advanceTimersByTime(300);
     fixture.detectChanges();
 
-    const row = (fixture.nativeElement as HTMLElement).querySelector('[aria-label]') as HTMLElement;
+    const row = (fixture.nativeElement as HTMLElement).querySelector('tbody tr') as HTMLElement;
     row?.click();
 
     expect(navigateSpy).toHaveBeenCalledWith(['/employees', 1]);

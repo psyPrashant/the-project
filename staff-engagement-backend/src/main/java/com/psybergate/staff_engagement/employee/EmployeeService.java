@@ -21,9 +21,7 @@ public interface EmployeeService {
 
 	EmployeeResponse toResponse(Employee employee);
 
-	List<EmployeeProfileResponse> listAll();
-
-	List<EmployeeProfileResponse> search(String query);
+	List<EmployeeProfileResponse> getEmployees(String query);
 
 	EmployeeProfileResponse createEmployee(CreateEmployeeRequest request);
 

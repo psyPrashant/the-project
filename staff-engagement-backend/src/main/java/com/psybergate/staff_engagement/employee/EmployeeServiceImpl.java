@@ -1,5 +1,6 @@
 package com.psybergate.staff_engagement.employee;
 
+import com.psybergate.staff_engagement.common.exception.DuplicateResourceException;
 import com.psybergate.staff_engagement.employee.dto.CreateEmployeeRequest;
 import com.psybergate.staff_engagement.employee.dto.EmployeeProfileResponse;
 import com.psybergate.staff_engagement.employee.dto.EmployeeResponse;
@@ -8,6 +9,7 @@ import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -42,31 +44,28 @@ public class EmployeeServiceImpl implements EmployeeService {
 
 	@Override
 	@Transactional(readOnly = true)
-	public List<EmployeeProfileResponse> listAll() {
-		return employeeRepository.findByArchivedFalse().stream()
-				.map(this::toProfileResponse)
-				.toList();
-	}
-
-	@Override
-	@Transactional(readOnly = true)
-	public List<EmployeeProfileResponse> search(String query) {
-		return employeeRepository.searchActiveByName(query).stream()
-				.map(this::toProfileResponse)
-				.toList();
+	public List<EmployeeProfileResponse> getEmployees(String query) {
+		List<Employee> employees = (query != null && !query.isBlank())
+				? employeeRepository.searchActiveByName(query)
+				: employeeRepository.findByArchivedFalse();
+		return employees.stream().map(this::toProfileResponse).toList();
 	}
 
 	@Override
 	public EmployeeProfileResponse createEmployee(CreateEmployeeRequest request) {
-		Employee employee = Employee.builder()
-				.firstName(request.firstName())
-				.lastName(request.lastName())
-				.email(request.email())
-				.jobTitle(request.jobTitle())
-				.department(request.department())
-				.phone(request.phone())
-				.build();
-		return toProfileResponse(employeeRepository.save(employee));
+		try {
+			Employee employee = Employee.builder()
+					.firstName(request.firstName())
+					.lastName(request.lastName())
+					.email(request.email())
+					.jobTitle(request.jobTitle())
+					.department(request.department())
+					.phone(request.phone())
+					.build();
+			return toProfileResponse(employeeRepository.save(employee));
+		} catch (DataIntegrityViolationException ex) {
+			throw new DuplicateResourceException("An employee with email '" + request.email() + "' already exists");
+		}
 	}
 
 	@Override
@@ -81,13 +80,17 @@ public class EmployeeServiceImpl implements EmployeeService {
 	public EmployeeProfileResponse updateEmployee(Long id, UpdateEmployeeRequest request) {
 		Employee employee = employeeRepository.findById(id)
 				.orElseThrow(() -> new EntityNotFoundException("Employee not found: " + id));
-		employee.setFirstName(request.firstName());
-		employee.setLastName(request.lastName());
-		employee.setEmail(request.email());
-		employee.setJobTitle(request.jobTitle());
-		employee.setDepartment(request.department());
-		employee.setPhone(request.phone());
-		return toProfileResponse(employeeRepository.save(employee));
+		try {
+			employee.setFirstName(request.firstName());
+			employee.setLastName(request.lastName());
+			employee.setEmail(request.email());
+			employee.setJobTitle(request.jobTitle());
+			employee.setDepartment(request.department());
+			employee.setPhone(request.phone());
+			return toProfileResponse(employeeRepository.save(employee));
+		} catch (DataIntegrityViolationException ex) {
+			throw new DuplicateResourceException("An employee with email '" + request.email() + "' already exists");
+		}
 	}
 
 	@Override
@@ -95,7 +98,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 		Employee employee = employeeRepository.findById(id)
 				.orElseThrow(() -> new EntityNotFoundException("Employee not found: " + id));
 		employee.setArchived(true);
-		employeeRepository.save(employee);
+		// dirty-checking flushes the flag on transaction commit — no explicit save needed
 	}
 
 	private EmployeeProfileResponse toProfileResponse(Employee employee) {

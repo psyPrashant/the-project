@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.psybergate.staff_engagement.common.exception.DuplicateResourceException;
 import com.psybergate.staff_engagement.employee.dto.CreateEmployeeRequest;
 import com.psybergate.staff_engagement.employee.dto.EmployeeProfileResponse;
 import com.psybergate.staff_engagement.employee.dto.UpdateEmployeeRequest;
@@ -48,12 +49,13 @@ class EmployeeServiceImplTest {
 	}
 
 	@Test
-	void createEmployee_duplicateEmail_propagatesDataIntegrityViolation() {
+	void createEmployee_duplicateEmail_throwsDuplicateResourceException() {
 		when(employeeRepository.save(any())).thenThrow(new DataIntegrityViolationException("duplicate"));
 
 		assertThatThrownBy(() -> employeeService.createEmployee(
 				new CreateEmployeeRequest("Bob", "Jones", "bob@example.com", null, null, null)))
-				.isInstanceOf(DataIntegrityViolationException.class);
+				.isInstanceOf(DuplicateResourceException.class)
+				.hasMessageContaining("bob@example.com");
 	}
 
 	// getProfile
@@ -78,37 +80,35 @@ class EmployeeServiceImplTest {
 				.isInstanceOf(EntityNotFoundException.class);
 	}
 
-	// listAll
+	// getEmployees
 
 	@Test
-	void listAll_returnsMappedActiveEmployees() {
+	void getEmployees_noQuery_returnsMappedActiveEmployees() {
 		when(employeeRepository.findByArchivedFalse()).thenReturn(List.of(
 				Employee.builder().id(1L).firstName("Dave").lastName("Brown").email("dave@example.com").build(),
 				Employee.builder().id(2L).firstName("Eve").lastName("Green").email("eve@example.com").build()
 		));
 
-		assertThat(employeeService.listAll()).hasSize(2);
+		assertThat(employeeService.getEmployees(null)).hasSize(2);
 	}
 
-	// search
-
 	@Test
-	void search_returnsMatchingActiveEmployees() {
+	void getEmployees_withQuery_returnsMatchingActiveEmployees() {
 		when(employeeRepository.searchActiveByName("Jane")).thenReturn(List.of(
 				Employee.builder().id(1L).firstName("Jane").lastName("Doe").email("jane@example.com").build()
 		));
 
-		List<EmployeeProfileResponse> result = employeeService.search("Jane");
+		List<EmployeeProfileResponse> result = employeeService.getEmployees("Jane");
 
 		assertThat(result).hasSize(1);
 		assertThat(result.get(0).firstName()).isEqualTo("Jane");
 	}
 
 	@Test
-	void search_noMatches_returnsEmptyList() {
+	void getEmployees_withQueryNoMatches_returnsEmptyList() {
 		when(employeeRepository.searchActiveByName("NoMatch")).thenReturn(List.of());
 
-		assertThat(employeeService.search("NoMatch")).isEmpty();
+		assertThat(employeeService.getEmployees("NoMatch")).isEmpty();
 	}
 
 	// updateEmployee
@@ -141,7 +141,7 @@ class EmployeeServiceImplTest {
 	// archive
 
 	@Test
-	void archive_setsArchivedFlagAndSaves() {
+	void archive_setsArchivedFlag() {
 		Employee employee = Employee.builder()
 				.id(1L).firstName("Fred").lastName("Black").email("fred@example.com").build();
 		when(employeeRepository.findById(1L)).thenReturn(Optional.of(employee));
@@ -149,7 +149,6 @@ class EmployeeServiceImplTest {
 		employeeService.archive(1L);
 
 		assertThat(employee.isArchived()).isTrue();
-		verify(employeeRepository).save(employee);
 	}
 
 	@Test

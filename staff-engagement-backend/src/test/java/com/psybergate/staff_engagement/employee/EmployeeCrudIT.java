@@ -31,9 +31,11 @@ class EmployeeCrudIT extends IntegrationTestBase {
 
 	@BeforeEach
 	void authenticate() {
-		token = restTemplate.postForEntity("/api/auth/login",
-				new LoginRequest("admin@psybergate.com", "password123"),
-				AuthResponse.class).getBody().token();
+		ResponseEntity<AuthResponse> login = restTemplate.postForEntity("/api/auth/login",
+				new LoginRequest("admin@psybergate.com", "password123"), AuthResponse.class);
+		assertThat(login.getStatusCode()).isEqualTo(HttpStatus.OK);
+		assertThat(login.getBody()).isNotNull();
+		token = login.getBody().token();
 	}
 
 	private HttpHeaders authHeaders() {

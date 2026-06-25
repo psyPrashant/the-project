@@ -33,10 +33,7 @@ public class EmployeeController {
 	@GetMapping
 	public ResponseEntity<List<EmployeeProfileResponse>> list(
 			@RequestParam(required = false) String search) {
-		List<EmployeeProfileResponse> result = (search != null && !search.isBlank())
-				? employeeService.search(search)
-				: employeeService.listAll();
-		return ResponseEntity.ok(result);
+		return ResponseEntity.ok(employeeService.getEmployees(search));
 	}
 
 	@GetMapping("/{id}")

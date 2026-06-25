@@ -31,13 +31,12 @@
           <tbody class="divide-y divide-gray-100 bg-white">
             @for (employee of employees(); track employee.id) {
               <tr (click)="navigate(employee.id)"
-                  (keydown.enter)="navigate(employee.id)"
-                  tabindex="0"
-                  role="button"
-                  [attr.aria-label]="'View profile for ' + employee.firstName + ' ' + employee.lastName"
-                  class="cursor-pointer hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500">
+                  class="hover:bg-gray-50 transition-colors">
                 <td class="px-6 py-4 text-sm font-medium text-gray-900">
-                  {{ employee.firstName }} {{ employee.lastName }}
+                  <a [routerLink]="['/employees', employee.id]"
+                     class="hover:underline focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded">
+                    {{ employee.firstName }} {{ employee.lastName }}
+                  </a>
                 </td>
                 <td class="px-6 py-4 text-sm text-gray-600">{{ employee.email }}</td>
                 <td class="px-6 py-4 text-sm text-gray-600">{{ employee.jobTitle ?? '—' }}</td>
