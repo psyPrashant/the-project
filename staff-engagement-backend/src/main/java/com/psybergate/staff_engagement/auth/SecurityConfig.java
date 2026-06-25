@@ -1,7 +1,7 @@
 package com.psybergate.staff_engagement.auth;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.psybergate.staff_engagement.auth.exception.ErrorResponse;
+import com.psybergate.staff_engagement.common.exception.ErrorResponse;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.Clock;

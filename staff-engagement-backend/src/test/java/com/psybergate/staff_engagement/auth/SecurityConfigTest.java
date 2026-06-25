@@ -8,7 +8,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.psybergate.staff_engagement.auth.exception.GlobalExceptionHandler;
+import com.psybergate.staff_engagement.common.exception.GlobalExceptionHandler;
 import com.psybergate.staff_engagement.config.AppConfig;
 import com.psybergate.staff_engagement.employee.Employee;
 import com.psybergate.staff_engagement.employee.EmployeeService;
@@ -30,7 +30,7 @@ import org.springframework.test.web.servlet.MockMvc;
 @WebMvcTest(AuthController.class)
 @Import({AppConfig.class, SecurityConfig.class, JwtAuthenticationFilter.class, JwtService.class,
 		EmployeeUserDetailsService.class, CurrentEmployeeArgumentResolver.class, WebMvcConfig.class,
-		GlobalExceptionHandler.class})
+		GlobalExceptionHandler.class, AuthExceptionHandler.class})
 class SecurityConfigTest {
 
 	@Autowired

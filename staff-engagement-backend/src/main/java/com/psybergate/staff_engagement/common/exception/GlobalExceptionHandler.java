@@ -1,39 +1,34 @@
-package com.psybergate.staff_engagement.auth.exception;
+package com.psybergate.staff_engagement.common.exception;
 
-import com.psybergate.staff_engagement.auth.JwtAuthException;
 import jakarta.persistence.EntityNotFoundException;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 /**
- * Single error contract for the API (F6). Maps auth/validation/not-found/generic exceptions to a
- * consistent {@link ErrorResponse}.
+ * App-wide error contract: maps validation, not-found, and unexpected exceptions to a consistent
+ * {@link ErrorResponse}. Auth-specific failures (authentication / access denied) are handled by
+ * {@code com.psybergate.staff_engagement.auth.AuthExceptionHandler} so this advice stays free of
+ * any dependency on the auth module.
+ *
+ * <p>Ordered last so its {@code @ExceptionHandler(Exception.class)} catch-all only handles what no
+ * more specific advice has claimed. Spring resolves the first matching advice (not the most
+ * specific across advices), so a catch-all must run last.
  */
 @RestControllerAdvice
 @RequiredArgsConstructor
+@Order(Ordered.LOWEST_PRECEDENCE)
 public class GlobalExceptionHandler {
 
 	private final Clock clock;
-
-	@ExceptionHandler({AuthenticationException.class, JwtAuthException.class, UsernameNotFoundException.class})
-	public ResponseEntity<ErrorResponse> unauthorized(Exception ex) {
-		return response(HttpStatus.UNAUTHORIZED, "Invalid credentials");
-	}
-
-	@ExceptionHandler(AccessDeniedException.class)
-	public ResponseEntity<ErrorResponse> forbidden(Exception ex) {
-		return response(HttpStatus.FORBIDDEN, "Access denied");
-	}
 
 	@ExceptionHandler(MethodArgumentNotValidException.class)
 	public ResponseEntity<ErrorResponse> validation(MethodArgumentNotValidException ex) {

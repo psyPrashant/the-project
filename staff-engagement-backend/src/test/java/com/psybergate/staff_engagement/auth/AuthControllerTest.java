@@ -8,7 +8,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.psybergate.staff_engagement.auth.exception.GlobalExceptionHandler;
+import com.psybergate.staff_engagement.common.exception.GlobalExceptionHandler;
 import com.psybergate.staff_engagement.employee.Employee;
 import com.psybergate.staff_engagement.employee.EmployeeService;
 import java.time.Clock;
@@ -53,7 +53,9 @@ class AuthControllerTest {
 				.passwordHash("$2a$10$hash").build();
 		mockMvc = MockMvcBuilders.standaloneSetup(authController)
 				.setValidator(new LocalValidatorFactoryBean())
-				.setControllerAdvice(new GlobalExceptionHandler(Clock.systemDefaultZone()))
+				.setControllerAdvice(
+					new AuthExceptionHandler(Clock.systemDefaultZone()),
+					new GlobalExceptionHandler(Clock.systemDefaultZone()))
 				.build();
 	}
 
