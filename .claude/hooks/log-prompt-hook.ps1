@@ -24,6 +24,33 @@ if ([string]::IsNullOrWhiteSpace($sanitizedAuthor)) { $sanitizedAuthor = 'unknow
 $branch = (git -C $repoRoot branch --show-current 2>$null)
 if (-not $branch) { $branch = 'N/A' }
 
+# Determine the model used for this prompt.
+# Resolution order:
+#   1. Payload model field (if present)
+#   2. OLLAMA_MODEL environment variable
+#   3. Currently running Ollama model via /api/ps
+#   4. Claude Code environment variables (cloud / non-Ollama models)
+#   5. Fallback to 'unknown'
+$model = if ($data.model) { $data.model } else { $null }
+if (-not $model) { $model = $env:OLLAMA_MODEL }
+if (-not $model) {
+    $ollamaHost = if ($env:OLLAMA_HOST) { $env:OLLAMA_HOST } else { 'http://localhost:11434' }
+    try {
+        $psResponse = Invoke-RestMethod -Uri "$ollamaHost/api/ps" -TimeoutSec 1 -ErrorAction Stop
+        if ($psResponse.models -and $psResponse.models.Count -gt 0) {
+            $model = $psResponse.models[0].name
+        }
+    } catch {
+        $model = $null
+    }
+}
+if (-not $model) { $model = $env:ANTHROPIC_MODEL }
+if (-not $model) { $model = $env:CLAUDE_CODE_SUBAGENT_MODEL }
+if (-not $model) { $model = $env:ANTHROPIC_DEFAULT_SONNET_MODEL }
+if (-not $model) { $model = $env:ANTHROPIC_DEFAULT_OPUS_MODEL }
+if (-not $model) { $model = $env:ANTHROPIC_DEFAULT_HAIKU_MODEL }
+if (-not $model) { $model = 'unknown' }
+
 $now     = Get-Date
 $date    = $now.ToString('yyyy-MM-dd')
 $time    = $now.ToString('HH:mm')
@@ -49,11 +76,12 @@ $entry = @"
 **Prompt:**
 $promptText
 
-| Field  | Value   |
-|--------|---------|
-| Time   | $time   |
-| Author | $author |
-| Branch | $branch |
+| Field  | Value       |
+|--------|-------------|
+| Time   | $time       |
+| Author | $author     |
+| Branch | $branch     |
+| Model  | $model |
 
 ---
 "@
