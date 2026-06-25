@@ -17,10 +17,29 @@ You are an expert in TypeScript, Angular, and scalable web application developme
 - Use `NgOptimizedImage` for all static images.
   - `NgOptimizedImage` does not work for inline base64 images.
 
-## Accessibility Requirements
+## Accessibility & Testability Requirements
 
 - It MUST pass all AXE checks.
 - It MUST follow all WCAG AA minimums, including focus management, color contrast, and ARIA attributes.
+
+### Semantic HTML for Playwright testability
+
+Templates MUST use semantic HTML so that Playwright e2e tests can target elements
+using accessible locators (`getByRole`, `getByLabel`, `getByText`) instead of
+brittle CSS selectors. These rules are mandatory for every component:
+
+- **Buttons** — use `<button>` with visible text, never a styled `<div>` with a click handler
+- **Links** — use `<a>` with `routerLink`, not `<span (click)="navigate()">`
+- **Form controls** — every `<input>`, `<select>`, `<textarea>` MUST have an associated `<label>` with a matching `for`/`id` pair
+- **Headings** — use `<h1>`–`<h6>` for page and section titles, in correct order
+- **Lists** — use `<ul>`/`<ol>` + `<li>` for repeated items, not repeated `<div>`s
+- **Tables** — use `<table>`, `<thead>`, `<tbody>`, `<th>` for tabular data, not grid `<div>`s
+- **Dialogs** — use the native `<dialog>` element or an element with `role="dialog"` and `aria-label`
+- **Icons** — decorative icons need `aria-hidden="true"`; interactive icons need `aria-label`
+- **Loading states** — use `aria-busy="true"` on the container
+- **Error messages** — use `aria-live="polite"` and associate with the control via `aria-describedby`
+
+Use `data-testid` only as a last resort when no accessible locator can identify the element.
 
 ### Components
 
@@ -53,3 +72,40 @@ You are an expert in TypeScript, Angular, and scalable web application developme
 - Design services around a single responsibility
 - Use the `providedIn: 'root'` option for singleton services
 - Use the `inject()` function instead of constructor injection
+
+## Playwright E2E Tests
+
+When implementing a new user-facing feature, you MUST write a Playwright e2e test
+alongside the component code. The test validates the feature works end-to-end in a
+real browser against the live backend.
+
+### Where tests go
+
+- Test files: `e2e/<module>.spec.ts` (e.g., `e2e/employee.spec.ts`)
+- One file per domain module — append new `test()` blocks to an existing file if one exists for the module
+
+### How to write tests
+
+```typescript
+import { test, expect } from '@playwright/test';
+
+test.describe('Employee management', () => {
+  test('create a new employee', async ({ page }) => {
+    await page.goto('/employees');
+    await page.getByRole('button', { name: 'Add Employee' }).click();
+    await page.getByLabel('First Name').fill('Sipho');
+    await page.getByLabel('Last Name').fill('Ndlovu');
+    await page.getByLabel('Email').fill('sipho@example.com');
+    await page.getByRole('button', { name: 'Save' }).click();
+    await expect(page.getByText('Sipho Ndlovu')).toBeVisible();
+  });
+});
+```
+
+### Rules
+
+- Use accessible locators: `getByRole()`, `getByLabel()`, `getByText()`, `getByPlaceholder()`
+- Use `data-testid` only when no accessible locator can identify the element
+- Each test must be independent — no ordering dependencies between tests
+- Test both the happy path and at least one negative/validation path per feature
+- Do NOT import or call services directly — tests interact through the browser only

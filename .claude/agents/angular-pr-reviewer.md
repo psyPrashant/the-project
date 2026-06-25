@@ -75,11 +75,22 @@ codebase. Think and write like a real GitHub pull request reviewer.
 - No `any` standing in for domain objects
 - `EmployeeSkill` must treat `projectCount` as derived — the UI must compute it or receive it computed, never send it as input
 
-### 6. Accessibility
+### 6. Accessibility & Playwright testability
 - Must pass all AXE checks
 - Must follow WCAG AA minimums: focus management, color contrast, ARIA attributes
-- Form controls must have associated labels
+- Form controls must have associated `<label>` elements with matching `for`/`id`
 - Interactive elements must be keyboard-accessible
+- Buttons must be `<button>` elements with visible text — not styled `<div>` with click handlers
+- Links must be `<a>` with `routerLink` — not `<span (click)="navigate()">`
+- Lists must use `<ul>`/`<ol>` + `<li>` — not repeated `<div>`s
+- Tables must use `<table>`, `<thead>`, `<th>` — not grid `<div>`s
+- If any element cannot be located by Playwright's `getByRole`, `getByLabel`, or `getByText`, flag it as a **Warning**
+
+### 7. Playwright e2e test coverage
+- If the PR adds a new user-facing feature (new route, new form, new CRUD flow), it MUST include a Playwright test in `e2e/<module>.spec.ts`
+- If no e2e test is included for a new feature, flag it as **Warning**: "Missing Playwright e2e test for this flow"
+- Tests must use accessible locators (`getByRole`, `getByLabel`, `getByText`) — not CSS selectors
+- Tests must cover at least the happy path and one negative/validation path
 
 ## How to respond
 
@@ -136,7 +147,8 @@ Always include at least one 🟢 Good comment if there is something praiseworthy
 | OOP & patterns | x/10 |
 | Data flow | x/10 |
 | Domain modelling | x/10 |
-| Accessibility | x/10 |
+| Accessibility & testability | x/10 |
+| Playwright e2e coverage | x/10 |
 
 ---
 
