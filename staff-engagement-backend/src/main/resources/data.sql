@@ -15,3 +15,8 @@ ON CONFLICT (email) DO NOTHING;
 
 -- Backfill archived=false for any rows added before the column existed (ddl-auto=update safety net)
 UPDATE employees SET archived = false WHERE archived IS NULL;
+
+-- Make password_hash nullable so CRUD-created employees don't need login credentials yet.
+-- ddl-auto=update never drops constraints, so this ALTER is needed for existing databases.
+-- Safe to run repeatedly — PostgreSQL no-ops if the column is already nullable.
+ALTER TABLE employees ALTER COLUMN password_hash DROP NOT NULL;
