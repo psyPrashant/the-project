@@ -1,13 +1,19 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
+import { afterNextRender, ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { catchError, of } from 'rxjs';
 
 import { EmployeeService } from '../../employees/employee.service';
 import { EmployeeProfileResponse } from '../../employees/employee.models';
 import { InteractionService } from '../interaction.service';
 import { InteractionType } from '../interaction.models';
+
+interface InteractionForm {
+  subjectId: FormControl<number | null>;
+  type: FormControl<InteractionType>;
+  date: FormControl<string>;
+  note: FormControl<string>;
+}
 
 @Component({
   selector: 'app-interaction-form',
@@ -34,10 +40,10 @@ export class InteractionFormComponent {
       : undefined
   );
 
-  protected readonly form = new FormGroup({
+  protected readonly form = new FormGroup<InteractionForm>({
     subjectId: new FormControl<number | null>(null, { nonNullable: false, validators: [Validators.required] }),
     type: new FormControl<InteractionType>(InteractionType.NOTE, { nonNullable: true, validators: [Validators.required] }),
-    date: new FormControl<string>(this.formatDate(new Date()), { nonNullable: true, validators: [Validators.required] }),
+    date: new FormControl<string>('', { nonNullable: true, validators: [Validators.required] }),
     note: new FormControl('', { nonNullable: true, validators: [Validators.required] })
   });
 
@@ -48,11 +54,12 @@ export class InteractionFormComponent {
       this.form.controls.subjectId.disable();
     }
 
+    afterNextRender(() => {
+      this.form.controls.date.setValue(this.formatDate(new Date()));
+    });
+
     this.employeeService.getAll()
-      .pipe(
-        catchError(() => of([])),
-        takeUntilDestroyed(this.destroyRef)
-      )
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: list => {
           this.employees.set(list);

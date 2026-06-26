@@ -20,14 +20,15 @@
         } @else {
           <select id="subjectId" formControlName="subjectId"
                   class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  [class.border-red-500]="form.controls.subjectId.invalid && form.controls.subjectId.touched">
+                  [class.border-red-500]="form.controls.subjectId.invalid && form.controls.subjectId.touched"
+                  [attr.aria-describedby]="form.controls.subjectId.invalid && form.controls.subjectId.touched ? 'subjectId-error' : null">
             <option value="" disabled selected>Select an employee</option>
             @for (employee of employees(); track employee.id) {
               <option [value]="employee.id">{{ employee.firstName }} {{ employee.lastName }}</option>
             }
           </select>
           @if (form.controls.subjectId.invalid && form.controls.subjectId.touched) {
-            <p class="mt-1 text-xs text-red-600" role="alert">Subject is required.</p>
+            <p id="subjectId-error" class="mt-1 text-xs text-red-600" role="alert">Subject is required.</p>
           }
         }
       </div>
@@ -38,13 +39,14 @@
         </label>
         <select id="type" formControlName="type"
                 class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                [class.border-red-500]="form.controls.type.invalid && form.controls.type.touched">
+                [class.border-red-500]="form.controls.type.invalid && form.controls.type.touched"
+                [attr.aria-describedby]="form.controls.type.invalid && form.controls.type.touched ? 'type-error' : null">
           @for (type of interactionTypes; track type) {
             <option [value]="type">{{ type }}</option>
           }
         </select>
         @if (form.controls.type.invalid && form.controls.type.touched) {
-          <p class="mt-1 text-xs text-red-600" role="alert">Type is required.</p>
+          <p id="type-error" class="mt-1 text-xs text-red-600" role="alert">Type is required.</p>
         }
       </div>
 
@@ -54,9 +56,10 @@
         </label>
         <input id="date" type="date" formControlName="date"
                class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-               [class.border-red-500]="form.controls.date.invalid && form.controls.date.touched" />
+               [class.border-red-500]="form.controls.date.invalid && form.controls.date.touched"
+               [attr.aria-describedby]="form.controls.date.invalid && form.controls.date.touched ? 'date-error' : null" />
         @if (form.controls.date.invalid && form.controls.date.touched) {
-          <p class="mt-1 text-xs text-red-600" role="alert">Date is required.</p>
+          <p id="date-error" class="mt-1 text-xs text-red-600" role="alert">Date is required.</p>
         }
       </div>
 
@@ -66,9 +69,10 @@
         </label>
         <textarea id="note" formControlName="note" rows="5"
                   class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  [class.border-red-500]="form.controls.note.invalid && form.controls.note.touched"></textarea>
+                  [class.border-red-500]="form.controls.note.invalid && form.controls.note.touched"
+                  [attr.aria-describedby]="form.controls.note.invalid && form.controls.note.touched ? 'note-error' : null"></textarea>
         @if (form.controls.note.invalid && form.controls.note.touched) {
-          <p class="mt-1 text-xs text-red-600" role="alert">Note is required.</p>
+          <p id="note-error" class="mt-1 text-xs text-red-600" role="alert">Note is required.</p>
         }
       </div>
 

@@ -33,21 +33,28 @@ class InteractionCrudIT extends IntegrationTestBase {
 
     private String adminToken;
     private String janeToken;
+    private Long adminEmployeeId;
+    private Long janeEmployeeId;
 
     @BeforeEach
     void authenticate() throws Exception {
-        adminToken = login("admin@psybergate.com");
-        janeToken = login("jane.doe@psybergate.com");
+        AuthResponse admin = login("admin@psybergate.com");
+        adminToken = admin.token();
+        adminEmployeeId = admin.employeeId();
+
+        AuthResponse jane = login("jane.doe@psybergate.com");
+        janeToken = jane.token();
+        janeEmployeeId = jane.employeeId();
     }
 
-    private String login(String email) throws Exception {
+    private AuthResponse login(String email) throws Exception {
         String body = objectMapper.writeValueAsString(new LoginRequest(email, "password123"));
         MvcResult result = mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
                 .andExpect(status().isOk())
                 .andReturn();
-        return objectMapper.readValue(result.getResponse().getContentAsString(), AuthResponse.class).token();
+        return objectMapper.readValue(result.getResponse().getContentAsString(), AuthResponse.class);
     }
 
     private String uniqueEmail() {
@@ -96,11 +103,10 @@ class InteractionCrudIT extends IntegrationTestBase {
 
     @Test
     void create_selfInteraction_isAllowed() throws Exception {
-        // admin@psybergate.com is the seeded employee with id 1; subject = author = 1 is a valid self-interaction.
-        InteractionResponseDto result = createInteraction(1L, "Personal log entry", InteractionType.NOTE, LocalDate.now(), adminToken);
+        InteractionResponseDto result = createInteraction(adminEmployeeId, "Personal log entry", InteractionType.NOTE, LocalDate.now(), adminToken);
 
-        assertThat(result.author().id()).isEqualTo(1L);
-        assertThat(result.subject().id()).isEqualTo(1L);
+        assertThat(result.author().id()).isEqualTo(adminEmployeeId);
+        assertThat(result.subject().id()).isEqualTo(adminEmployeeId);
     }
 
     @Test
@@ -139,7 +145,7 @@ class InteractionCrudIT extends IntegrationTestBase {
 
     @Test
     void create_unauthenticated_returns401() throws Exception {
-        String body = objectMapper.writeValueAsString(new InteractionRequestDto(1L, "Note", InteractionType.NOTE, LocalDate.now()));
+        String body = objectMapper.writeValueAsString(new InteractionRequestDto(adminEmployeeId, "Note", InteractionType.NOTE, LocalDate.now()));
 
         mockMvc.perform(post("/api/interactions")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -174,7 +180,7 @@ class InteractionCrudIT extends IntegrationTestBase {
     void update_byAuthor_returns200WithUpdatedInteraction() throws Exception {
         EmployeeProfileResponse subject = createEmployee("Update", "Subject", uniqueEmail(), adminToken);
         InteractionResponseDto created = createInteraction(subject.id(), "Original", InteractionType.NOTE, LocalDate.now(), adminToken);
-        String body = objectMapper.writeValueAsString(new InteractionRequestDto(subject.id(), "Updated", InteractionType.CALL, LocalDate.now().plusDays(1)));
+        String body = objectMapper.writeValueAsString(new InteractionRequestDto(subject.id(), "Updated", InteractionType.CALL, LocalDate.now()));
 
         MvcResult result = mockMvc.perform(put("/api/interactions/" + created.id())
                         .header("Authorization", "Bearer " + adminToken)

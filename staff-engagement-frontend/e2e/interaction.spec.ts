@@ -32,11 +32,11 @@ test.describe('Interaction logging', () => {
     await page.getByRole('link', { name: /jane doe/i }).click();
 
     await expect(page.getByRole('heading', { name: /jane doe/i })).toBeVisible();
-    await page.getByRole('link', { name: /log/i }).click();
+    await page.getByRole('link', { name: /log interaction/i }).click();
 
     await expect(page.getByRole('heading', { name: 'Log Interaction' })).toBeVisible();
 
-    const subjectSelect = page.locator('#subjectId');
+    const subjectSelect = page.getByLabel('Subject');
     await expect(subjectSelect).toBeDisabled();
 
     await page.getByLabel('Type').selectOption('NOTE');
