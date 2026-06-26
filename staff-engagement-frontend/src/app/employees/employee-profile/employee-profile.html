@@ -56,11 +56,22 @@
           </dl>
         </section>
 
-        <!-- Interactions (placeholder) -->
+        <!-- Interactions -->
         <section aria-labelledby="interactions-heading"
                  class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 id="interactions-heading" class="mb-2 text-base font-semibold text-gray-900">Interactions</h2>
-          <p class="text-sm text-gray-500">No interactions yet.</p>
+          <div class="flex items-center justify-between mb-2">
+            <h2 id="interactions-heading" class="text-base font-semibold text-gray-900">Interactions</h2>
+            <a [routerLink]="['/interactions/new']"
+               [queryParams]="{ subjectId: employee()!.id }"
+               aria-label="Log interaction for {{ employee()!.firstName }} {{ employee()!.lastName }}"
+               class="rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+              Log Interaction
+            </a>
+          </div>
+          <a [routerLink]="['/employees', employee()!.id, 'interactions']"
+             class="text-sm text-indigo-600 hover:underline focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded">
+            View interactions
+          </a>
         </section>
 
         <!-- Tasks (placeholder) -->

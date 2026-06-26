@@ -49,6 +49,11 @@ public class GlobalExceptionHandler {
 		return response(HttpStatus.CONFLICT, ex.getMessage());
 	}
 
+	@ExceptionHandler(ForbiddenOperationException.class)
+	public ResponseEntity<ErrorResponse> forbidden(ForbiddenOperationException ex) {
+		return response(HttpStatus.FORBIDDEN, ex.getMessage());
+	}
+
 	@ExceptionHandler(Exception.class)
 	public ResponseEntity<ErrorResponse> generic(Exception ex) {
 		return response(HttpStatus.INTERNAL_SERVER_ERROR, "Unexpected error");

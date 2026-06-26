@@ -29,8 +29,18 @@ export const routes: Routes = [
     loadComponent: () => import('./employees/employee-form/employee-form').then(m => m.EmployeeFormComponent)
   },
   {
+    path: 'employees/:id/interactions',
+    canActivate: [authGuard],
+    loadComponent: () => import('./interactions/interaction-timeline/interaction-timeline').then(m => m.InteractionTimelineComponent)
+  },
+  {
     path: 'employees/:id',
     canActivate: [authGuard],
     loadComponent: () => import('./employees/employee-profile/employee-profile').then(m => m.EmployeeProfileComponent)
+  },
+  {
+    path: 'interactions/new',
+    canActivate: [authGuard],
+    loadComponent: () => import('./interactions/interaction-form/interaction-form').then(m => m.InteractionFormComponent)
   }
 ];

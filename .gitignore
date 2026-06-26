@@ -10,3 +10,10 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Project-local agent reference / memory file
+AGENTS.md
+.claude/myagents/
+
+# Local secrets / credentials
+jira.properties
