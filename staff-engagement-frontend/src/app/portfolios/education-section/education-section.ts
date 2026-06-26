@@ -30,6 +30,7 @@ export class EducationSectionComponent {
   protected readonly editingId = signal<number | 'new' | null>(null);
   protected readonly submitting = signal(false);
   protected readonly deletingId = signal<number | null>(null);
+  protected readonly saveError = signal<string | null>(null);
 
   protected readonly form = new FormGroup({
     institution: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
@@ -42,6 +43,7 @@ export class EducationSectionComponent {
 
   protected startNew(): void {
     this.form.reset();
+    this.saveError.set(null);
     this.editingId.set('new');
   }
 
@@ -54,17 +56,23 @@ export class EducationSectionComponent {
       endYear: education.endYear,
       description: education.description ?? ''
     });
+    this.saveError.set(null);
     this.editingId.set(education.id);
   }
 
   protected cancel(): void {
     this.editingId.set(null);
+    this.saveError.set(null);
     this.form.reset();
   }
 
   protected save(): void {
-    if (this.form.invalid) return;
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
     this.submitting.set(true);
+    this.saveError.set(null);
 
     const id = this.editingId();
     if (id === null) return;
@@ -90,7 +98,10 @@ export class EducationSectionComponent {
         this.form.reset();
         this.changed.emit();
       },
-      error: () => this.submitting.set(false)
+      error: (err) => {
+        this.submitting.set(false);
+        this.saveError.set(err?.error?.message ?? 'Failed to save education.');
+      }
     });
   }
 

@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, ActivatedRoute, Router } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { BehaviorSubject, of, throwError } from 'rxjs';
 import { vi } from 'vitest';
 
 import { PortfolioComponent } from './portfolio';
@@ -19,8 +19,10 @@ const mockPortfolio: PortfolioResponse = {
 
 describe('PortfolioComponent', () => {
   let serviceSpy: Partial<PortfolioService>;
+  let paramMapSubject: BehaviorSubject<{ get: (key: string) => string | null }>;
 
   beforeEach(() => {
+    paramMapSubject = new BehaviorSubject<{ get: (key: string) => string | null }>({ get: () => '1' });
     serviceSpy = {
       getPortfolio: vi.fn().mockReturnValue(of(mockPortfolio))
     };
@@ -30,7 +32,12 @@ describe('PortfolioComponent', () => {
       providers: [
         provideRouter([]),
         { provide: PortfolioService, useValue: serviceSpy },
-        { provide: ActivatedRoute, useValue: { snapshot: { paramMap: { get: () => '1' } } } }
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            paramMap: paramMapSubject.asObservable()
+          }
+        }
       ]
     });
   });
@@ -48,6 +55,26 @@ describe('PortfolioComponent', () => {
     const fixture = TestBed.createComponent(PortfolioComponent);
     fixture.detectChanges();
     expect(serviceSpy.getPortfolio).toHaveBeenCalledWith(1);
+  });
+
+  it('reloads portfolio when route parameter changes', () => {
+    const fixture = TestBed.createComponent(PortfolioComponent);
+    fixture.detectChanges();
+
+    paramMapSubject.next({ get: (key: string) => key === 'id' ? '2' : null });
+    fixture.detectChanges();
+
+    expect(serviceSpy.getPortfolio).toHaveBeenCalledWith(2);
+  });
+
+  it('shows an error message for an invalid route id', () => {
+    paramMapSubject.next({ get: () => 'invalid' });
+    const fixture = TestBed.createComponent(PortfolioComponent);
+    fixture.detectChanges();
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('Invalid employee ID');
+    expect(serviceSpy.getPortfolio).not.toHaveBeenCalled();
   });
 
   it('shows an error message when loading fails', () => {

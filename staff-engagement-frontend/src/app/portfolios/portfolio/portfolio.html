@@ -3,10 +3,10 @@
 
     <div class="flex items-center justify-between">
       <div class="flex items-center gap-4">
-        <button type="button" (click)="navigateToEmployee()"
-                class="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-700 border border-gray-300 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        <a [routerLink]="['/employees', employeeId()]"
+           class="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-700 border border-gray-300 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 inline-block">
           ← Back to Employee
-        </button>
+        </a>
         <h1 class="text-2xl font-semibold text-gray-900">Portfolio</h1>
       </div>
     </div>
@@ -17,21 +17,21 @@
       <div role="alert" class="rounded-md bg-red-50 p-4 text-sm text-red-700">
         {{ errorMessage() }}
       </div>
-    } @else if (portfolio()) {
+    } @else if (portfolio(); as p) {
       <app-education-section
         [employeeId]="employeeId()"
-        [education]="portfolio()!.education"
-        (changed)="loadPortfolio()" />
+        [education]="p.education"
+        (changed)="loadPortfolio(employeeId())" />
 
       <app-project-section
         [employeeId]="employeeId()"
-        [projects]="portfolio()!.projects"
-        (changed)="loadPortfolio()" />
+        [projects]="p.projects"
+        (changed)="loadPortfolio(employeeId())" />
 
       <app-link-section
         [employeeId]="employeeId()"
-        [links]="portfolio()!.links"
-        (changed)="loadPortfolio()" />
+        [links]="p.links"
+        (changed)="loadPortfolio(employeeId())" />
     } @else {
       <p class="text-gray-500 text-sm text-center py-12">Portfolio not found.</p>
     }

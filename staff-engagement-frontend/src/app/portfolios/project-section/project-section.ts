@@ -30,6 +30,7 @@ export class ProjectSectionComponent {
   protected readonly editingId = signal<number | 'new' | null>(null);
   protected readonly submitting = signal(false);
   protected readonly deletingId = signal<number | null>(null);
+  protected readonly saveError = signal<string | null>(null);
 
   protected readonly form = new FormGroup({
     name: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
@@ -41,6 +42,7 @@ export class ProjectSectionComponent {
 
   protected startNew(): void {
     this.form.reset();
+    this.saveError.set(null);
     this.editingId.set('new');
   }
 
@@ -52,17 +54,23 @@ export class ProjectSectionComponent {
       endDate: project.endDate ?? '',
       url: project.url ?? ''
     });
+    this.saveError.set(null);
     this.editingId.set(project.id);
   }
 
   protected cancel(): void {
     this.editingId.set(null);
+    this.saveError.set(null);
     this.form.reset();
   }
 
   protected save(): void {
-    if (this.form.invalid) return;
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
     this.submitting.set(true);
+    this.saveError.set(null);
 
     const id = this.editingId();
     if (id === null) return;
@@ -87,7 +95,10 @@ export class ProjectSectionComponent {
         this.form.reset();
         this.changed.emit();
       },
-      error: () => this.submitting.set(false)
+      error: (err) => {
+        this.submitting.set(false);
+        this.saveError.set(err?.error?.message ?? 'Failed to save project.');
+      }
     });
   }
 

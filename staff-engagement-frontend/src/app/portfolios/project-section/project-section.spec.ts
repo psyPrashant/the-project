@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { vi } from 'vitest';
 
 import { ProjectSectionComponent } from './project-section';
@@ -56,6 +56,22 @@ describe('ProjectSectionComponent', () => {
     expect(changedSpy).toHaveBeenCalled();
   });
 
+  it('does not call service when the form is invalid', () => {
+    const fixture = TestBed.createComponent(ProjectSectionComponent);
+    fixture.componentRef.setInput('employeeId', 1);
+    fixture.componentRef.setInput('projects', []);
+    fixture.detectChanges();
+
+    const c = fixture.componentInstance as unknown as {
+      startNew: () => void;
+      save: () => void;
+    };
+    c.startNew();
+    c.save();
+
+    expect(serviceSpy.addProject).not.toHaveBeenCalled();
+  });
+
   it('emits changed when deleting a project', () => {
     const fixture = TestBed.createComponent(ProjectSectionComponent);
     fixture.componentRef.setInput('employeeId', 1);
@@ -69,5 +85,18 @@ describe('ProjectSectionComponent', () => {
 
     expect(serviceSpy.deleteProject).toHaveBeenCalledWith(1, 2);
     expect(changedSpy).toHaveBeenCalled();
+  });
+
+  it('resets deletingId when delete fails', () => {
+    (serviceSpy.deleteProject as ReturnType<typeof vi.fn>).mockReturnValue(throwError(() => new Error('fail')));
+    const fixture = TestBed.createComponent(ProjectSectionComponent);
+    fixture.componentRef.setInput('employeeId', 1);
+    fixture.componentRef.setInput('projects', [mockProject]);
+    fixture.detectChanges();
+
+    const c = fixture.componentInstance as unknown as { deleteProject: (id: number) => void; deletingId: () => number | null };
+    c.deleteProject(2);
+
+    expect(c.deletingId()).toBeNull();
   });
 });

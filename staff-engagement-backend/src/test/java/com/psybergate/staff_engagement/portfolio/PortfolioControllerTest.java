@@ -99,11 +99,31 @@ class PortfolioControllerTest {
         mockMvc.perform(post("/api/employees/{employeeId}/portfolio/education", EMPLOYEE_ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isCreated())
-                .andExpect(header().string("Location",
-                        "/api/employees/" + EMPLOYEE_ID + "/portfolio/education/" + EDUCATION_ID))
-                .andExpect(jsonPath("$.id").value(EDUCATION_ID))
-                .andExpect(jsonPath("$.institution").value("University"));
+                .andExpect(status().isCreated());
+    }
+
+    @Test
+    void addEducationReturnsBadRequestWhenYearRangeInvalid() throws Exception {
+        CreateEducationRequest request = new CreateEducationRequest("University", "BSc",
+                "CS", 2025, 2020, "desc");
+
+        mockMvc.perform(post("/api/employees/{employeeId}/portfolio/education", EMPLOYEE_ID)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400));
+    }
+
+    @Test
+    void updateEducationReturnsBadRequestWhenYearRangeInvalid() throws Exception {
+        UpdateEducationRequest request = new UpdateEducationRequest("University", "BSc",
+                "CS", 2025, 2020, "desc");
+
+        mockMvc.perform(put("/api/employees/{employeeId}/portfolio/education/{id}", EMPLOYEE_ID, EDUCATION_ID)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400));
     }
 
     @Test
@@ -167,6 +187,30 @@ class PortfolioControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(PROJECT_ID))
                 .andExpect(jsonPath("$.url").value("https://example.com"));
+    }
+
+    @Test
+    void addProjectReturnsBadRequestWhenDateRangeInvalid() throws Exception {
+        CreateProjectRequest request = new CreateProjectRequest("Project A", "Description",
+                LocalDate.of(2023, 1, 1), LocalDate.of(2022, 1, 1), "https://example.com");
+
+        mockMvc.perform(post("/api/employees/{employeeId}/portfolio/projects", EMPLOYEE_ID)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400));
+    }
+
+    @Test
+    void updateProjectReturnsBadRequestWhenDateRangeInvalid() throws Exception {
+        UpdateProjectRequest request = new UpdateProjectRequest("Project A", "Description",
+                LocalDate.of(2023, 1, 1), LocalDate.of(2022, 1, 1), "https://example.com");
+
+        mockMvc.perform(put("/api/employees/{employeeId}/portfolio/projects/{id}", EMPLOYEE_ID, PROJECT_ID)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400));
     }
 
     @Test

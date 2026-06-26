@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { vi } from 'vitest';
 
 import { LinkSectionComponent } from './link-section';
@@ -56,6 +56,22 @@ describe('LinkSectionComponent', () => {
     expect(changedSpy).toHaveBeenCalled();
   });
 
+  it('does not call service when the form is invalid', () => {
+    const fixture = TestBed.createComponent(LinkSectionComponent);
+    fixture.componentRef.setInput('employeeId', 1);
+    fixture.componentRef.setInput('links', []);
+    fixture.detectChanges();
+
+    const c = fixture.componentInstance as unknown as {
+      startNew: () => void;
+      save: () => void;
+    };
+    c.startNew();
+    c.save();
+
+    expect(serviceSpy.addLink).not.toHaveBeenCalled();
+  });
+
   it('emits changed when deleting a link', () => {
     const fixture = TestBed.createComponent(LinkSectionComponent);
     fixture.componentRef.setInput('employeeId', 1);
@@ -69,5 +85,18 @@ describe('LinkSectionComponent', () => {
 
     expect(serviceSpy.deleteLink).toHaveBeenCalledWith(1, 3);
     expect(changedSpy).toHaveBeenCalled();
+  });
+
+  it('resets deletingId when delete fails', () => {
+    (serviceSpy.deleteLink as ReturnType<typeof vi.fn>).mockReturnValue(throwError(() => new Error('fail')));
+    const fixture = TestBed.createComponent(LinkSectionComponent);
+    fixture.componentRef.setInput('employeeId', 1);
+    fixture.componentRef.setInput('links', [mockLink]);
+    fixture.detectChanges();
+
+    const c = fixture.componentInstance as unknown as { deleteLink: (id: number) => void; deletingId: () => number | null };
+    c.deleteLink(3);
+
+    expect(c.deletingId()).toBeNull();
   });
 });

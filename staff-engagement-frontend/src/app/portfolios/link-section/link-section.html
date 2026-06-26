@@ -10,19 +10,40 @@
   </div>
 
   @if (editingId() === 'new') {
-    <form [formGroup]="form" (ngSubmit)="save()" novalidate class="space-y-4 mb-6">
+    <form [formGroup]="form" (ngSubmit)="save()" novalidate class="space-y-4 mb-6" aria-label="Add showcase link">
+      @if (saveError(); as error) {
+        <div role="alert" class="rounded-md bg-red-50 p-3 text-sm text-red-700" aria-live="polite">
+          {{ error }}
+        </div>
+      }
       <div class="grid grid-cols-2 gap-4">
         <div>
-          <label for="link-label" class="block text-sm font-medium text-gray-700 mb-1">Label <span aria-hidden="true" class="text-red-500">*</span></label>
+          <label for="link-label" class="block text-sm font-medium text-gray-700 mb-1">
+            Label <span aria-hidden="true" class="text-red-500">*</span>
+          </label>
           <input id="link-label" type="text" formControlName="label"
                  class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                 [class.border-red-500]="form.controls.label.invalid && form.controls.label.touched" />
+                 [class.border-red-500]="form.controls.label.invalid && form.controls.label.touched"
+                 [attr.aria-required]="true"
+                 [attr.aria-invalid]="form.controls.label.invalid && form.controls.label.touched"
+                 aria-describedby="link-label-error" />
+          @if (form.controls.label.invalid && form.controls.label.touched) {
+            <p id="link-label-error" class="mt-1 text-xs text-red-600">Label is required.</p>
+          }
         </div>
         <div>
-          <label for="link-url" class="block text-sm font-medium text-gray-700 mb-1">URL <span aria-hidden="true" class="text-red-500">*</span></label>
+          <label for="link-url" class="block text-sm font-medium text-gray-700 mb-1">
+            URL <span aria-hidden="true" class="text-red-500">*</span>
+          </label>
           <input id="link-url" type="url" formControlName="url"
                  class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                 [class.border-red-500]="form.controls.url.invalid && form.controls.url.touched" />
+                 [class.border-red-500]="form.controls.url.invalid && form.controls.url.touched"
+                 [attr.aria-required]="true"
+                 [attr.aria-invalid]="form.controls.url.invalid && form.controls.url.touched"
+                 aria-describedby="link-url-error" />
+          @if (form.controls.url.invalid && form.controls.url.touched) {
+            <p id="link-url-error" class="mt-1 text-xs text-red-600">A valid URL is required.</p>
+          }
         </div>
       </div>
       <div>
@@ -50,17 +71,30 @@
       @for (link of links(); track link.id) {
         <li class="py-4">
           @if (editingId() === link.id) {
-            <form [formGroup]="form" (ngSubmit)="save()" novalidate class="space-y-4">
+            <form [formGroup]="form" (ngSubmit)="save()" novalidate class="space-y-4" aria-label="Edit showcase link">
+              @if (saveError(); as error) {
+                <div role="alert" class="rounded-md bg-red-50 p-3 text-sm text-red-700" aria-live="polite">
+                  {{ error }}
+                </div>
+              }
               <div class="grid grid-cols-2 gap-4">
                 <div>
-                  <label [for]="'link-label-' + link.id" class="block text-sm font-medium text-gray-700 mb-1">Label <span aria-hidden="true" class="text-red-500">*</span></label>
+                  <label [for]="'link-label-' + link.id" class="block text-sm font-medium text-gray-700 mb-1">
+                    Label <span aria-hidden="true" class="text-red-500">*</span>
+                  </label>
                   <input [id]="'link-label-' + link.id" type="text" formControlName="label"
-                         class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                         class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                         [attr.aria-required]="true"
+                         [attr.aria-invalid]="form.controls.label.invalid && form.controls.label.touched" />
                 </div>
                 <div>
-                  <label [for]="'link-url-' + link.id" class="block text-sm font-medium text-gray-700 mb-1">URL <span aria-hidden="true" class="text-red-500">*</span></label>
+                  <label [for]="'link-url-' + link.id" class="block text-sm font-medium text-gray-700 mb-1">
+                    URL <span aria-hidden="true" class="text-red-500">*</span>
+                  </label>
                   <input [id]="'link-url-' + link.id" type="url" formControlName="url"
-                         class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                         class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                         [attr.aria-required]="true"
+                         [attr.aria-invalid]="form.controls.url.invalid && form.controls.url.touched" />
                 </div>
               </div>
               <div>

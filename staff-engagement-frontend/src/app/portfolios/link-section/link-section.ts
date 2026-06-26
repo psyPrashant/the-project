@@ -30,6 +30,7 @@ export class LinkSectionComponent {
   protected readonly editingId = signal<number | 'new' | null>(null);
   protected readonly submitting = signal(false);
   protected readonly deletingId = signal<number | null>(null);
+  protected readonly saveError = signal<string | null>(null);
 
   protected readonly form = new FormGroup({
     label: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
@@ -39,6 +40,7 @@ export class LinkSectionComponent {
 
   protected startNew(): void {
     this.form.reset();
+    this.saveError.set(null);
     this.editingId.set('new');
   }
 
@@ -48,17 +50,23 @@ export class LinkSectionComponent {
       url: link.url,
       sortOrder: link.sortOrder
     });
+    this.saveError.set(null);
     this.editingId.set(link.id);
   }
 
   protected cancel(): void {
     this.editingId.set(null);
+    this.saveError.set(null);
     this.form.reset();
   }
 
   protected save(): void {
-    if (this.form.invalid) return;
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
     this.submitting.set(true);
+    this.saveError.set(null);
 
     const id = this.editingId();
     if (id === null) return;
@@ -77,7 +85,10 @@ export class LinkSectionComponent {
         this.form.reset();
         this.changed.emit();
       },
-      error: () => this.submitting.set(false)
+      error: (err) => {
+        this.submitting.set(false);
+        this.saveError.set(err?.error?.message ?? 'Failed to save link.');
+      }
     });
   }
 
