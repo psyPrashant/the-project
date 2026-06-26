@@ -40,7 +40,24 @@ public class Employee {
 	@Column(nullable = false, unique = true)
 	private String email;
 
-	/** BCrypt hash — never plaintext, never logged, never serialized over the API. */
-	@Column(nullable = false)
+	/**
+	 * BCrypt hash — never plaintext, never logged, never serialized over the API.
+	 * Nullable because CRUD-created employees don't have login credentials yet;
+	 * they acquire one via account self-service (D6 — out of scope for POC).
+	 */
+	@Column
 	private String passwordHash;
+
+	@Column
+	private String jobTitle;
+
+	@Column
+	private String department;
+
+	@Column
+	private String phone;
+
+	/** Soft-delete flag: archived employees are excluded from default lists but their history remains. */
+	@Column(columnDefinition = "boolean default false")
+	private boolean archived;
 }

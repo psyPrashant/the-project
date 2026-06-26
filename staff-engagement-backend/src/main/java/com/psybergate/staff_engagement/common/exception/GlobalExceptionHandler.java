@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
+import com.psybergate.staff_engagement.common.exception.DuplicateResourceException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -41,6 +42,11 @@ public class GlobalExceptionHandler {
 	@ExceptionHandler(EntityNotFoundException.class)
 	public ResponseEntity<ErrorResponse> notFound(EntityNotFoundException ex) {
 		return response(HttpStatus.NOT_FOUND, ex.getMessage());
+	}
+
+	@ExceptionHandler(DuplicateResourceException.class)
+	public ResponseEntity<ErrorResponse> conflict(DuplicateResourceException ex) {
+		return response(HttpStatus.CONFLICT, ex.getMessage());
 	}
 
 	@ExceptionHandler(Exception.class)

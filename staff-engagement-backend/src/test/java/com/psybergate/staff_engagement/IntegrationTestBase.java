@@ -1,6 +1,7 @@
 package com.psybergate.staff_engagement;
 
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -28,7 +29,8 @@ import org.testcontainers.containers.PostgreSQLContainer;
  * <p>For fast local repeat runs, set {@code testcontainers.reuse.enable=true} in
  * {@code ~/.testcontainers.properties} and flip {@code withReuse(true)} on below.
  */
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
+@AutoConfigureMockMvc
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 public abstract class IntegrationTestBase {
 
