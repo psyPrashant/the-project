@@ -1,0 +1,40 @@
+<div class="min-h-screen bg-gray-50 py-8 px-4">
+  <div class="max-w-4xl mx-auto space-y-6">
+
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-4">
+        <button type="button" (click)="navigateToEmployee()"
+                class="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-700 border border-gray-300 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          ← Back to Employee
+        </button>
+        <h1 class="text-2xl font-semibold text-gray-900">Portfolio</h1>
+      </div>
+    </div>
+
+    @if (loading()) {
+      <p class="text-gray-500 text-sm text-center py-12" aria-live="polite" aria-busy="true">Loading…</p>
+    } @else if (errorMessage()) {
+      <div role="alert" class="rounded-md bg-red-50 p-4 text-sm text-red-700">
+        {{ errorMessage() }}
+      </div>
+    } @else if (portfolio()) {
+      <app-education-section
+        [employeeId]="employeeId()"
+        [education]="portfolio()!.education"
+        (changed)="loadPortfolio()" />
+
+      <app-project-section
+        [employeeId]="employeeId()"
+        [projects]="portfolio()!.projects"
+        (changed)="loadPortfolio()" />
+
+      <app-link-section
+        [employeeId]="employeeId()"
+        [links]="portfolio()!.links"
+        (changed)="loadPortfolio()" />
+    } @else {
+      <p class="text-gray-500 text-sm text-center py-12">Portfolio not found.</p>
+    }
+
+  </div>
+</div>
