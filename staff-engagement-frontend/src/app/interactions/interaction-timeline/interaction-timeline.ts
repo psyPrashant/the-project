@@ -3,6 +3,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { catchError, EMPTY, forkJoin } from 'rxjs';
 
+import { AuthService } from '../../auth/auth.service';
 import { EmployeeService } from '../../employees/employee.service';
 import { EmployeeProfileResponse } from '../../employees/employee.models';
 import { InteractionService } from '../interaction.service';
@@ -17,6 +18,7 @@ import { InteractionResponse } from '../interaction.models';
 export class InteractionTimelineComponent {
   private readonly interactionService = inject(InteractionService);
   private readonly employeeService = inject(EmployeeService);
+  private readonly authService = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
@@ -26,6 +28,9 @@ export class InteractionTimelineComponent {
   protected readonly interactions = signal<InteractionResponse[]>([]);
   protected readonly loading = signal(true);
   protected readonly errorMessage = signal<string | null>(null);
+  protected readonly deletingId = signal<number | null>(null);
+
+  protected readonly currentUser = this.authService.currentUser;
 
   protected readonly sortedInteractions = computed(() => {
     return [...this.interactions()].sort(
@@ -39,6 +44,12 @@ export class InteractionTimelineComponent {
       this.loading.set(false);
       this.errorMessage.set('Invalid employee id.');
       return;
+    }
+
+    if (this.currentUser() === null) {
+      this.authService.loadCurrentUser()
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({ error: () => { /* best-effort */ } });
     }
 
     forkJoin({
@@ -60,8 +71,42 @@ export class InteractionTimelineComponent {
       });
   }
 
+  protected isAuthor(interaction: InteractionResponse): boolean {
+    const user = this.currentUser();
+    return user !== null && interaction.author.id === user.id;
+  }
+
   protected logInteraction(): void {
     void this.router.navigate(['/interactions/new'], { queryParams: { subjectId: this.subjectId() } });
+  }
+
+  protected editInteraction(interaction: InteractionResponse): void {
+    void this.router.navigate(['/interactions', interaction.id, 'edit']);
+  }
+
+  protected deleteInteraction(interaction: InteractionResponse): void {
+    if (!this.isAuthor(interaction)) {
+      return;
+    }
+    if (!confirm('Are you sure you want to delete this interaction?')) {
+      return;
+    }
+
+    this.deletingId.set(interaction.id);
+    this.errorMessage.set(null);
+
+    this.interactionService.delete(interaction.id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.deletingId.set(null);
+          this.interactions.update(list => list.filter(i => i.id !== interaction.id));
+        },
+        error: () => {
+          this.deletingId.set(null);
+          this.errorMessage.set('Failed to delete interaction. Please try again.');
+        }
+      });
   }
 
   protected formatDate(isoDate: string): string {

@@ -1,4 +1,4 @@
-import { afterNextRender, ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
+import { afterNextRender, ChangeDetectionStrategy, Component, computed, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -6,7 +6,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { EmployeeService } from '../../employees/employee.service';
 import { EmployeeProfileResponse } from '../../employees/employee.models';
 import { InteractionService } from '../interaction.service';
-import { InteractionType } from '../interaction.models';
+import { InteractionResponse, InteractionType } from '../interaction.models';
 
 interface InteractionForm {
   subjectId: FormControl<number | null>;
@@ -30,15 +30,24 @@ export class InteractionFormComponent {
 
   protected readonly employees = signal<EmployeeProfileResponse[]>([]);
   protected readonly loadingEmployees = signal(true);
+  protected readonly loadingInteraction = signal(false);
   protected readonly submitting = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly interactionTypes = Object.values(InteractionType);
+
+  protected readonly interactionId = signal<number | undefined>(
+    this.route.snapshot.paramMap.get('id')
+      ? Number(this.route.snapshot.paramMap.get('id'))
+      : undefined
+  );
 
   protected readonly subjectIdParam = signal<number | undefined>(
     this.route.snapshot.queryParamMap.get('subjectId')
       ? Number(this.route.snapshot.queryParamMap.get('subjectId'))
       : undefined
   );
+
+  protected readonly isEditMode = computed(() => this.interactionId() !== undefined);
 
   protected readonly form = new FormGroup<InteractionForm>({
     subjectId: new FormControl<number | null>(null, { nonNullable: false, validators: [Validators.required] }),
@@ -49,14 +58,37 @@ export class InteractionFormComponent {
 
   constructor() {
     const subjectId = this.subjectIdParam();
-    if (subjectId !== undefined) {
-      this.form.controls.subjectId.setValue(subjectId);
-      this.form.controls.subjectId.disable();
-    }
+    if (this.isEditMode()) {
+      this.loadingInteraction.set(true);
+      this.form.disable();
+      const id = this.interactionId();
+      if (id !== undefined) {
+        this.interactionService.findById(id)
+          .pipe(takeUntilDestroyed(this.destroyRef))
+          .subscribe({
+            next: interaction => {
+              this.patchForm(interaction);
+              this.loadingInteraction.set(false);
+              this.form.enable();
+              this.form.controls.subjectId.disable();
+            },
+            error: () => {
+              this.loadingInteraction.set(false);
+              this.form.enable();
+              this.errorMessage.set('Failed to load interaction.');
+            }
+          });
+      }
+    } else {
+      if (subjectId !== undefined) {
+        this.form.controls.subjectId.setValue(subjectId);
+        this.form.controls.subjectId.disable();
+      }
 
-    afterNextRender(() => {
-      this.form.controls.date.setValue(this.formatDate(new Date()));
-    });
+      afterNextRender(() => {
+        this.form.controls.date.setValue(this.formatDate(new Date()));
+      });
+    }
 
     this.employeeService.getAll()
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -70,6 +102,15 @@ export class InteractionFormComponent {
           this.errorMessage.set('Failed to load employees.');
         }
       });
+  }
+
+  private patchForm(interaction: InteractionResponse): void {
+    this.form.patchValue({
+      subjectId: interaction.subject.id,
+      type: interaction.type,
+      date: interaction.date,
+      note: interaction.note
+    });
   }
 
   protected onSubmit(): void {
@@ -93,7 +134,12 @@ export class InteractionFormComponent {
       note: rawValue.note
     };
 
-    this.interactionService.create(request)
+    const id = this.interactionId();
+    const operation = id !== undefined
+      ? this.interactionService.update(id, request)
+      : this.interactionService.create(request);
+
+    operation
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: interaction => {
@@ -108,8 +154,9 @@ export class InteractionFormComponent {
   }
 
   protected cancel(): void {
-    const subjectId = this.subjectIdParam();
-    void this.router.navigate(subjectId !== undefined
+    const rawValue = this.form.getRawValue();
+    const subjectId = rawValue.subjectId ?? this.subjectIdParam();
+    void this.router.navigate(subjectId !== undefined && subjectId !== null
       ? ['/employees', subjectId, 'interactions']
       : ['/employees']
     );

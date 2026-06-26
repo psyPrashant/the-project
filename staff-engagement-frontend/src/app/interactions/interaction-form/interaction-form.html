@@ -1,6 +1,10 @@
 <div class="min-h-screen bg-gray-50 py-8 px-4">
   <div class="max-w-2xl mx-auto">
-    <h1 class="text-2xl font-semibold text-gray-900 mb-6">Log Interaction</h1>
+    <h1 class="text-2xl font-semibold text-gray-900 mb-6">{{ isEditMode() ? 'Edit Interaction' : 'Log Interaction' }}</h1>
+
+    @if (loadingInteraction()) {
+      <p class="text-sm text-gray-500" aria-busy="true">Loading interaction…</p>
+    }
 
     @if (errorMessage()) {
       <div role="alert" class="mb-4 rounded-md bg-red-50 p-4 text-sm text-red-700">
@@ -77,9 +81,9 @@
       </div>
 
       <div class="flex gap-3 pt-2">
-        <button type="submit" [disabled]="submitting() || loadingEmployees()"
+        <button type="submit" [disabled]="submitting() || loadingEmployees() || loadingInteraction()"
                 class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50">
-          {{ submitting() ? 'Saving…' : 'Log Interaction' }}
+          {{ submitting() ? 'Saving…' : (isEditMode() ? 'Save Changes' : 'Log Interaction') }}
         </button>
         <button type="button" (click)="cancel()"
                 class="rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-700 border border-gray-300 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500">

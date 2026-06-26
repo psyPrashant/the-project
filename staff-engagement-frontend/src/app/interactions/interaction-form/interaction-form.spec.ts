@@ -45,9 +45,15 @@ type FormInstance = {
   onSubmit(): void;
 };
 
-function createActivatedRouteStub(queryParams: Record<string, string>): Partial<ActivatedRoute> {
+function createActivatedRouteStub(params: Record<string, string> = {}, queryParams: Record<string, string> = {}): Partial<ActivatedRoute> {
   return {
     snapshot: {
+      paramMap: {
+        get: (key: string) => params[key] ?? null,
+        has: (key: string) => key in params,
+        getAll: () => [],
+        keys: Object.keys(params)
+      },
       queryParamMap: {
         get: (key: string) => queryParams[key] ?? null,
         has: (key: string) => key in queryParams,
@@ -64,7 +70,9 @@ describe('InteractionFormComponent', () => {
 
   beforeEach(() => {
     interactionServiceSpy = {
-      create: vi.fn().mockReturnValue(of(mockInteraction))
+      create: vi.fn().mockReturnValue(of(mockInteraction)),
+      findById: vi.fn().mockReturnValue(of(mockInteraction)),
+      update: vi.fn().mockReturnValue(of(mockInteraction))
     };
     employeeServiceSpy = {
       getAll: vi.fn().mockReturnValue(of(mockEmployees))
@@ -75,20 +83,20 @@ describe('InteractionFormComponent', () => {
     vi.restoreAllMocks();
   });
 
-  function configureTestBed(queryParams: Record<string, string> = {}) {
+  function configureTestBed(params: Record<string, string> = {}, queryParams: Record<string, string> = {}) {
     TestBed.configureTestingModule({
       imports: [InteractionFormComponent],
       providers: [
         provideRouter([]),
         { provide: InteractionService, useValue: interactionServiceSpy },
         { provide: EmployeeService, useValue: employeeServiceSpy },
-        { provide: ActivatedRoute, useValue: createActivatedRouteStub(queryParams) }
+        { provide: ActivatedRoute, useValue: createActivatedRouteStub(params, queryParams) }
       ]
     });
   }
 
   it('renders employee options and pre-selects subject from query param', () => {
-    configureTestBed({ subjectId: '2' });
+    configureTestBed({}, { subjectId: '2' });
     const fixture = TestBed.createComponent(InteractionFormComponent);
     fixture.detectChanges();
 
@@ -126,7 +134,7 @@ describe('InteractionFormComponent', () => {
   });
 
   it('submits valid interaction and navigates to subject timeline', async () => {
-    configureTestBed({ subjectId: '2' });
+    configureTestBed({}, { subjectId: '2' });
     const fixture = TestBed.createComponent(InteractionFormComponent);
     const router = TestBed.inject(Router);
     const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
@@ -154,7 +162,7 @@ describe('InteractionFormComponent', () => {
 
   it('displays error message when create fails', () => {
     (interactionServiceSpy.create as ReturnType<typeof vi.fn>).mockReturnValue(throwError(() => new Error('Server error')));
-    configureTestBed({ subjectId: '2' });
+    configureTestBed({}, { subjectId: '2' });
     const fixture = TestBed.createComponent(InteractionFormComponent);
     const c = fixture.componentInstance as unknown as FormInstance;
     fixture.detectChanges();
@@ -171,5 +179,39 @@ describe('InteractionFormComponent', () => {
 
     const alert = (fixture.nativeElement as HTMLElement).querySelector('[role="alert"]');
     expect(alert?.textContent).toContain('Server error');
+  });
+
+  it('loads existing interaction in edit mode and calls update on submit', async () => {
+    configureTestBed({ id: '10' });
+    const fixture = TestBed.createComponent(InteractionFormComponent);
+    const router = TestBed.inject(Router);
+    const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+    const c = fixture.componentInstance as unknown as FormInstance;
+    fixture.detectChanges();
+
+    expect(interactionServiceSpy.findById).toHaveBeenCalledWith(10);
+
+    c.form.patchValue({ note: 'Updated notes' });
+    c.onSubmit();
+    fixture.detectChanges();
+
+    expect(interactionServiceSpy.update).toHaveBeenCalledWith(10, {
+      subjectId: 2,
+      type: InteractionType.CALL,
+      date: '2026-06-25',
+      note: 'Updated notes'
+    });
+    expect(interactionServiceSpy.create).not.toHaveBeenCalled();
+    expect(navigateSpy).toHaveBeenCalledWith(['/employees', 2, 'interactions']);
+  });
+
+  it('shows edit title and save button in edit mode', () => {
+    configureTestBed({ id: '10' });
+    const fixture = TestBed.createComponent(InteractionFormComponent);
+    fixture.detectChanges();
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('Edit Interaction');
+    expect(text).toContain('Save Changes');
   });
 });
