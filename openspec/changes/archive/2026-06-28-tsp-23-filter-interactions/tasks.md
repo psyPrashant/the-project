@@ -34,5 +34,5 @@
 
 ## 5. Archive and Jira update
 
-- [ ] 5.1 Apply and archive the OpenSpec change using `openspec-apply-change` and `openspec-archive-change`.
-- [ ] 5.2 Move Jira ticket TSP-23 to Testing/Review and add a verification summary comment.
+- [x] 5.1 Apply and archive the OpenSpec change using `openspec-apply-change` and `openspec-archive-change`.
+- [x] 5.2 Move Jira ticket TSP-23 to Testing/Review and add a verification summary comment.
