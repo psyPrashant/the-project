@@ -59,6 +59,9 @@ type TimelineInstance = {
   logInteraction(): void;
   editInteraction(interaction: InteractionResponse): void;
   deleteInteraction(interaction: InteractionResponse): void;
+  applyFilters(): void;
+  resetFilters(): void;
+  filterForm: { value: { type: InteractionType | null; authorId: number | null; date: string | null } };
 };
 
 describe('InteractionTimelineComponent', () => {
@@ -72,7 +75,8 @@ describe('InteractionTimelineComponent', () => {
       delete: vi.fn().mockReturnValue(of(undefined))
     };
     employeeServiceSpy = {
-      getProfile: vi.fn().mockReturnValue(of(mockEmployee))
+      getProfile: vi.fn().mockReturnValue(of(mockEmployee)),
+      getAll: vi.fn().mockReturnValue(of([]))
     };
     currentUserSignal = signal({ id: 1, email: 'alice@example.com', firstName: 'Alice', lastName: 'Smith' });
   });
@@ -106,7 +110,7 @@ describe('InteractionTimelineComponent', () => {
     fixture.detectChanges();
 
     expect(employeeServiceSpy.getProfile).toHaveBeenCalledWith(2);
-    expect(interactionServiceSpy.findBySubject).toHaveBeenCalledWith(2);
+    expect(interactionServiceSpy.findBySubject).toHaveBeenLastCalledWith(2, undefined);
 
     const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
     expect(text).toContain('Interactions with Bob Jones');
@@ -238,5 +242,55 @@ describe('InteractionTimelineComponent', () => {
     c.deleteInteraction(mockInteractions[0]);
 
     expect(interactionServiceSpy.delete).not.toHaveBeenCalled();
+  });
+
+  it('loads employees for the author filter on init', () => {
+    configureTestBed();
+    const fixture = TestBed.createComponent(InteractionTimelineComponent);
+    fixture.detectChanges();
+
+    expect(employeeServiceSpy.getAll).toHaveBeenCalled();
+  });
+
+  it('applyFilters() calls service with selected filters', () => {
+    configureTestBed();
+    const fixture = TestBed.createComponent(InteractionTimelineComponent);
+    const c = fixture.componentInstance as unknown as TimelineInstance;
+    fixture.detectChanges();
+
+    c.filterForm.value.type = InteractionType.CALL;
+    c.filterForm.value.authorId = 1;
+    c.filterForm.value.date = '2026-06-25';
+    c.applyFilters();
+
+    expect(interactionServiceSpy.findBySubject).toHaveBeenCalledWith(2, {
+      type: InteractionType.CALL,
+      authorId: 1,
+      date: '2026-06-25'
+    });
+  });
+
+  it('resetFilters() clears filters and reloads full timeline', () => {
+    configureTestBed();
+    const fixture = TestBed.createComponent(InteractionTimelineComponent);
+    const c = fixture.componentInstance as unknown as TimelineInstance;
+    fixture.detectChanges();
+
+    c.filterForm.value.type = InteractionType.CALL;
+    c.resetFilters();
+
+    expect(interactionServiceSpy.findBySubject).toHaveBeenLastCalledWith(2, undefined);
+  });
+
+  it('renders filter controls', () => {
+    configureTestBed();
+    const fixture = TestBed.createComponent(InteractionTimelineComponent);
+    fixture.detectChanges();
+
+    const form = (fixture.nativeElement as HTMLElement).querySelector('form');
+    expect(form).not.toBeNull();
+    expect(form?.querySelector('#filter-type')).not.toBeNull();
+    expect(form?.querySelector('#filter-author')).not.toBeNull();
+    expect(form?.querySelector('#filter-date')).not.toBeNull();
   });
 });

@@ -3,7 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 import { environment } from '../../environments/environment';
-import { CreateInteractionRequest, InteractionResponse, UpdateInteractionRequest } from './interaction.models';
+import { CreateInteractionRequest, InteractionFilter, InteractionResponse, UpdateInteractionRequest } from './interaction.models';
 
 @Injectable({ providedIn: 'root' })
 export class InteractionService {
@@ -14,8 +14,17 @@ export class InteractionService {
     return this.http.post<InteractionResponse>(this.baseUrl, request);
   }
 
-  findBySubject(subjectId: number): Observable<InteractionResponse[]> {
-    const params = new HttpParams().set('subjectId', subjectId.toString());
+  findBySubject(subjectId: number, filter?: InteractionFilter): Observable<InteractionResponse[]> {
+    let params = new HttpParams().set('subjectId', subjectId.toString());
+    if (filter?.type) {
+      params = params.set('type', filter.type);
+    }
+    if (filter?.authorId != null) {
+      params = params.set('authorId', filter.authorId.toString());
+    }
+    if (filter?.date) {
+      params = params.set('date', filter.date);
+    }
     return this.http.get<InteractionResponse[]>(this.baseUrl, { params });
   }
 

@@ -129,3 +129,55 @@ test.describe('Interaction logging', () => {
     await expect(interactionItem).not.toBeVisible();
   });
 });
+
+test.describe('Interaction filtering', () => {
+  test('filters timeline by type and date', async ({ page }) => {
+    await login(page);
+
+    await page.goto('/employees');
+    await page.getByRole('link', { name: /jane doe/i }).click();
+    await page.getByRole('link', { name: /log interaction/i }).click();
+
+    const noteText = uniqueNote();
+    await page.getByLabel('Type').selectOption('NOTE');
+    await page.getByLabel('Date').fill(todayIso());
+    await page.getByLabel('Note').fill(`${noteText} NOTE`);
+    await page.getByRole('button', { name: /log interaction/i }).click();
+
+    await expect(page).toHaveURL(/\/employees\/\d+\/interactions/);
+
+    await page.getByRole('button', { name: /log interaction/i }).click();
+    await page.getByLabel('Type').selectOption('CALL');
+    await page.getByLabel('Date').fill(todayIso());
+    await page.getByLabel('Note').fill(`${noteText} CALL`);
+    await page.getByRole('button', { name: /log interaction/i }).click();
+
+    await expect(page).toHaveURL(/\/employees\/\d+\/interactions/);
+
+    const noteItem = page.locator('app-interaction-timeline li', { hasText: `${noteText} NOTE` });
+    const callItem = page.locator('app-interaction-timeline li', { hasText: `${noteText} CALL` });
+    await expect(noteItem).toBeVisible();
+    await expect(callItem).toBeVisible();
+
+    await page.locator('form[aria-label="Filter interactions"]').getByLabel('Type').selectOption('CALL');
+    await page.getByRole('button', { name: /apply filters/i }).click();
+
+    await expect(callItem).toBeVisible();
+    await expect(noteItem).not.toBeVisible();
+
+    await page.locator('form[aria-label="Filter interactions"]').getByLabel('Type').selectOption({ label: 'All types' });
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const localIso = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, '0')}-${String(yesterday.getDate()).padStart(2, '0')}`;
+    await page.locator('form[aria-label="Filter interactions"]').getByLabel('Date').fill(localIso);
+    await page.getByRole('button', { name: /apply filters/i }).click();
+
+    await expect(callItem).not.toBeVisible();
+    await expect(noteItem).not.toBeVisible();
+
+    await page.getByRole('button', { name: /reset/i }).click();
+
+    await expect(noteItem).toBeVisible();
+    await expect(callItem).toBeVisible();
+  });
+});

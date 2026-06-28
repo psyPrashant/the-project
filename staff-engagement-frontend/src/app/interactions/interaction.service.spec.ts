@@ -3,7 +3,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 
 import { InteractionService } from './interaction.service';
-import { CreateInteractionRequest, InteractionResponse, InteractionType, UpdateInteractionRequest } from './interaction.models';
+import { CreateInteractionRequest, InteractionFilter, InteractionResponse, InteractionType, UpdateInteractionRequest } from './interaction.models';
 
 describe('InteractionService', () => {
   let service: InteractionService;
@@ -58,6 +58,34 @@ describe('InteractionService', () => {
     req.flush([mockInteraction]);
 
     expect(result).toEqual([mockInteraction]);
+  });
+
+  it('findBySubject() appends filter params when provided', () => {
+    const filter: InteractionFilter = {
+      type: InteractionType.MEETING,
+      authorId: 5,
+      date: '2026-06-25'
+    };
+    let result: InteractionResponse[] | undefined;
+    service.findBySubject(2, filter).subscribe(r => (result = r));
+
+    const req = httpTesting.expectOne(`${baseUrl}?subjectId=2&type=MEETING&authorId=5&date=2026-06-25`);
+    expect(req.request.method).toBe('GET');
+    req.flush([mockInteraction]);
+
+    expect(result).toEqual([mockInteraction]);
+  });
+
+  it('findBySubject() omits empty filter params', () => {
+    const filter: InteractionFilter = { type: InteractionType.NOTE, authorId: null, date: null };
+    let result: InteractionResponse[] | undefined;
+    service.findBySubject(3, filter).subscribe(r => (result = r));
+
+    const req = httpTesting.expectOne(`${baseUrl}?subjectId=3&type=NOTE`);
+    expect(req.request.method).toBe('GET');
+    req.flush([]);
+
+    expect(result).toEqual([]);
   });
 
   it('findById() fetches interaction by id', () => {

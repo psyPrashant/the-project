@@ -10,6 +10,7 @@ import com.psybergate.staff_engagement.common.exception.ForbiddenOperationExcept
 import com.psybergate.staff_engagement.employee.Employee;
 import com.psybergate.staff_engagement.employee.EmployeeService;
 import com.psybergate.staff_engagement.employee.dto.EmployeeResponse;
+import com.psybergate.staff_engagement.interaction.dto.InteractionFilter;
 import com.psybergate.staff_engagement.interaction.dto.InteractionRequestDto;
 import com.psybergate.staff_engagement.interaction.dto.InteractionResponseDto;
 import jakarta.persistence.EntityNotFoundException;
@@ -204,5 +205,101 @@ class InteractionServiceImplTest {
         assertThat(result).hasSize(2);
         assertThat(result.get(0).id()).isEqualTo(2L);
         assertThat(result.get(1).id()).isEqualTo(1L);
+    }
+
+    @Test
+    void findBySubject_withTypeFilter_returnsOnlyMatchingType() {
+        Interaction meeting = Interaction.builder()
+                .id(1L).author(author).subject(subject).note("Meeting note").type(InteractionType.MEETING).date(today).build();
+        InteractionResponseDto response = new InteractionResponseDto(
+                1L, new EmployeeResponse(1L, "author@example.com", "Author", "User"),
+                new EmployeeResponse(2L, "subject@example.com", "Subject", "User"),
+                "Meeting note", InteractionType.MEETING, today);
+        InteractionFilter filter = new InteractionFilter(InteractionType.MEETING, null, null);
+
+        when(interactionRepository.findBySubjectIdWithFilter(2L, filter)).thenReturn(List.of(meeting));
+        when(interactionMapper.toResponse(meeting)).thenReturn(response);
+
+        List<InteractionResponseDto> result = interactionService.findBySubject(2L, filter);
+
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).type()).isEqualTo(InteractionType.MEETING);
+    }
+
+    @Test
+    void findBySubject_withAuthorIdFilter_returnsOnlyMatchingAuthor() {
+        Interaction fromAuthor = Interaction.builder()
+                .id(1L).author(author).subject(subject).note("Author note").type(InteractionType.NOTE).date(today).build();
+        InteractionResponseDto response = new InteractionResponseDto(
+                1L, new EmployeeResponse(1L, "author@example.com", "Author", "User"),
+                new EmployeeResponse(2L, "subject@example.com", "Subject", "User"),
+                "Author note", InteractionType.NOTE, today);
+        InteractionFilter filter = new InteractionFilter(null, 1L, null);
+
+        when(interactionRepository.findBySubjectIdWithFilter(2L, filter)).thenReturn(List.of(fromAuthor));
+        when(interactionMapper.toResponse(fromAuthor)).thenReturn(response);
+
+        List<InteractionResponseDto> result = interactionService.findBySubject(2L, filter);
+
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).author().id()).isEqualTo(1L);
+    }
+
+    @Test
+    void findBySubject_withDateFilter_returnsOnlyMatchingDate() {
+        Interaction onDate = Interaction.builder()
+                .id(1L).author(author).subject(subject).note("Date note").type(InteractionType.NOTE).date(today).build();
+        InteractionResponseDto response = new InteractionResponseDto(
+                1L, new EmployeeResponse(1L, "author@example.com", "Author", "User"),
+                new EmployeeResponse(2L, "subject@example.com", "Subject", "User"),
+                "Date note", InteractionType.NOTE, today);
+        InteractionFilter filter = new InteractionFilter(null, null, today);
+
+        when(interactionRepository.findBySubjectIdWithFilter(2L, filter)).thenReturn(List.of(onDate));
+        when(interactionMapper.toResponse(onDate)).thenReturn(response);
+
+        List<InteractionResponseDto> result = interactionService.findBySubject(2L, filter);
+
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).date()).isEqualTo(today);
+    }
+
+    @Test
+    void findBySubject_withCombinedFilters_returnsOnlyInteractionsMatchingAll() {
+        Interaction matching = Interaction.builder()
+                .id(1L).author(author).subject(subject).note("Match").type(InteractionType.MEETING).date(today).build();
+        InteractionResponseDto response = new InteractionResponseDto(
+                1L, new EmployeeResponse(1L, "author@example.com", "Author", "User"),
+                new EmployeeResponse(2L, "subject@example.com", "Subject", "User"),
+                "Match", InteractionType.MEETING, today);
+        InteractionFilter filter = new InteractionFilter(InteractionType.MEETING, 1L, today);
+
+        when(interactionRepository.findBySubjectIdWithFilter(2L, filter)).thenReturn(List.of(matching));
+        when(interactionMapper.toResponse(matching)).thenReturn(response);
+
+        List<InteractionResponseDto> result = interactionService.findBySubject(2L, filter);
+
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).type()).isEqualTo(InteractionType.MEETING);
+        assertThat(result.get(0).author().id()).isEqualTo(1L);
+        assertThat(result.get(0).date()).isEqualTo(today);
+    }
+
+    @Test
+    void findBySubject_withEmptyFilter_returnsAllForSubject() {
+        Interaction i1 = Interaction.builder()
+                .id(1L).author(author).subject(subject).note("One").type(InteractionType.NOTE).date(today).build();
+        InteractionResponseDto r1 = new InteractionResponseDto(
+                1L, new EmployeeResponse(1L, "author@example.com", "Author", "User"),
+                new EmployeeResponse(2L, "subject@example.com", "Subject", "User"),
+                "One", InteractionType.NOTE, today);
+        InteractionFilter filter = new InteractionFilter(null, null, null);
+
+        when(interactionRepository.findBySubjectIdWithFilter(2L, filter)).thenReturn(List.of(i1));
+        when(interactionMapper.toResponse(i1)).thenReturn(r1);
+
+        List<InteractionResponseDto> result = interactionService.findBySubject(2L, filter);
+
+        assertThat(result).hasSize(1);
     }
 }
