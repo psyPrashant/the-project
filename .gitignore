@@ -19,5 +19,8 @@ tmp_pgdata/
 AGENTS.md
 .claude/myagents/
 
+# Claude Code session logs (large, ephemeral)
+.claude/logs/
+
 # Local secrets / credentials
 jira.properties
