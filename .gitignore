@@ -11,6 +11,13 @@ Thumbs.db
 # Logs
 *.log
 
+# Temporary local Postgres data
+/tmp_pgdata/
+tmp_pgdata/
+
+# Claude Code session files
+.claude/
+
 # Project-local agent reference / memory file
 AGENTS.md
 .claude/myagents/

@@ -15,6 +15,9 @@ public class HookSteps {
     public void cleanTestData() {
         JdbcTemplate jdbc = new JdbcTemplate(dataSource);
         jdbc.update("DELETE FROM interactions");
+        jdbc.update("DELETE FROM portfolio_education");
+        jdbc.update("DELETE FROM portfolio_projects");
+        jdbc.update("DELETE FROM portfolio_links");
         jdbc.update("DELETE FROM employees WHERE email NOT IN ('admin@psybergate.com', 'jane.doe@psybergate.com', 'john.smith@psybergate.com')");
     }
 }

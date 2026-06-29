@@ -81,11 +81,17 @@
           <p class="text-sm text-gray-500">No tasks yet.</p>
         </section>
 
-        <!-- Portfolio (placeholder) -->
+        <!-- Portfolio -->
         <section aria-labelledby="portfolio-heading"
                  class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 id="portfolio-heading" class="mb-2 text-base font-semibold text-gray-900">Portfolio</h2>
-          <p class="text-sm text-gray-500">No portfolio items yet.</p>
+          <div class="flex items-center justify-between mb-2">
+            <h2 id="portfolio-heading" class="text-base font-semibold text-gray-900">Portfolio</h2>
+            <a [routerLink]="['/employees', employee()!.id, 'portfolio']"
+               class="text-sm font-semibold text-indigo-600 hover:text-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded">
+              View portfolio →
+            </a>
+          </div>
+          <p class="text-sm text-gray-500">Manage education, projects, and showcase links.</p>
         </section>
 
       </div>
