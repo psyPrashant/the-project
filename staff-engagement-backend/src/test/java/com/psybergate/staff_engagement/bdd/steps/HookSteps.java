@@ -14,6 +14,7 @@ public class HookSteps {
     @Before
     public void cleanTestData() {
         JdbcTemplate jdbc = new JdbcTemplate(dataSource);
+        jdbc.update("DELETE FROM tasks");
         jdbc.update("DELETE FROM interactions");
         jdbc.update("DELETE FROM employees WHERE email NOT IN ('admin@psybergate.com', 'jane.doe@psybergate.com', 'john.smith@psybergate.com')");
     }

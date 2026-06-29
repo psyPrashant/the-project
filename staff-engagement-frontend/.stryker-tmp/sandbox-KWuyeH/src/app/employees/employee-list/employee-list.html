@@ -1,0 +1,51 @@
+<div class="min-h-screen bg-gray-50 py-8 px-4">
+  <div class="max-w-4xl mx-auto">
+    <div class="flex items-center justify-between mb-6">
+      <h1 class="text-2xl font-semibold text-gray-900">Employees</h1>
+      <a routerLink="/employees/new"
+         class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        New Employee
+      </a>
+    </div>
+
+    <div class="mb-4">
+      <label for="employee-search" class="sr-only">Search employees by name</label>
+      <input id="employee-search" type="search" placeholder="Search by name…"
+             (input)="onSearch($event)"
+             class="w-full rounded-md border border-gray-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+    </div>
+
+    @if (employees().length === 0) {
+      <p class="text-gray-500 text-sm text-center py-12">No employees found.</p>
+    } @else {
+      <div class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Name</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Email</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Job Title</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Department</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100 bg-white">
+            @for (employee of employees(); track employee.id) {
+              <tr (click)="navigate(employee.id)"
+                  class="hover:bg-gray-50 transition-colors">
+                <td class="px-6 py-4 text-sm font-medium text-gray-900">
+                  <a [routerLink]="['/employees', employee.id]"
+                     class="hover:underline focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded">
+                    {{ employee.firstName }} {{ employee.lastName }}
+                  </a>
+                </td>
+                <td class="px-6 py-4 text-sm text-gray-600">{{ employee.email }}</td>
+                <td class="px-6 py-4 text-sm text-gray-600">{{ employee.jobTitle ?? '—' }}</td>
+                <td class="px-6 py-4 text-sm text-gray-600">{{ employee.department ?? '—' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+</div>

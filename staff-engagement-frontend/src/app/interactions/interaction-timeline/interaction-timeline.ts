@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { catchError, EMPTY, forkJoin } from 'rxjs';
 
@@ -9,6 +9,12 @@ import { EmployeeService } from '../../employees/employee.service';
 import { EmployeeProfileResponse } from '../../employees/employee.models';
 import { InteractionService } from '../interaction.service';
 import { InteractionFilter, InteractionResponse, InteractionType } from '../interaction.models';
+
+interface InteractionFilterForm {
+  type: FormControl<InteractionType | null>;
+  authorId: FormControl<number | null>;
+  date: FormControl<string | null>;
+}
 
 @Component({
   selector: 'app-interaction-timeline',
@@ -23,7 +29,6 @@ export class InteractionTimelineComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
-  private readonly formBuilder = inject(FormBuilder);
 
   protected readonly subjectId = signal(Number(this.route.snapshot.paramMap.get('id')));
   protected readonly employee = signal<EmployeeProfileResponse | null>(null);
@@ -32,10 +37,10 @@ export class InteractionTimelineComponent {
   protected readonly loading = signal(true);
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly deletingId = signal<number | null>(null);
-  protected readonly filterForm: FormGroup = this.formBuilder.group({
-    type: [null as InteractionType | null],
-    authorId: [null as number | null],
-    date: [null as string | null]
+  protected readonly filterForm = new FormGroup<InteractionFilterForm>({
+    type: new FormControl<InteractionType | null>(null),
+    authorId: new FormControl<number | null>(null),
+    date: new FormControl<string | null>(null)
   });
 
   protected readonly currentUser = this.authService.currentUser;
@@ -49,7 +54,7 @@ export class InteractionTimelineComponent {
 
   constructor() {
     const id = this.subjectId();
-    if (Number.isNaN(id)) {
+    if (!Number.isFinite(id) || id <= 0) {
       this.loading.set(false);
       this.errorMessage.set('Invalid employee id.');
       return;
@@ -98,8 +103,7 @@ export class InteractionTimelineComponent {
   }
 
   protected applyFilters(): void {
-    const formValue = this.filterForm.value as InteractionFilter;
-    this.loadInteractions(this.subjectId(), formValue);
+    this.loadInteractions(this.subjectId(), this.filterForm.getRawValue());
   }
 
   protected resetFilters(): void {
@@ -118,6 +122,10 @@ export class InteractionTimelineComponent {
 
   protected editInteraction(interaction: InteractionResponse): void {
     void this.router.navigate(['/interactions', interaction.id, 'edit']);
+  }
+
+  protected createTaskFromInteraction(interaction: InteractionResponse): void {
+    void this.router.navigate(['/interactions', interaction.id, 'create-task']);
   }
 
   protected deleteInteraction(interaction: InteractionResponse): void {

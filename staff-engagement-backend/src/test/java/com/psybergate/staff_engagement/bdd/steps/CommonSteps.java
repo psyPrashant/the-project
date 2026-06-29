@@ -83,6 +83,11 @@ public class CommonSteps {
         response = exchange(HttpMethod.PATCH, path, null);
     }
 
+    @When("I send a PATCH to {string} with body:")
+    public void sendPatchWithBody(String path, String body) {
+        response = exchange(HttpMethod.PATCH, path, body);
+    }
+
     @When("I send a DELETE to {string}")
     public void sendDelete(String path) {
         response = exchange(HttpMethod.DELETE, path, null);

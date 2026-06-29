@@ -258,9 +258,9 @@ describe('InteractionTimelineComponent', () => {
     const c = fixture.componentInstance as unknown as TimelineInstance;
     fixture.detectChanges();
 
-    c.filterForm.value.type = InteractionType.CALL;
-    c.filterForm.value.authorId = 1;
-    c.filterForm.value.date = '2026-06-25';
+    // Use patchValue to update the underlying FormControl values (not the read-only snapshot)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (c.filterForm as any).patchValue({ type: InteractionType.CALL, authorId: 1, date: '2026-06-25' });
     c.applyFilters();
 
     expect(interactionServiceSpy.findBySubject).toHaveBeenCalledWith(2, {
@@ -276,10 +276,22 @@ describe('InteractionTimelineComponent', () => {
     const c = fixture.componentInstance as unknown as TimelineInstance;
     fixture.detectChanges();
 
-    c.filterForm.value.type = InteractionType.CALL;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (c.filterForm as any).patchValue({ type: InteractionType.CALL });
     c.resetFilters();
 
     expect(interactionServiceSpy.findBySubject).toHaveBeenLastCalledWith(2, undefined);
+  });
+
+  it('shows error and skips service calls when the route id is invalid (0)', () => {
+    configureTestBed({ id: '0' });
+    const fixture = TestBed.createComponent(InteractionTimelineComponent);
+    fixture.detectChanges();
+
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.textContent).toContain('Invalid employee id');
+    expect(interactionServiceSpy.findBySubject).not.toHaveBeenCalled();
+    expect(employeeServiceSpy.getProfile).not.toHaveBeenCalled();
   });
 
   it('renders filter controls', () => {

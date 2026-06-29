@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { provideRouter, RedirectCommand } from '@angular/router';
+import { provideRouter, RedirectCommand, Router } from '@angular/router';
 
 import { authGuard } from './auth.guard';
 
@@ -21,5 +21,11 @@ describe('authGuard', () => {
     const result = runGuard('/home');
     expect(result).toBeInstanceOf(RedirectCommand);
     expect((result as unknown as { redirectTo: { queryParams: Record<string, string> } }).redirectTo.queryParams['redirect']).toBe('/home');
+  });
+
+  it('redirects unauthenticated users specifically to /login', () => {
+    const result = runGuard('/dashboard') as RedirectCommand;
+    const router = TestBed.inject(Router);
+    expect(router.serializeUrl(result.redirectTo)).toContain('/login');
   });
 });
