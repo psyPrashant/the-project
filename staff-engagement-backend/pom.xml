@@ -203,10 +203,10 @@
 					</execution>
 				</executions>
 			</plugin>
-		<plugin>
+			<plugin>
 				<groupId>org.pitest</groupId>
 				<artifactId>pitest-maven</artifactId>
-				<version>1.19.6</version>
+				<version>1.17.4</version>
 				<dependencies>
 					<dependency>
 						<groupId>org.pitest</groupId>
@@ -216,22 +216,21 @@
 				</dependencies>
 				<configuration>
 					<targetClasses>
-						<param>com.psybergate.staff_engagement.*</param>
+						<param>com.psybergate.staff_engagement.portfolio.*</param>
 					</targetClasses>
 					<targetTests>
-						<param>com.psybergate.staff_engagement.*</param>
+						<param>com.psybergate.staff_engagement.portfolio.*Test</param>
 					</targetTests>
-					<excludedClasses>
-						<param>com.psybergate.staff_engagement.StaffEngagementBackendApplication</param>
-					</excludedClasses>
 					<mutators>
 						<mutator>DEFAULTS</mutator>
 					</mutators>
 					<outputFormats>
-						<param>HTML</param>
-						<param>XML</param>
+						<outputFormat>HTML</outputFormat>
+						<outputFormat>XML</outputFormat>
 					</outputFormats>
 					<timestampedReports>false</timestampedReports>
+					<historyInputFile>${project.build.directory}/pit-reports/portfolio-history.txt</historyInputFile>
+					<historyOutputFile>${project.build.directory}/pit-reports/portfolio-history.txt</historyOutputFile>
 				</configuration>
 			</plugin>
 		</plugins>

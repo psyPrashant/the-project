@@ -7,18 +7,24 @@ import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.http.*;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 import java.util.HashMap;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.request;
 
 public class CommonSteps {
 
     @Autowired
-    private TestRestTemplate restTemplate;
+    private MockMvc mockMvc;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -34,11 +40,8 @@ public class CommonSteps {
 
     @Given("I am authenticated as {string}")
     public void authenticateAs(String email) throws Exception {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
         String body = String.format("{\"email\":\"%s\",\"password\":\"password123\"}", email);
-        ResponseEntity<String> loginResponse = restTemplate.postForEntity("/api/auth/login",
-                new HttpEntity<>(body, headers), String.class);
+        ResponseEntity<String> loginResponse = exchangeWithoutAuth(HttpMethod.POST, "/api/auth/login", body);
         assertThat(loginResponse.getStatusCode().value()).isEqualTo(200);
         JsonNode node = objectMapper.readTree(loginResponse.getBody());
         authToken = node.get("token").asText();
@@ -128,13 +131,31 @@ public class CommonSteps {
     }
 
     ResponseEntity<String> exchange(HttpMethod method, String path, String body) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        if (authToken != null) {
-            headers.setBearerAuth(authToken);
+        return perform(method, path, body, authToken);
+    }
+
+    private ResponseEntity<String> exchangeWithoutAuth(HttpMethod method, String path, String body) {
+        return perform(method, path, body, null);
+    }
+
+    private ResponseEntity<String> perform(HttpMethod method, String path, String body, String token) {
+        MockHttpServletRequestBuilder request = request(method, replacePlaceholders(path))
+                .contentType(MediaType.APPLICATION_JSON);
+        if (body != null) {
+            request.content(replacePlaceholders(body));
         }
-        HttpEntity<String> entity = new HttpEntity<>(replacePlaceholders(body), headers);
-        return restTemplate.exchange(replacePlaceholders(path), method, entity, String.class);
+        if (token != null) {
+            request.header("Authorization", "Bearer " + token);
+        }
+        try {
+            MvcResult result = mockMvc.perform(request).andReturn();
+            MockHttpServletResponse servletResponse = result.getResponse();
+            String responseBody = servletResponse.getContentAsString();
+            return ResponseEntity.status(servletResponse.getStatus())
+                    .body(responseBody.isEmpty() ? null : responseBody);
+        } catch (Exception e) {
+            throw new RuntimeException("MockMvc request failed: " + method + " " + path, e);
+        }
     }
 
     String replacePlaceholders(String raw) {
@@ -166,10 +187,6 @@ public class CommonSteps {
 
     public Map<String, String> getStoredValues() {
         return storedValues;
-    }
-
-    public TestRestTemplate getRestTemplate() {
-        return restTemplate;
     }
 
     public ObjectMapper getObjectMapper() {

@@ -45,6 +45,9 @@ __screenshots__/
 /blob-report
 /playwright/.cache
 
+# Mutation testing reports
+/reports
+
 # System files
 .DS_Store
 Thumbs.db

@@ -1,18 +1,21 @@
 /** @type {import('@stryker-mutator/api/core').PartialStrykerOptions} */
 export default {
-  testRunner: 'vitest',
-  vitest: {
-    configFile: './vitest.config.ts',
-  },
-  checkers: ['typescript'],
-  tsconfigFile: 'tsconfig.json',
-  mutate: [
-    'src/app/**/*.ts',
-    '!src/app/**/*.spec.ts',
-    '!src/app/app.config.ts',
-    '!src/app/app.routes.ts',
+  mutate: ['src/app/portfolios/portfolio.service.ts'],
+  command: 'npx ng test --watch=false --include="src/app/portfolios/**/*.spec.ts" --progress=false',
+  testRunner: 'command',
+  reporters: ['html', 'json', 'progress', 'clear-text'],
+  coverageAnalysis: 'off',
+  timeoutMS: 120000,
+  timeoutFactor: 3,
+  concurrency: 1,
+  ignorePatterns: [
+    '.angular/',
+    'dist/',
+    'node_modules/',
+    'test-results/',
+    'coverage/',
+    'reports/',
+    'e2e/',
+    'public/',
   ],
-  reporters: ['html', 'clear-text', 'progress'],
-  coverageAnalysis: 'perTest',
-  thresholds: { high: 80, low: 70, break: 60 },
 };

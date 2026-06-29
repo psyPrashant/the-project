@@ -39,6 +39,11 @@ export const routes: Routes = [
     loadComponent: () => import('./employees/employee-profile/employee-profile').then(m => m.EmployeeProfileComponent)
   },
   {
+    path: 'employees/:id/portfolio',
+    canActivate: [authGuard],
+    loadComponent: () => import('./portfolios/portfolio/portfolio').then(m => m.PortfolioComponent)
+  },
+  {
     path: 'interactions/new',
     canActivate: [authGuard],
     loadComponent: () => import('./interactions/interaction-form/interaction-form').then(m => m.InteractionFormComponent)
