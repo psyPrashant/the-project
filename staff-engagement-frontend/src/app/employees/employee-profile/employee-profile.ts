@@ -45,12 +45,19 @@ export class EmployeeProfileComponent {
   protected readonly employeeId = Number(this.route.snapshot.paramMap.get('id'));
   protected readonly employee = signal<EmployeeProfileResponse | null>(null);
   protected readonly loading = signal(true);
+  protected readonly loadError = signal<string | null>(null);
   protected readonly archiving = signal(false);
   protected readonly editOpen = signal(false);
 
   protected readonly portfolio = signal<PortfolioResponse | null>(null);
 
   constructor() {
+    if (!this.employeeId || isNaN(this.employeeId)) {
+      this.loadError.set('Employee not found.');
+      this.loading.set(false);
+      return;
+    }
+
     this.employeeService.getProfile(this.employeeId)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
@@ -58,7 +65,10 @@ export class EmployeeProfileComponent {
           this.employee.set(emp);
           this.loading.set(false);
         },
-        error: () => this.loading.set(false)
+        error: () => {
+          this.loadError.set('Failed to load employee.');
+          this.loading.set(false);
+        }
       });
 
     this.reloadPortfolio();

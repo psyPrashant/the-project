@@ -1,8 +1,11 @@
 import {
+  afterNextRender,
   ChangeDetectionStrategy,
   Component,
-  ElementRef,
   effect,
+  ElementRef,
+  inject,
+  Injector,
   input,
   output,
   viewChild
@@ -29,18 +32,27 @@ export class ModalComponent {
   readonly cancel = output<void>();
 
   private readonly dialog = viewChild<ElementRef<HTMLDialogElement>>('dlg');
+  private readonly injector = inject(Injector);
+
+  private static nextId = 0;
+  protected readonly headingId = `modal-heading-${++ModalComponent.nextId}`;
 
   constructor() {
-    effect(() => {
-      const el = this.dialog()?.nativeElement;
-      if (!el || typeof el.showModal !== 'function') {
-        return;
-      }
-      if (this.open() && !el.open) {
-        el.showModal();
-      } else if (!this.open() && el.open) {
-        el.close();
-      }
+    // Register the open/close effect after the first render so viewChild is guaranteed to
+    // be resolved before the effect reads it — avoids a silent no-op on the very first open.
+    afterNextRender(() => {
+      effect(
+        () => {
+          const el = this.dialog()?.nativeElement;
+          if (!el || typeof el.showModal !== 'function') return;
+          if (this.open() && !el.open) {
+            el.showModal();
+          } else if (!this.open() && el.open) {
+            el.close();
+          }
+        },
+        { injector: this.injector }
+      );
     });
   }
 

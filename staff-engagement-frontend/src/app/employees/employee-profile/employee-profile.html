@@ -9,6 +9,8 @@
 
   @if (loading()) {
     <p class="py-12 text-center text-sm text-muted" aria-live="polite" aria-busy="true">Loading…</p>
+  } @else if (loadError()) {
+    <p class="py-12 text-center text-sm text-muted" role="alert">{{ loadError() }}</p>
   } @else if (employee(); as emp) {
     <!-- Header -->
     <div class="flex items-start justify-between gap-5 rounded-card border border-hairline bg-card p-6 shadow-card">
