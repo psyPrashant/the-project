@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { provideRouter, Router } from '@angular/router';
+import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { vi, afterEach, beforeEach, describe, it, expect } from 'vitest';
 
@@ -34,45 +34,40 @@ describe('EmployeeListComponent', () => {
     vi.useRealTimers();
   });
 
-  it('renders employee names from the service', () => {
+  function render() {
     const fixture = TestBed.createComponent(EmployeeListComponent);
     fixture.detectChanges();
     vi.advanceTimersByTime(300);
     fixture.detectChanges();
+    return fixture;
+  }
+
+  it('renders employees as cards with names', () => {
+    const fixture = render();
     const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
-    expect(text).toContain('Alice');
-    expect(text).toContain('Bob');
+    expect(text).toContain('Alice Smith');
+    expect(text).toContain('Bob Jones');
+  });
+
+  it('links each person to their profile under /people', () => {
+    const fixture = render();
+    const link = (fixture.nativeElement as HTMLElement).querySelector(
+      'a[href="/people/1"]'
+    );
+    expect(link).not.toBeNull();
   });
 
   it('shows empty state when no employees returned', () => {
     (employeeServiceSpy.getAll as ReturnType<typeof vi.fn>).mockReturnValue(of([]));
-    const fixture = TestBed.createComponent(EmployeeListComponent);
-    fixture.detectChanges();
-    vi.advanceTimersByTime(300);
-    fixture.detectChanges();
-    expect((fixture.nativeElement as HTMLElement).textContent).toContain('No employees found');
+    const fixture = render();
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('No people found');
   });
 
-  it('navigates to employee profile on row click', () => {
-    const fixture = TestBed.createComponent(EmployeeListComponent);
-    const router = TestBed.inject(Router);
-    const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
-    fixture.detectChanges();
-    vi.advanceTimersByTime(300);
-    fixture.detectChanges();
-
-    const row = (fixture.nativeElement as HTMLElement).querySelector('tbody tr') as HTMLElement;
-    row?.click();
-
-    expect(navigateSpy).toHaveBeenCalledWith(['/employees', 1]);
-  });
-
-  it('contains a link to create a new employee', () => {
-    const fixture = TestBed.createComponent(EmployeeListComponent);
-    fixture.detectChanges();
-    vi.advanceTimersByTime(300);
-    fixture.detectChanges();
-    const link = (fixture.nativeElement as HTMLElement).querySelector('a[href="/employees/new"]');
-    expect(link).not.toBeNull();
+  it('has an Add employee button', () => {
+    const fixture = render();
+    const button = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll('button')
+    ).find(b => b.textContent?.includes('Add employee'));
+    expect(button).toBeTruthy();
   });
 });

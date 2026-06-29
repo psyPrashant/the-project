@@ -1,65 +1,72 @@
-import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  computed,
+  effect,
+  inject,
+  input,
+  signal
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { catchError, EMPTY, forkJoin } from 'rxjs';
+import { catchError, EMPTY, of } from 'rxjs';
 
 import { AuthService } from '../../auth/auth.service';
 import { EmployeeService } from '../../employees/employee.service';
 import { EmployeeProfileResponse } from '../../employees/employee.models';
 import { InteractionService } from '../interaction.service';
 import { InteractionFilter, InteractionResponse, InteractionType } from '../interaction.models';
+import { InteractionFormModalComponent } from '../interaction-form-modal/interaction-form-modal';
+import { avatarColor, initials } from '../../shared/avatar';
+import { interactionTypeStyle } from '../../shared/interaction-type';
 
-interface InteractionFilterForm {
-  type: FormControl<InteractionType | null>;
-  authorId: FormControl<number | null>;
-  date: FormControl<string | null>;
-}
-
+/**
+ * Interactions timeline as an embeddable profile section (TSP-44). Reuses the Epic 2 logic
+ * (filters by type/author/date, author-only edit/delete per D4) and drives the log/edit modal.
+ */
 @Component({
-  selector: 'app-interaction-timeline',
-  imports: [RouterLink, ReactiveFormsModule],
-  templateUrl: './interaction-timeline.html',
+  selector: 'app-interactions-section',
+  imports: [ReactiveFormsModule, InteractionFormModalComponent],
+  templateUrl: './interactions-section.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class InteractionTimelineComponent {
+export class InteractionsSectionComponent {
   private readonly interactionService = inject(InteractionService);
   private readonly employeeService = inject(EmployeeService);
   private readonly authService = inject(AuthService);
-  private readonly route = inject(ActivatedRoute);
-  private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
 
-  protected readonly subjectId = signal(Number(this.route.snapshot.paramMap.get('id')));
-  protected readonly employee = signal<EmployeeProfileResponse | null>(null);
+  readonly subjectId = input.required<number>();
+
+  protected readonly avatarColor = avatarColor;
+  protected readonly initials = initials;
+  protected readonly typeStyle = interactionTypeStyle;
+
   protected readonly interactions = signal<InteractionResponse[]>([]);
-  protected readonly employees = signal<EmployeeProfileResponse[]>([]);
+  protected readonly authors = signal<EmployeeProfileResponse[]>([]);
   protected readonly loading = signal(true);
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly deletingId = signal<number | null>(null);
-  protected readonly filterForm = new FormGroup<InteractionFilterForm>({
+
+  protected readonly logOpen = signal(false);
+  protected readonly editing = signal<InteractionResponse | null>(null);
+  protected readonly filtersActive = signal(false);
+
+  protected readonly currentUser = this.authService.currentUser;
+  protected readonly interactionTypes = Object.values(InteractionType);
+
+  protected readonly filterForm = new FormGroup({
     type: new FormControl<InteractionType | null>(null),
     authorId: new FormControl<number | null>(null),
     date: new FormControl<string | null>(null)
   });
 
-  protected readonly currentUser = this.authService.currentUser;
-  protected readonly interactionTypes = Object.values(InteractionType);
-
-  protected readonly sortedInteractions = computed(() => {
-    return [...this.interactions()].sort(
-      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-    );
-  });
+  protected readonly sortedInteractions = computed(() =>
+    [...this.interactions()].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+  );
 
   constructor() {
-    const id = this.subjectId();
-    if (!Number.isFinite(id) || id <= 0) {
-      this.loading.set(false);
-      this.errorMessage.set('Invalid employee id.');
-      return;
-    }
-
     if (this.currentUser() === null) {
       this.authService.loadCurrentUser()
         .pipe(takeUntilDestroyed(this.destroyRef))
@@ -67,26 +74,21 @@ export class InteractionTimelineComponent {
     }
 
     this.employeeService.getAll()
-      .pipe(
-        catchError(() => {
-          this.errorMessage.set('Failed to load employees for filter.');
-          return EMPTY;
-        }),
-        takeUntilDestroyed(this.destroyRef)
-      )
-      .subscribe(employees => this.employees.set(employees));
+      .pipe(catchError(() => of([] as EmployeeProfileResponse[])), takeUntilDestroyed(this.destroyRef))
+      .subscribe(employees => this.authors.set(employees));
 
-    this.loadInteractions(id);
+    effect(() => {
+      const id = this.subjectId();
+      if (id > 0) {
+        this.load(id);
+      }
+    });
   }
 
-  private loadInteractions(id: number, filter?: InteractionFilter): void {
+  private load(id: number, filter?: InteractionFilter): void {
     this.loading.set(true);
     this.errorMessage.set(null);
-
-    forkJoin({
-      employee: this.employeeService.getProfile(id),
-      interactions: this.interactionService.findBySubject(id, filter)
-    })
+    this.interactionService.findBySubject(id, filter)
       .pipe(
         catchError(() => {
           this.loading.set(false);
@@ -95,20 +97,22 @@ export class InteractionTimelineComponent {
         }),
         takeUntilDestroyed(this.destroyRef)
       )
-      .subscribe(result => {
-        this.employee.set(result.employee);
-        this.interactions.set(result.interactions);
+      .subscribe(interactions => {
+        this.interactions.set(interactions);
         this.loading.set(false);
       });
   }
 
   protected applyFilters(): void {
-    this.loadInteractions(this.subjectId(), this.filterForm.getRawValue());
+    const value = this.filterForm.value as InteractionFilter;
+    this.filtersActive.set(!!(value.type || value.authorId || value.date));
+    this.load(this.subjectId(), value);
   }
 
   protected resetFilters(): void {
     this.filterForm.reset({ type: null, authorId: null, date: null });
-    this.loadInteractions(this.subjectId());
+    this.filtersActive.set(false);
+    this.load(this.subjectId());
   }
 
   protected isAuthor(interaction: InteractionResponse): boolean {
@@ -116,29 +120,34 @@ export class InteractionTimelineComponent {
     return user !== null && interaction.author.id === user.id;
   }
 
-  protected logInteraction(): void {
-    void this.router.navigate(['/interactions/new'], { queryParams: { subjectId: this.subjectId() } });
+  protected openLog(): void {
+    this.editing.set(null);
+    this.logOpen.set(true);
   }
 
-  protected editInteraction(interaction: InteractionResponse): void {
-    void this.router.navigate(['/interactions', interaction.id, 'edit']);
+  protected openEdit(interaction: InteractionResponse): void {
+    this.editing.set(interaction);
+    this.logOpen.set(true);
   }
 
-  protected createTaskFromInteraction(interaction: InteractionResponse): void {
-    void this.router.navigate(['/interactions', interaction.id, 'create-task']);
+  protected closeModal(): void {
+    this.logOpen.set(false);
+    this.editing.set(null);
+  }
+
+  protected onSaved(): void {
+    this.closeModal();
+    this.load(this.subjectId(), this.filterForm.value as InteractionFilter);
   }
 
   protected deleteInteraction(interaction: InteractionResponse): void {
     if (!this.isAuthor(interaction)) {
       return;
     }
-    if (!confirm('Are you sure you want to delete this interaction?')) {
+    if (!confirm('Delete this interaction?')) {
       return;
     }
-
     this.deletingId.set(interaction.id);
-    this.errorMessage.set(null);
-
     this.interactionService.delete(interaction.id)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({

@@ -40,7 +40,7 @@ export class LoginComponent {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
-          const redirect = this.route.snapshot.queryParamMap.get('redirect') ?? '/home';
+          const redirect = this.route.snapshot.queryParamMap.get('redirect') ?? '/people';
           void this.router.navigateByUrl(redirect);
         },
         error: () => {

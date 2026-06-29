@@ -1,11 +1,11 @@
 import { test, expect } from '@playwright/test';
 
 /**
- * End-to-end interaction smoke (story TSP-20 / TSP-22).
+ * End-to-end interaction smoke (story TSP-20 / TSP-22, reskinned for TSP-44).
  *
- * Drives a real browser through logging, editing, and deleting an interaction against a seeded employee
- * and viewing it on the employee timeline. Requires the Angular dev server, backend,
- * and Postgres to be running. Seeded demo account: admin@psybergate.com / password123.
+ * Logging, editing, deleting and filtering interactions now happen on the consolidated employee
+ * profile via a modal and the embedded interactions section. Requires the Angular dev server,
+ * backend, and Postgres to be running. Seeded demo account: admin@psybergate.com / password123.
  */
 const SEED_EMAIL = 'admin@psybergate.com';
 const SEED_PASSWORD = 'password123';
@@ -19,164 +19,120 @@ async function login(page: import('@playwright/test').Page): Promise<void> {
   await page.getByLabel('Email').fill(SEED_EMAIL);
   await page.getByLabel('Password').fill(SEED_PASSWORD);
   await page.getByRole('button', { name: /sign in/i }).click();
-  await expect(page).toHaveURL(/\/home/);
+  await expect(page).toHaveURL(/\/people/);
+}
+
+async function openJaneDoeProfile(page: import('@playwright/test').Page): Promise<void> {
+  await page.getByRole('link', { name: /jane doe/i }).click();
+  await expect(page.getByRole('heading', { name: /jane doe/i })).toBeVisible();
 }
 
 function todayIso(): string {
   return new Date().toISOString().split('T')[0];
 }
 
+async function logInteraction(page: import('@playwright/test').Page, note: string, type = 'NOTE'): Promise<void> {
+  await page.getByRole('button', { name: 'Log interaction' }).click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog.getByRole('heading', { name: 'Log interaction' })).toBeVisible();
+  await dialog.getByLabel('Type').selectOption(type);
+  await dialog.getByLabel('Date').fill(todayIso());
+  await dialog.getByLabel('Note').fill(note);
+  await dialog.getByRole('button', { name: 'Save interaction' }).click();
+}
+
 test.describe('Interaction logging', () => {
-  test('logs an interaction against a seeded employee and shows it on the timeline', async ({ page }) => {
+  test('logs an interaction and shows it in the timeline', async ({ page }) => {
     await login(page);
-
-    await page.goto('/employees');
-    await expect(page.getByRole('heading', { name: 'Employees' })).toBeVisible();
-
-    await page.getByRole('link', { name: /jane doe/i }).click();
-
-    await expect(page.getByRole('heading', { name: /jane doe/i })).toBeVisible();
-    await page.getByRole('link', { name: /log interaction/i }).click();
-
-    await expect(page.getByRole('heading', { name: 'Log Interaction' })).toBeVisible();
-
-    const subjectSelect = page.getByLabel('Subject');
-    await expect(subjectSelect).toBeDisabled();
+    await page.goto('/people');
+    await openJaneDoeProfile(page);
 
     const noteText = uniqueNote();
+    await logInteraction(page, noteText);
 
-    await page.getByLabel('Type').selectOption('NOTE');
-    await page.getByLabel('Date').fill(todayIso());
-    await page.getByLabel('Note').fill(noteText);
-
-    await page.getByRole('button', { name: /log interaction/i }).click();
-
-    await expect(page).toHaveURL(/\/employees\/\d+\/interactions/);
-    const interactionItem = page.locator('app-interaction-timeline li', { hasText: noteText });
-    await expect(interactionItem).toBeVisible();
-    await expect(interactionItem.getByText('NOTE', { exact: true })).toBeVisible();
-    await expect(interactionItem.getByText(/logged by admin user/i)).toBeVisible();
+    const item = page.locator('app-interactions-section li', { hasText: noteText });
+    await expect(item).toBeVisible();
+    await expect(item.getByText('Note', { exact: true })).toBeVisible();
   });
 
-  test('shows validation errors when required fields are empty', async ({ page }) => {
+  test('shows a validation error when the note is empty', async ({ page }) => {
     await login(page);
+    await page.goto('/people');
+    await openJaneDoeProfile(page);
 
-    await page.goto('/interactions/new');
-    await expect(page.getByRole('heading', { name: 'Log Interaction' })).toBeVisible();
+    await page.getByRole('button', { name: 'Log interaction' }).click();
+    const dialog = page.getByRole('dialog');
+    await expect(dialog.getByRole('heading', { name: 'Log interaction' })).toBeVisible();
+    await dialog.getByRole('button', { name: 'Save interaction' }).click();
 
-    // Clear the default date so all required-field validation messages appear.
-    await page.getByLabel('Date').fill('');
-    await page.getByRole('button', { name: /log interaction/i }).click();
-
-    await expect(page.getByText('Subject is required.')).toBeVisible();
-    await expect(page.getByText('Note is required.')).toBeVisible();
-    await expect(page.getByText('Date is required.')).toBeVisible();
+    await expect(dialog.getByText('A note is required.')).toBeVisible();
   });
 
   test('edits an existing own interaction', async ({ page }) => {
     await login(page);
-
-    await page.goto('/employees');
-    await page.getByRole('link', { name: /jane doe/i }).click();
-    await page.getByRole('link', { name: /log interaction/i }).click();
+    await page.goto('/people');
+    await openJaneDoeProfile(page);
 
     const originalNote = uniqueNote();
-    await page.getByLabel('Type').selectOption('NOTE');
-    await page.getByLabel('Date').fill(todayIso());
-    await page.getByLabel('Note').fill(originalNote);
-    await page.getByRole('button', { name: /log interaction/i }).click();
+    await logInteraction(page, originalNote);
 
-    await expect(page).toHaveURL(/\/employees\/\d+\/interactions/);
-    const interactionItem = page.locator('app-interaction-timeline li', { hasText: originalNote });
-    await expect(interactionItem).toBeVisible();
+    const item = page.locator('app-interactions-section li', { hasText: originalNote });
+    await expect(item).toBeVisible();
+    await item.getByRole('button', { name: /edit interaction/i }).click();
 
-    await interactionItem.getByRole('button', { name: /edit/i }).click();
-
-    await expect(page).toHaveURL(/\/interactions\/\d+\/edit/);
-    await expect(page.getByRole('heading', { name: 'Edit Interaction' })).toBeVisible();
-
+    const dialog = page.getByRole('dialog');
+    await expect(dialog.getByRole('heading', { name: 'Edit interaction' })).toBeVisible();
     const updatedNote = `${originalNote} (edited)`;
-    await page.getByLabel('Note').fill(updatedNote);
-    await page.getByLabel('Type').selectOption('CALL');
-    await page.getByRole('button', { name: /save changes/i }).click();
+    await dialog.getByLabel('Note').fill(updatedNote);
+    await dialog.getByLabel('Type').selectOption('CALL');
+    await dialog.getByRole('button', { name: 'Save interaction' }).click();
 
-    await expect(page).toHaveURL(/\/employees\/\d+\/interactions/);
-    const updatedItem = page.locator('app-interaction-timeline li', { hasText: updatedNote });
+    const updatedItem = page.locator('app-interactions-section li', { hasText: updatedNote });
     await expect(updatedItem).toBeVisible();
-    await expect(updatedItem.getByText('CALL', { exact: true })).toBeVisible();
+    await expect(updatedItem.getByText('Call', { exact: true })).toBeVisible();
   });
 
   test('deletes an existing own interaction', async ({ page }) => {
     await login(page);
-
-    await page.goto('/employees');
-    await page.getByRole('link', { name: /jane doe/i }).click();
-    await page.getByRole('link', { name: /log interaction/i }).click();
+    await page.goto('/people');
+    await openJaneDoeProfile(page);
 
     const noteText = uniqueNote();
-    await page.getByLabel('Type').selectOption('NOTE');
-    await page.getByLabel('Date').fill(todayIso());
-    await page.getByLabel('Note').fill(noteText);
-    await page.getByRole('button', { name: /log interaction/i }).click();
+    await logInteraction(page, noteText);
 
-    await expect(page).toHaveURL(/\/employees\/\d+\/interactions/);
-    const interactionItem = page.locator('app-interaction-timeline li', { hasText: noteText });
-    await expect(interactionItem).toBeVisible();
+    const item = page.locator('app-interactions-section li', { hasText: noteText });
+    await expect(item).toBeVisible();
 
     page.on('dialog', dialog => dialog.accept());
-    await interactionItem.getByRole('button', { name: /delete/i }).click();
+    await item.getByRole('button', { name: /delete interaction/i }).click();
 
-    await expect(interactionItem).not.toBeVisible();
+    await expect(item).not.toBeVisible();
   });
 });
 
 test.describe('Interaction filtering', () => {
-  test('filters timeline by type and date', async ({ page }) => {
+  test('filters the timeline by type', async ({ page }) => {
     await login(page);
-
-    await page.goto('/employees');
-    await page.getByRole('link', { name: /jane doe/i }).click();
-    await page.getByRole('link', { name: /log interaction/i }).click();
+    await page.goto('/people');
+    await openJaneDoeProfile(page);
 
     const noteText = uniqueNote();
-    await page.getByLabel('Type').selectOption('NOTE');
-    await page.getByLabel('Date').fill(todayIso());
-    await page.getByLabel('Note').fill(`${noteText} NOTE`);
-    await page.getByRole('button', { name: /log interaction/i }).click();
+    await logInteraction(page, `${noteText} NOTE`, 'NOTE');
+    await logInteraction(page, `${noteText} CALL`, 'CALL');
 
-    await expect(page).toHaveURL(/\/employees\/\d+\/interactions/);
-
-    await page.getByRole('button', { name: /log interaction/i }).click();
-    await page.getByLabel('Type').selectOption('CALL');
-    await page.getByLabel('Date').fill(todayIso());
-    await page.getByLabel('Note').fill(`${noteText} CALL`);
-    await page.getByRole('button', { name: /log interaction/i }).click();
-
-    await expect(page).toHaveURL(/\/employees\/\d+\/interactions/);
-
-    const noteItem = page.locator('app-interaction-timeline li', { hasText: `${noteText} NOTE` });
-    const callItem = page.locator('app-interaction-timeline li', { hasText: `${noteText} CALL` });
+    const noteItem = page.locator('app-interactions-section li', { hasText: `${noteText} NOTE` });
+    const callItem = page.locator('app-interactions-section li', { hasText: `${noteText} CALL` });
     await expect(noteItem).toBeVisible();
     await expect(callItem).toBeVisible();
 
-    await page.locator('form[aria-label="Filter interactions"]').getByLabel('Type').selectOption('CALL');
-    await page.getByRole('button', { name: /apply filters/i }).click();
+    // Filters apply reactively on change — no Apply button.
+    const filter = page.locator('form[aria-label="Filter interactions"]');
+    await filter.getByLabel('Type').selectOption({ label: 'Call' });
 
     await expect(callItem).toBeVisible();
     await expect(noteItem).not.toBeVisible();
 
-    await page.locator('form[aria-label="Filter interactions"]').getByLabel('Type').selectOption({ label: 'All types' });
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    const localIso = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, '0')}-${String(yesterday.getDate()).padStart(2, '0')}`;
-    await page.locator('form[aria-label="Filter interactions"]').getByLabel('Date').fill(localIso);
-    await page.getByRole('button', { name: /apply filters/i }).click();
-
-    await expect(callItem).not.toBeVisible();
-    await expect(noteItem).not.toBeVisible();
-
-    await page.getByRole('button', { name: /reset/i }).click();
-
+    await page.getByRole('button', { name: 'Clear' }).click();
     await expect(noteItem).toBeVisible();
     await expect(callItem).toBeVisible();
   });

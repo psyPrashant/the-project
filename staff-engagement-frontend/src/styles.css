@@ -1,3 +1,85 @@
 /* You can add global styles to this file, and also import other style files */
 
 @import 'tailwindcss';
+
+/*
+ * "Engage" design tokens (TSP-44). Exposed as Tailwind 4 theme variables so utilities like
+ * bg-brand / text-muted / border-hairline / rounded-card / shadow-card are available app-wide.
+ */
+@theme {
+  /* brand */
+  --color-brand: #3b5bdb;
+  --color-brand-hover: #3350c4;
+  --color-brand-tint: #eef1fd;
+
+  /* accents */
+  --color-accent-purple: #7c3aed;
+  --color-accent-cyan: #0891b2;
+  --color-accent-green: #15803d;
+  --color-accent-amber: #b45309;
+  --color-accent-rose: #be123c;
+
+  /* surfaces */
+  --color-page: #f7f8fa;
+  --color-card: #ffffff;
+  --color-hairline: #e9ebef;
+  --color-hairline-soft: #eef0f3;
+
+  /* text */
+  --color-ink: #1a1d21;
+  --color-ink-strong: #344054;
+  --color-ink-body: #475467;
+  --color-ink-soft: #6b7280;
+  --color-muted: #9aa1ab;
+
+  /* radii */
+  --radius-card: 14px;
+  --radius-control: 8px;
+
+  /* shadows */
+  --shadow-card: 0 1px 2px rgba(16, 24, 40, 0.04);
+  --shadow-card-hover: 0 4px 14px rgba(16, 24, 40, 0.08);
+}
+
+@layer base {
+  html,
+  body {
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    background: var(--color-page);
+    color: var(--color-ink);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::placeholder {
+    color: var(--color-muted);
+  }
+}
+
+@layer components {
+  /* Sidebar nav item — explicit colours so the active state always wins over the base. */
+  .nav-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-radius: 8px;
+    padding: 10px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--color-ink-body);
+    text-decoration: none;
+  }
+
+  .nav-link:hover {
+    background: var(--color-page);
+  }
+
+  .nav-link-active {
+    background: var(--color-brand-tint);
+    color: var(--color-brand);
+  }
+}
