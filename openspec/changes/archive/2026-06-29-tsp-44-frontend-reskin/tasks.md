@@ -48,5 +48,5 @@
 - [x] 7.3 Update Playwright e2e (`app`, `interaction`, `portfolio`) + add shell-nav/placeholder
       smoke. Run deferred to CI: a non-project Postgres occupies port 5432 locally with different
       credentials, so the backend/seed can't start here. CI stands up its own Postgres.
-- [ ] 7.4 Manual run against backend (blocked locally by the same Postgres port conflict)
-- [ ] 7.5 Commit with a message referencing TSP-44 (awaiting user go-ahead)
+- [ ] 7.4 Manual run against backend (blocked locally by the same Postgres port conflict — deferred to CI)
+- [x] 7.5 Committed as `feat(frontend): TSP-44 reskin with Engage design system shell`

@@ -15,9 +15,6 @@ Thumbs.db
 /tmp_pgdata/
 tmp_pgdata/
 
-# Claude Code session files
-.claude/
-
 # Project-local agent reference / memory file
 AGENTS.md
 .claude/myagents/
