@@ -34,3 +34,9 @@ export interface UpdateInteractionRequest {
   type: InteractionType;
   date: string;
 }
+
+export interface InteractionFilter {
+  type: InteractionType | null;
+  authorId: number | null;
+  date: string | null;
+}

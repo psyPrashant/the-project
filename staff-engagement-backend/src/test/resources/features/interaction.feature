@@ -134,3 +134,12 @@ Feature: Interaction management
     And I am authenticated as "admin@psybergate.com"
     When I send a DELETE to "/api/interactions/${interactionId}"
     Then the response status should be 403
+
+  Scenario: Filter interactions by type
+    Given an employee exists with firstName "Filter", lastName "Subject", email "filter.cucumber@example.com"
+    And an interaction exists for subject "filter.cucumber@example.com" created by "admin@psybergate.com" with note "Meeting note" and type "MEETING" and date "2026-06-25"
+    And an interaction exists for subject "filter.cucumber@example.com" created by "admin@psybergate.com" with note "Call note" and type "CALL" and date "2026-06-25"
+    When I send a GET to "/api/interactions?subjectId=${subjectId}&type=MEETING"
+    Then the response status should be 200
+    And the response body should contain "Meeting note"
+    And the response body should not contain "Call note"

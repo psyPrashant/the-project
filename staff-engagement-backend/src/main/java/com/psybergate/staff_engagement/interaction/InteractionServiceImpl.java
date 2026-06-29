@@ -3,6 +3,7 @@ package com.psybergate.staff_engagement.interaction;
 import com.psybergate.staff_engagement.common.exception.ForbiddenOperationException;
 import com.psybergate.staff_engagement.employee.Employee;
 import com.psybergate.staff_engagement.employee.EmployeeService;
+import com.psybergate.staff_engagement.interaction.dto.InteractionFilter;
 import com.psybergate.staff_engagement.interaction.dto.InteractionRequestDto;
 import com.psybergate.staff_engagement.interaction.dto.InteractionResponseDto;
 import jakarta.persistence.EntityNotFoundException;
@@ -58,6 +59,14 @@ public class InteractionServiceImpl implements InteractionService {
     @Transactional(readOnly = true)
     public List<InteractionResponseDto> findBySubject(Long subjectId) {
         return interactionRepository.findBySubjectIdOrderByDateDesc(subjectId).stream()
+                .map(interactionMapper::toResponse)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<InteractionResponseDto> findBySubject(Long subjectId, InteractionFilter filter) {
+        return interactionRepository.findBySubjectIdWithFilter(subjectId, filter).stream()
                 .map(interactionMapper::toResponse)
                 .toList();
     }

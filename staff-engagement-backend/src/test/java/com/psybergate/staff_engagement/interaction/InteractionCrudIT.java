@@ -243,4 +243,112 @@ class InteractionCrudIT extends IntegrationTestBase {
                         .header("Authorization", "Bearer " + adminToken))
                 .andExpect(status().isForbidden());
     }
+
+    // GET /api/interactions?subjectId={id} filtering
+
+    @Test
+    void findBySubject_withTypeFilter_returnsOnlyMatchingInteractions() throws Exception {
+        EmployeeProfileResponse subject = createEmployee("Filter", "Type", uniqueEmail(), adminToken);
+        createInteraction(subject.id(), "Meeting one", InteractionType.MEETING, LocalDate.now(), adminToken);
+        createInteraction(subject.id(), "Note one", InteractionType.NOTE, LocalDate.now(), adminToken);
+
+        MvcResult result = mockMvc.perform(get("/api/interactions")
+                        .param("subjectId", subject.id().toString())
+                        .param("type", InteractionType.MEETING.name())
+                        .header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        List<InteractionResponseDto> list = objectMapper.readValue(
+                result.getResponse().getContentAsString(),
+                new TypeReference<List<InteractionResponseDto>>() {});
+        assertThat(list).hasSize(1);
+        assertThat(list.get(0).type()).isEqualTo(InteractionType.MEETING);
+    }
+
+    @Test
+    void findBySubject_withAuthorIdFilter_returnsOnlyMatchingInteractions() throws Exception {
+        EmployeeProfileResponse subject = createEmployee("Filter", "Author", uniqueEmail(), adminToken);
+        createInteraction(subject.id(), "By admin", InteractionType.NOTE, LocalDate.now(), adminToken);
+        createInteraction(subject.id(), "By jane", InteractionType.NOTE, LocalDate.now(), janeToken);
+
+        MvcResult result = mockMvc.perform(get("/api/interactions")
+                        .param("subjectId", subject.id().toString())
+                        .param("authorId", adminEmployeeId.toString())
+                        .header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        List<InteractionResponseDto> list = objectMapper.readValue(
+                result.getResponse().getContentAsString(),
+                new TypeReference<List<InteractionResponseDto>>() {});
+        assertThat(list).hasSize(1);
+        assertThat(list.get(0).author().id()).isEqualTo(adminEmployeeId);
+    }
+
+    @Test
+    void findBySubject_withDateFilter_returnsOnlyMatchingInteractions() throws Exception {
+        EmployeeProfileResponse subject = createEmployee("Filter", "Date", uniqueEmail(), adminToken);
+        LocalDate yesterday = LocalDate.now().minusDays(1);
+        LocalDate today = LocalDate.now();
+        createInteraction(subject.id(), "Yesterday", InteractionType.NOTE, yesterday, adminToken);
+        createInteraction(subject.id(), "Today", InteractionType.NOTE, today, adminToken);
+
+        MvcResult result = mockMvc.perform(get("/api/interactions")
+                        .param("subjectId", subject.id().toString())
+                        .param("date", today.toString())
+                        .header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        List<InteractionResponseDto> list = objectMapper.readValue(
+                result.getResponse().getContentAsString(),
+                new TypeReference<List<InteractionResponseDto>>() {});
+        assertThat(list).hasSize(1);
+        assertThat(list.get(0).note()).isEqualTo("Today");
+    }
+
+    @Test
+    void findBySubject_withCombinedFilters_returnsOnlyInteractionsMatchingAll() throws Exception {
+        EmployeeProfileResponse subject = createEmployee("Filter", "Combined", uniqueEmail(), adminToken);
+        LocalDate yesterday = LocalDate.now().minusDays(1);
+        LocalDate today = LocalDate.now();
+        createInteraction(subject.id(), "Admin meeting today", InteractionType.MEETING, today, adminToken);
+        createInteraction(subject.id(), "Admin note today", InteractionType.NOTE, today, adminToken);
+        createInteraction(subject.id(), "Jane meeting today", InteractionType.MEETING, today, janeToken);
+        createInteraction(subject.id(), "Admin meeting yesterday", InteractionType.MEETING, yesterday, adminToken);
+
+        MvcResult result = mockMvc.perform(get("/api/interactions")
+                        .param("subjectId", subject.id().toString())
+                        .param("type", InteractionType.MEETING.name())
+                        .param("authorId", adminEmployeeId.toString())
+                        .param("date", today.toString())
+                        .header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        List<InteractionResponseDto> list = objectMapper.readValue(
+                result.getResponse().getContentAsString(),
+                new TypeReference<List<InteractionResponseDto>>() {});
+        assertThat(list).hasSize(1);
+        assertThat(list.get(0).note()).isEqualTo("Admin meeting today");
+    }
+
+    @Test
+    void findBySubject_withNoFilterParameters_returnsFullTimeline() throws Exception {
+        EmployeeProfileResponse subject = createEmployee("Filter", "None", uniqueEmail(), adminToken);
+        createInteraction(subject.id(), "First", InteractionType.NOTE, LocalDate.now().minusDays(1), adminToken);
+        createInteraction(subject.id(), "Second", InteractionType.MEETING, LocalDate.now(), adminToken);
+
+        MvcResult result = mockMvc.perform(get("/api/interactions")
+                        .param("subjectId", subject.id().toString())
+                        .header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        List<InteractionResponseDto> list = objectMapper.readValue(
+                result.getResponse().getContentAsString(),
+                new TypeReference<List<InteractionResponseDto>>() {});
+        assertThat(list).hasSize(2);
+    }
 }

@@ -1,6 +1,7 @@
 package com.psybergate.staff_engagement.interaction;
 
 import com.psybergate.staff_engagement.employee.Employee;
+import com.psybergate.staff_engagement.interaction.dto.InteractionFilter;
 import com.psybergate.staff_engagement.interaction.dto.InteractionRequestDto;
 import com.psybergate.staff_engagement.interaction.dto.InteractionResponseDto;
 import java.util.List;
@@ -17,4 +18,6 @@ public interface InteractionService {
     InteractionResponseDto findById(Long id);
 
     List<InteractionResponseDto> findBySubject(Long subjectId);
+
+    List<InteractionResponseDto> findBySubject(Long subjectId, InteractionFilter filter);
 }

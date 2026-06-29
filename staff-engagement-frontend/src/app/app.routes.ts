@@ -42,5 +42,10 @@ export const routes: Routes = [
     path: 'interactions/new',
     canActivate: [authGuard],
     loadComponent: () => import('./interactions/interaction-form/interaction-form').then(m => m.InteractionFormComponent)
+  },
+  {
+    path: 'interactions/:id/edit',
+    canActivate: [authGuard],
+    loadComponent: () => import('./interactions/interaction-form/interaction-form').then(m => m.InteractionFormComponent)
   }
 ];

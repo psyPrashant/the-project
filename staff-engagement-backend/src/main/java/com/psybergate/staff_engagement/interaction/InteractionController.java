@@ -2,9 +2,12 @@ package com.psybergate.staff_engagement.interaction;
 
 import com.psybergate.staff_engagement.auth.CurrentEmployee;
 import com.psybergate.staff_engagement.employee.Employee;
+import com.psybergate.staff_engagement.interaction.InteractionType;
+import com.psybergate.staff_engagement.interaction.dto.InteractionFilter;
 import com.psybergate.staff_engagement.interaction.dto.InteractionRequestDto;
 import com.psybergate.staff_engagement.interaction.dto.InteractionResponseDto;
 import jakarta.validation.Valid;
+import java.time.LocalDate;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -35,8 +38,12 @@ public class InteractionController {
 
     @GetMapping
     public ResponseEntity<List<InteractionResponseDto>> findBySubject(
-            @RequestParam Long subjectId) {
-        return ResponseEntity.ok(interactionService.findBySubject(subjectId));
+            @RequestParam Long subjectId,
+            @RequestParam(required = false) InteractionType type,
+            @RequestParam(required = false) Long authorId,
+            @RequestParam(required = false) LocalDate date) {
+        InteractionFilter filter = new InteractionFilter(type, authorId, date);
+        return ResponseEntity.ok(interactionService.findBySubject(subjectId, filter));
     }
 
     @GetMapping("/{id}")
