@@ -50,6 +50,7 @@ export class EmployeeProfileComponent {
   protected readonly loadError = signal<string | null>(null);
   protected readonly archiving = signal(false);
   protected readonly unarchiving = signal(false);
+  protected readonly actionError = signal<string | null>(null);
   protected readonly editOpen = signal(false);
 
   protected readonly portfolio = signal<PortfolioResponse | null>(null);
@@ -116,7 +117,10 @@ export class EmployeeProfileComponent {
           this.employee.set(updated);
           this.unarchiving.set(false);
         },
-        error: () => this.unarchiving.set(false)
+        error: () => {
+          this.unarchiving.set(false);
+          this.actionError.set('Failed to unarchive employee. Please try again.');
+        }
       });
   }
 

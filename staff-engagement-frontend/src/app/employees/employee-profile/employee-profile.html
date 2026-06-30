@@ -63,6 +63,9 @@
           class="inline-flex items-center gap-1.5 rounded-[8px] border border-hairline bg-card px-3 py-2.5 text-[13px] font-semibold text-ink-strong no-underline hover:bg-page"
         >New task</a>
       </div>
+      @if (actionError()) {
+        <p class="mt-2 text-[12.5px] text-red-500" role="alert" aria-live="polite">{{ actionError() }}</p>
+      }
     </div>
 
     <!-- Body -->

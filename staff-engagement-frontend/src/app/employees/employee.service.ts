@@ -14,7 +14,7 @@ export class EmployeeService {
     let params = new HttpParams();
     if (search) params = params.set('search', search);
     if (includeArchived) params = params.set('includeArchived', 'true');
-    return this.http.get<EmployeeProfileResponse[]>(this.baseUrl, { params: params.keys().length ? params : undefined });
+    return this.http.get<EmployeeProfileResponse[]>(this.baseUrl, { params });
   }
 
   getProfile(id: number): Observable<EmployeeProfileResponse> {

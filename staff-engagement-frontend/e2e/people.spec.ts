@@ -25,8 +25,7 @@ test.describe('People — Show archived toggle', () => {
     await login(page);
     await page.goto('/people');
 
-    const toggle = page.locator('#show-archived');
-    await expect(toggle).not.toBeChecked();
+    await expect(page.getByRole('checkbox', { name: /show archived/i })).not.toBeChecked();
   });
 
   test('Turning on Show archived reveals archived employees with Archived badge', async ({ page }) => {
@@ -43,11 +42,28 @@ test.describe('People — Show archived toggle', () => {
 
     await expect(page.getByText('ToggleTest Person')).not.toBeVisible();
 
-    await page.locator('#show-archived').check();
+    await page.getByRole('checkbox', { name: /show archived/i }).check();
     await expect(page.getByText('ToggleTest Person')).toBeVisible();
 
     const archivedCard = page.locator('ul li').filter({ hasText: 'ToggleTest Person' });
     await expect(archivedCard.getByText('Archived', { exact: true })).toBeVisible();
+  });
+
+  test('Archived employee hidden in search results when Show archived is off', async ({ page }) => {
+    await login(page);
+
+    const unique = `search-hidden-${Date.now()}`;
+    const firstName = `SearchHidden${unique}`;
+    await createEmployee(page, firstName, 'Person', `${unique}@example.com`);
+
+    await page.getByRole('button', { name: 'Archive', exact: true }).click();
+    await expect(page.getByText('Archived', { exact: true })).toBeVisible();
+
+    await page.getByRole('link', { name: 'People' }).first().click();
+    await expect(page).toHaveURL(/\/people/);
+
+    await page.getByPlaceholder(/search by name/i).fill(firstName);
+    await expect(page.getByText(`${firstName} Person`)).not.toBeVisible();
   });
 });
 

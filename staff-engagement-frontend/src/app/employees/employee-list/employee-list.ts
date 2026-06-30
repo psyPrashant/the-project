@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
-import { catchError, combineLatest, debounceTime, distinctUntilChanged, of, switchMap } from 'rxjs';
+import { catchError, combineLatest, debounceTime, distinctUntilChanged, of, startWith, switchMap } from 'rxjs';
 
 import { EmployeeService } from '../employee.service';
 import { EmployeeProfileResponse } from '../employee.models';
@@ -27,7 +27,7 @@ export class EmployeeListComponent {
 
   protected readonly employees = toSignal(
     combineLatest([
-      toObservable(this.searchQuery).pipe(debounceTime(300), distinctUntilChanged()),
+      toObservable(this.searchQuery).pipe(startWith(''), debounceTime(300), distinctUntilChanged()),
       toObservable(this.showArchived)
     ]).pipe(
       switchMap(([q, includeArchived]) =>

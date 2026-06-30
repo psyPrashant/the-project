@@ -315,6 +315,21 @@ class EmployeeCrudIT extends IntegrationTestBase {
                 .andExpect(status().isUnauthorized());
     }
 
+    @Test
+    void unarchive_alreadyActiveEmployee_isIdempotentAndReturns200() throws Exception {
+        EmployeeProfileResponse created = createEmployee("Active", "Employee", uniqueEmail());
+
+        MvcResult result = mockMvc.perform(patch("/api/employees/" + created.id() + "/unarchive")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        EmployeeProfileResponse profile = objectMapper.readValue(
+                result.getResponse().getContentAsString(), EmployeeProfileResponse.class);
+        assertThat(profile.archived()).isFalse();
+        assertThat(profile.id()).isEqualTo(created.id());
+    }
+
     // GET /api/employees?includeArchived=true
 
     @Test

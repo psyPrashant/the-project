@@ -115,7 +115,7 @@ class EmployeeServiceImplTest {
 	void getEmployees_includeArchived_noQuery_returnsAllEmployees() {
 		Employee active = Employee.builder().id(1L).firstName("Active").lastName("A").email("a@example.com").archived(false).build();
 		Employee archived = Employee.builder().id(2L).firstName("Archived").lastName("B").email("b@example.com").archived(true).build();
-		when(employeeRepository.findAll()).thenReturn(List.of(active, archived));
+		when(employeeRepository.findAllByOrderByLastNameAscFirstNameAsc()).thenReturn(List.of(active, archived));
 
 		List<EmployeeProfileResponse> result = employeeService.getEmployees(null, true);
 
@@ -189,12 +189,14 @@ class EmployeeServiceImplTest {
 		Employee employee = Employee.builder()
 				.id(1L).firstName("Grace").lastName("Lee").email("grace@example.com").archived(true).build();
 		when(employeeRepository.findById(1L)).thenReturn(Optional.of(employee));
+		when(employeeRepository.save(employee)).thenReturn(employee);
 
 		EmployeeProfileResponse result = employeeService.unarchive(1L);
 
 		assertThat(employee.isArchived()).isFalse();
 		assertThat(result.archived()).isFalse();
 		assertThat(result.id()).isEqualTo(1L);
+		verify(employeeRepository).save(employee);
 	}
 
 	@Test

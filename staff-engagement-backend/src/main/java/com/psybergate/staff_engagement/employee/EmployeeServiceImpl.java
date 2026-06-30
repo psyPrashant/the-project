@@ -49,7 +49,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 		if (includeArchived) {
 			employees = (query != null && !query.isBlank())
 					? employeeRepository.searchAllByName(query)
-					: employeeRepository.findAll();
+					: employeeRepository.findAllByOrderByLastNameAscFirstNameAsc();
 		} else {
 			employees = (query != null && !query.isBlank())
 					? employeeRepository.searchActiveByName(query)
@@ -63,7 +63,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 		Employee employee = employeeRepository.findById(id)
 				.orElseThrow(() -> new EntityNotFoundException("Employee not found: " + id));
 		employee.setArchived(false);
-		return toProfileResponse(employee);
+		return toProfileResponse(employeeRepository.save(employee));
 	}
 
 	@Override
