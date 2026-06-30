@@ -1,0 +1,39 @@
+<dialog
+  #dlg
+  (cancel)="onDialogCancel($event)"
+  (click)="onBackdropClick($event)"
+  [attr.aria-labelledby]="headingId"
+  class="fixed inset-0 m-auto h-fit w-[480px] max-w-[calc(100%-40px)] rounded-2xl border-0 p-0 shadow-[0_24px_60px_rgba(16,24,40,0.3)] backdrop:bg-[rgba(16,24,40,0.45)]"
+>
+  <div class="flex max-h-[90vh] flex-col overflow-hidden bg-card">
+    <header class="flex items-center justify-between border-b border-hairline-soft px-[22px] py-5">
+      <h2 [id]="headingId" class="m-0 text-[16.5px] font-bold tracking-tight text-ink">{{ heading() }}</h2>
+      <button
+        type="button"
+        (click)="cancel.emit()"
+        aria-label="Close"
+        class="flex p-0.5 text-muted hover:text-ink"
+      >
+        <svg aria-hidden="true" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </header>
+
+    <div class="overflow-y-auto px-[22px] py-5">
+      <ng-content />
+    </div>
+
+    <footer class="flex justify-end gap-2.5 px-[22px] pb-5 pt-3.5">
+      <button
+        type="button"
+        (click)="cancel.emit()"
+        class="rounded-[8px] border border-hairline bg-card px-4 py-2.5 text-[13.5px] font-semibold text-ink-body hover:bg-page"
+      >{{ cancelLabel() }}</button>
+      <button
+        type="button"
+        (click)="save.emit()"
+        [disabled]="saving()"
+        class="rounded-[8px] border-0 bg-brand px-[18px] py-2.5 text-[13.5px] font-semibold text-white hover:bg-brand-hover disabled:opacity-60"
+      >{{ saveLabel() }}</button>
+    </footer>
+  </div>
+</dialog>

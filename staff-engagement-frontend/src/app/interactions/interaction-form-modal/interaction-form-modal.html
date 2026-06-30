@@ -1,0 +1,55 @@
+<app-modal
+  [open]="open()"
+  [heading]="isEdit() ? 'Edit interaction' : 'Log interaction'"
+  saveLabel="Save interaction"
+  [saving]="submitting()"
+  (save)="save()"
+  (cancel)="close()"
+>
+  <form [formGroup]="form" (ngSubmit)="save()" novalidate class="flex flex-col gap-3.5">
+    <div class="grid grid-cols-2 gap-3">
+      <div>
+        <label for="int-type" class="mb-1.5 block text-xs font-semibold text-ink-body">Type</label>
+        <select
+          id="int-type"
+          formControlName="type"
+          class="w-full rounded-[8px] border border-hairline bg-card px-2.5 py-2.5 text-[13.5px] text-ink outline-none focus:border-brand focus:ring-2 focus:ring-brand-tint"
+        >
+          @for (type of types; track type) {
+            <option [value]="type">{{ typeLabel(type) }}</option>
+          }
+        </select>
+      </div>
+      <div>
+        <label for="int-date" class="mb-1.5 block text-xs font-semibold text-ink-body">Date</label>
+        <input
+          id="int-date"
+          type="date"
+          formControlName="date"
+          class="w-full rounded-[8px] border border-hairline bg-card px-2.5 py-2.5 text-[13.5px] text-ink outline-none focus:border-brand focus:ring-2 focus:ring-brand-tint"
+        />
+      </div>
+    </div>
+
+    <div>
+      <label for="int-note" class="mb-1.5 block text-xs font-semibold text-ink-body">
+        Note <span aria-hidden="true" class="text-accent-rose">*</span>
+      </label>
+      <textarea
+        id="int-note"
+        formControlName="note"
+        rows="4"
+        placeholder="What did you discuss?"
+        class="w-full resize-y rounded-[8px] border border-hairline px-2.5 py-2.5 text-[13.5px] leading-relaxed text-ink outline-none focus:border-brand focus:ring-2 focus:ring-brand-tint"
+        [class.border-accent-rose]="form.controls.note.invalid && form.controls.note.touched"
+      ></textarea>
+      @if (form.controls.note.invalid && form.controls.note.touched) {
+        <p class="mt-1 text-xs text-accent-rose" aria-live="polite">A note is required.</p>
+      }
+    </div>
+
+    @if (errorMessage(); as msg) {
+      <p class="text-[12.5px] text-accent-rose" role="alert" aria-live="assertive">{{ msg }}</p>
+    }
+  </form>
+</app-modal>

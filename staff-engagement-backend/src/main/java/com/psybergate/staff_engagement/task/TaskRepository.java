@@ -13,4 +13,7 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
 
     @EntityGraph(attributePaths = {"relatesTo", "createdBy", "assignee"})
     List<Task> findByRelatesToIdOrAssigneeId(Long relatesToId, Long assigneeId);
+
+    @EntityGraph(attributePaths = {"relatesTo", "createdBy", "assignee"})
+    List<Task> findByRelatesToId(Long relatesToId);
 }

@@ -1,0 +1,111 @@
+<section
+  aria-labelledby="interactions-heading"
+  class="rounded-card border border-hairline bg-card p-5 shadow-card"
+>
+  <div class="mb-1 flex items-center justify-between gap-3">
+    <h2 id="interactions-heading" class="m-0 text-[15px] font-bold text-ink">Interactions</h2>
+    <button
+      type="button"
+      (click)="openLog()"
+      class="inline-flex items-center gap-1.5 rounded-[8px] bg-brand px-3 py-2 text-[12.5px] font-semibold text-white hover:bg-brand-hover"
+    >
+      <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg>
+      Log interaction
+    </button>
+  </div>
+
+  <form [formGroup]="filterForm" aria-label="Filter interactions" class="mt-3 flex flex-wrap items-center gap-2">
+    <select
+      aria-label="Type"
+      formControlName="type"
+      (change)="applyFilters()"
+      class="rounded-[7px] border border-hairline bg-card px-2.5 py-1.5 text-[12.5px] font-medium text-ink-strong outline-none focus:border-brand focus:ring-2 focus:ring-brand-tint"
+    >
+      <option [ngValue]="null">All types</option>
+      @for (type of interactionTypes; track type) {
+        <option [ngValue]="type">{{ typeStyle(type).label }}</option>
+      }
+    </select>
+    <select
+      aria-label="Author"
+      formControlName="authorId"
+      (change)="applyFilters()"
+      class="rounded-[7px] border border-hairline bg-card px-2.5 py-1.5 text-[12.5px] font-medium text-ink-strong outline-none focus:border-brand focus:ring-2 focus:ring-brand-tint"
+    >
+      <option [ngValue]="null">All authors</option>
+      @for (author of authors(); track author.id) {
+        <option [ngValue]="author.id">{{ author.firstName }} {{ author.lastName }}</option>
+      }
+    </select>
+    <input
+      type="date"
+      aria-label="Date"
+      formControlName="date"
+      (change)="applyFilters()"
+      class="rounded-[7px] border border-hairline bg-card px-2.5 py-1.5 text-[12.5px] font-medium text-ink-strong outline-none focus:border-brand focus:ring-2 focus:ring-brand-tint"
+    />
+    @if (filtersActive()) {
+      <button type="button" (click)="resetFilters()" class="px-1 text-[12.5px] font-semibold text-brand">Clear</button>
+    }
+  </form>
+
+  @if (loading()) {
+    <p class="py-6 text-center text-sm text-muted" aria-live="polite" aria-busy="true">Loading…</p>
+  } @else if (errorMessage()) {
+    <p class="mt-3 rounded-[8px] bg-[#fdecef] p-3 text-sm text-accent-rose" role="alert" aria-live="polite">{{ errorMessage() }}</p>
+  } @else if (sortedInteractions().length === 0) {
+    <p class="py-5 text-sm text-muted">No interactions logged yet. Use <b class="text-ink-body">Log interaction</b> to start the history.</p>
+  } @else {
+    <ul class="mt-2 flex list-none flex-col p-0" aria-label="Interaction timeline">
+      @for (interaction of sortedInteractions(); track interaction.id) {
+        <li class="flex gap-3 border-t border-hairline-soft py-3.5">
+          <div
+            class="flex h-[30px] w-[30px] flex-none items-center justify-center rounded-full text-[11px] font-semibold text-white"
+            [style.background]="avatarColor(interaction.author.id)"
+            aria-hidden="true"
+          >{{ initials(interaction.author.firstName + ' ' + interaction.author.lastName) }}</div>
+          <div class="min-w-0 flex-1">
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="text-[13px] font-semibold text-ink">{{ interaction.author.firstName }} {{ interaction.author.lastName }}</span>
+              <span
+                class="rounded-[5px] px-1.5 py-0.5 text-[11px] font-semibold"
+                [style.color]="typeStyle(interaction.type).color"
+                [style.background]="typeStyle(interaction.type).bg"
+              >{{ typeStyle(interaction.type).label }}</span>
+              <time class="text-[11.5px] text-muted" [attr.datetime]="interaction.date">{{ formatDate(interaction.date) }}</time>
+              @if (isAuthor(interaction)) {
+                <span class="text-[11px] text-muted">· you</span>
+              }
+            </div>
+            <p class="mt-1.5 whitespace-pre-wrap text-[13.5px] leading-relaxed text-ink-strong">{{ interaction.note }}</p>
+            @if (isAuthor(interaction)) {
+              <div class="mt-2 flex gap-3.5">
+                <button
+                  type="button"
+                  (click)="openEdit(interaction)"
+                  class="border-0 bg-transparent p-0 text-[12.5px] font-semibold text-brand"
+                  [attr.aria-label]="'Edit interaction ' + interaction.id"
+                >Edit</button>
+                <button
+                  type="button"
+                  (click)="deleteInteraction(interaction)"
+                  [disabled]="deletingId() === interaction.id"
+                  class="border-0 bg-transparent p-0 text-[12.5px] font-medium text-muted hover:text-accent-rose disabled:opacity-50"
+                  [attr.aria-label]="'Delete interaction ' + interaction.id"
+                >{{ deletingId() === interaction.id ? 'Deleting…' : 'Delete' }}</button>
+              </div>
+            }
+          </div>
+        </li>
+      }
+    </ul>
+  }
+</section>
+
+<app-interaction-form-modal
+  [open]="logOpen()"
+  [subjectId]="subjectId()"
+  [interaction]="editing()"
+  (saved)="onSaved()"
+  (closed)="closeModal()"
+/>

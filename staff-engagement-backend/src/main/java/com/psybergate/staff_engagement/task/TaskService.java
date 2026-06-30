@@ -16,5 +16,7 @@ public interface TaskService {
 
     List<TaskResponse> getMyTasks(Employee currentEmployee);
 
+    List<TaskResponse> getByRelatesTo(Long employeeId);
+
     TaskResponse updateStatus(Long id, UpdateTaskStatusRequest request, Employee currentEmployee);
 }

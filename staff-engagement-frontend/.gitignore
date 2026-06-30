@@ -47,7 +47,7 @@ __screenshots__/
 
 # Stryker
 /reports
-/.stryker-tmp
+.stryker-tmp/
 
 # System files
 .DS_Store

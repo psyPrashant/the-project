@@ -70,6 +70,15 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public List<TaskResponse> getByRelatesTo(Long employeeId) {
+        return taskRepository.findByRelatesToId(employeeId)
+                .stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
+    @Override
     public TaskResponse updateStatus(Long id, UpdateTaskStatusRequest request, Employee currentEmployee) {
         Task task = taskRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Task not found: " + id));

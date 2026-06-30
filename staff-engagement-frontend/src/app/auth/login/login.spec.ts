@@ -51,7 +51,7 @@ describe('LoginComponent', () => {
     expect(c.form.invalid).toBe(true);
   });
 
-  it('calls the auth service on submit and navigates to /home on success', () => {
+  it('calls the auth service on submit and navigates to /people on success', () => {
     const fixture = TestBed.createComponent(LoginComponent);
     const router = TestBed.inject(Router);
     const navigateSpy = vi.spyOn(router, 'navigateByUrl');
@@ -70,7 +70,7 @@ describe('LoginComponent', () => {
     });
 
     loginSubject.next({ token: 't', employeeId: 1, email: 'a', firstName: 'Admin', lastName: 'User' });
-    expect(navigateSpy).toHaveBeenCalledWith('/home');
+    expect(navigateSpy).toHaveBeenCalledWith('/people');
   });
 
   it('shows an error message on a failed login', () => {

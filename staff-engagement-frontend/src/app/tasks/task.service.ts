@@ -27,6 +27,10 @@ export class TaskService {
     return this.http.get<Task[]>(`${this.baseUrl}/mine`);
   }
 
+  getByEmployee(employeeId: number): Observable<Task[]> {
+    return this.http.get<Task[]>(this.baseUrl, { params: { relatesToId: employeeId } });
+  }
+
   updateStatus(id: number, request: UpdateTaskStatusRequest): Observable<Task> {
     return this.http.patch<Task>(`${this.baseUrl}/${id}/status`, request);
   }
