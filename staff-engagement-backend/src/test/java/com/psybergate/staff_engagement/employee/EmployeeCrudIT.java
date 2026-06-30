@@ -279,4 +279,105 @@ class EmployeeCrudIT extends IntegrationTestBase {
                 result.getResponse().getContentAsString(), EmployeeProfileResponse.class);
         assertThat(profile.archived()).isTrue();
     }
+
+    // PATCH /api/employees/{id}/unarchive
+
+    @Test
+    void unarchive_archiveThenUnarchive_returns200WithArchivedFalse() throws Exception {
+        String email = uniqueEmail();
+        EmployeeProfileResponse created = createEmployee("Unarchive", "Me", email);
+
+        mockMvc.perform(patch("/api/employees/" + created.id() + "/archive")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isNoContent());
+
+        MvcResult result = mockMvc.perform(patch("/api/employees/" + created.id() + "/unarchive")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        EmployeeProfileResponse profile = objectMapper.readValue(
+                result.getResponse().getContentAsString(), EmployeeProfileResponse.class);
+        assertThat(profile.archived()).isFalse();
+        assertThat(profile.email()).isEqualTo(email);
+    }
+
+    @Test
+    void unarchive_unknownId_returns404() throws Exception {
+        mockMvc.perform(patch("/api/employees/999999999/unarchive")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void unarchive_unauthenticated_returns401() throws Exception {
+        mockMvc.perform(patch("/api/employees/1/unarchive"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    // GET /api/employees?includeArchived=true
+
+    @Test
+    void list_includeArchived_containsArchivedEmployee() throws Exception {
+        String email = uniqueEmail();
+        EmployeeProfileResponse created = createEmployee("InclArchived", "Test", email);
+
+        mockMvc.perform(patch("/api/employees/" + created.id() + "/archive")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isNoContent());
+
+        MvcResult result = mockMvc.perform(get("/api/employees")
+                        .param("includeArchived", "true")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        List<EmployeeProfileResponse> list = objectMapper.readValue(
+                result.getResponse().getContentAsString(),
+                new TypeReference<List<EmployeeProfileResponse>>() {});
+        assertThat(list).extracting(EmployeeProfileResponse::email).contains(email);
+    }
+
+    @Test
+    void list_defaultExcludesArchivedEmployee() throws Exception {
+        String email = uniqueEmail();
+        EmployeeProfileResponse created = createEmployee("ExclArchived", "Test", email);
+
+        mockMvc.perform(patch("/api/employees/" + created.id() + "/archive")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isNoContent());
+
+        MvcResult result = mockMvc.perform(get("/api/employees")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        List<EmployeeProfileResponse> list = objectMapper.readValue(
+                result.getResponse().getContentAsString(),
+                new TypeReference<List<EmployeeProfileResponse>>() {});
+        assertThat(list).extracting(EmployeeProfileResponse::email).doesNotContain(email);
+    }
+
+    @Test
+    void search_includeArchived_findsArchivedEmployeeByName() throws Exception {
+        String uniqueFirst = "Zarchived" + UUID.randomUUID().toString().replace("-", "").substring(0, 6);
+        String email = uniqueEmail();
+        EmployeeProfileResponse created = createEmployee(uniqueFirst, "ArchivedSearch", email);
+
+        mockMvc.perform(patch("/api/employees/" + created.id() + "/archive")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isNoContent());
+
+        MvcResult result = mockMvc.perform(get("/api/employees")
+                        .param("search", uniqueFirst)
+                        .param("includeArchived", "true")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        List<EmployeeProfileResponse> list = objectMapper.readValue(
+                result.getResponse().getContentAsString(),
+                new TypeReference<List<EmployeeProfileResponse>>() {});
+        assertThat(list).extracting(EmployeeProfileResponse::email).contains(email);
+    }
 }

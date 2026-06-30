@@ -22,4 +22,9 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
 			"(LOWER(e.firstName) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
 			"LOWER(e.lastName) LIKE LOWER(CONCAT('%', :query, '%')))")
 	List<Employee> searchActiveByName(@Param("query") String query);
+
+	@Query("SELECT e FROM Employee e WHERE " +
+			"LOWER(e.firstName) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
+			"LOWER(e.lastName) LIKE LOWER(CONCAT('%', :query, '%'))")
+	List<Employee> searchAllByName(@Param("query") String query);
 }

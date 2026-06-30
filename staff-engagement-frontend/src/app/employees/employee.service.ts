@@ -10,9 +10,11 @@ export class EmployeeService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = `${environment.apiUrl}/employees`;
 
-  getAll(search?: string): Observable<EmployeeProfileResponse[]> {
-    const params = search ? new HttpParams().set('search', search) : undefined;
-    return this.http.get<EmployeeProfileResponse[]>(this.baseUrl, { params });
+  getAll(search?: string, includeArchived?: boolean): Observable<EmployeeProfileResponse[]> {
+    let params = new HttpParams();
+    if (search) params = params.set('search', search);
+    if (includeArchived) params = params.set('includeArchived', 'true');
+    return this.http.get<EmployeeProfileResponse[]>(this.baseUrl, { params: params.keys().length ? params : undefined });
   }
 
   getProfile(id: number): Observable<EmployeeProfileResponse> {
@@ -29,5 +31,9 @@ export class EmployeeService {
 
   archive(id: number): Observable<void> {
     return this.http.patch<void>(`${this.baseUrl}/${id}/archive`, null);
+  }
+
+  unarchive(id: number): Observable<EmployeeProfileResponse> {
+    return this.http.patch<EmployeeProfileResponse>(`${this.baseUrl}/${id}/unarchive`, null);
   }
 }

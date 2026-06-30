@@ -21,6 +21,7 @@ const emptyPortfolio = { employeeId: 1, education: [], projects: [], links: [] }
 type ProfileInstance = {
   employee(): EmployeeProfileResponse | null;
   archive(): void;
+  unarchive(): void;
 };
 
 describe('EmployeeProfileComponent', () => {
@@ -30,7 +31,8 @@ describe('EmployeeProfileComponent', () => {
     serviceSpy = {
       getProfile: vi.fn().mockReturnValue(of(mockEmployee)),
       getAll: vi.fn().mockReturnValue(of([mockEmployee])),
-      archive: vi.fn().mockReturnValue(of(undefined))
+      archive: vi.fn().mockReturnValue(of(undefined)),
+      unarchive: vi.fn().mockReturnValue(of({ ...mockEmployee, archived: false }))
     };
 
     TestBed.configureTestingModule({
@@ -84,7 +86,49 @@ describe('EmployeeProfileComponent', () => {
     const fixture = TestBed.createComponent(EmployeeProfileComponent);
     fixture.detectChanges();
     const buttons = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('button'));
-    const archiveButton = buttons.find(b => b.textContent?.trim().startsWith('Archive'));
+    const archiveButton = buttons.find(b => b.textContent?.trim() === 'Archive');
     expect(archiveButton).toBeUndefined();
+  });
+
+  it('shows Unarchive button when employee is archived', () => {
+    (serviceSpy.getProfile as ReturnType<typeof vi.fn>).mockReturnValue(
+      of({ ...mockEmployee, archived: true })
+    );
+    const fixture = TestBed.createComponent(EmployeeProfileComponent);
+    fixture.detectChanges();
+    const buttons = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('button'));
+    const unarchiveButton = buttons.find(b => b.textContent?.trim() === 'Unarchive');
+    expect(unarchiveButton).toBeTruthy();
+  });
+
+  it('hides Unarchive button when employee is active', () => {
+    const fixture = TestBed.createComponent(EmployeeProfileComponent);
+    fixture.detectChanges();
+    const buttons = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('button'));
+    const unarchiveButton = buttons.find(b => b.textContent?.trim() === 'Unarchive');
+    expect(unarchiveButton).toBeUndefined();
+  });
+
+  it('calls unarchive() on the service and reflects active state', () => {
+    (serviceSpy.getProfile as ReturnType<typeof vi.fn>).mockReturnValue(
+      of({ ...mockEmployee, archived: true })
+    );
+    const fixture = TestBed.createComponent(EmployeeProfileComponent);
+    fixture.detectChanges();
+    const c = fixture.componentInstance as unknown as ProfileInstance;
+
+    c.unarchive();
+
+    expect(serviceSpy.unarchive).toHaveBeenCalledWith(1);
+    expect(c.employee()?.archived).toBe(false);
+  });
+
+  it('Archive and Unarchive buttons are mutually exclusive', () => {
+    const fixture = TestBed.createComponent(EmployeeProfileComponent);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    const buttons = Array.from(el.querySelectorAll('button')).map(b => b.textContent?.trim());
+    expect(buttons).toContain('Archive');
+    expect(buttons).not.toContain('Unarchive');
   });
 });

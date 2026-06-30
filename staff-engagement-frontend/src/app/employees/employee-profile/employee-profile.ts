@@ -49,6 +49,7 @@ export class EmployeeProfileComponent {
   protected readonly loading = signal(true);
   protected readonly loadError = signal<string | null>(null);
   protected readonly archiving = signal(false);
+  protected readonly unarchiving = signal(false);
   protected readonly editOpen = signal(false);
 
   protected readonly portfolio = signal<PortfolioResponse | null>(null);
@@ -99,6 +100,23 @@ export class EmployeeProfileComponent {
           this.archiving.set(false);
         },
         error: () => this.archiving.set(false)
+      });
+  }
+
+  protected unarchive(): void {
+    const emp = this.employee();
+    if (!emp || this.unarchiving()) {
+      return;
+    }
+    this.unarchiving.set(true);
+    this.employeeService.unarchive(emp.id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: updated => {
+          this.employee.set(updated);
+          this.unarchiving.set(false);
+        },
+        error: () => this.unarchiving.set(false)
       });
   }
 
