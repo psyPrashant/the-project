@@ -16,6 +16,7 @@ import com.psybergate.staff_engagement.interaction.dto.InteractionResponseDto;
 import com.psybergate.staff_engagement.task.dto.CreateStandaloneTaskRequest;
 import com.psybergate.staff_engagement.task.dto.CreateTaskFromInteractionRequest;
 import com.psybergate.staff_engagement.task.dto.TaskResponse;
+import com.psybergate.staff_engagement.task.dto.UpdateTaskRequest;
 import com.psybergate.staff_engagement.task.dto.UpdateTaskStatusRequest;
 import jakarta.persistence.EntityNotFoundException;
 import java.time.LocalDate;
@@ -235,6 +236,92 @@ class TaskServiceImplTest {
         when(taskRepository.findById(999L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> taskService.updateStatus(999L, new UpdateTaskStatusRequest(TaskStatus.DONE), creator))
+                .isInstanceOf(EntityNotFoundException.class);
+    }
+
+    // update()
+
+    @Test
+    void update_byCreator_updatesFields() {
+        Task task = savedTask(1L, subject, creator, null);
+        when(taskRepository.findById(1L)).thenReturn(Optional.of(task));
+        when(taskRepository.save(any(Task.class))).thenReturn(task);
+        lenient().when(employeeService.toResponse(subject)).thenReturn(subjectResponse);
+        lenient().when(employeeService.toResponse(creator)).thenReturn(creatorResponse);
+
+        UpdateTaskRequest request = new UpdateTaskRequest("New title", "New desc", null, null);
+        TaskResponse result = taskService.update(1L, request, creator);
+
+        assertThat(result.title()).isEqualTo("New title");
+    }
+
+    @Test
+    void update_bySubject_updatesFields() {
+        Task task = savedTask(1L, subject, creator, null);
+        when(taskRepository.findById(1L)).thenReturn(Optional.of(task));
+        when(taskRepository.save(any(Task.class))).thenReturn(task);
+        lenient().when(employeeService.toResponse(subject)).thenReturn(subjectResponse);
+        lenient().when(employeeService.toResponse(creator)).thenReturn(creatorResponse);
+
+        UpdateTaskRequest request = new UpdateTaskRequest("Subject edit", null, null, null);
+        TaskResponse result = taskService.update(1L, request, subject);
+
+        assertThat(result.title()).isEqualTo("Subject edit");
+    }
+
+    @Test
+    void update_byUnrelatedEmployee_throwsForbiddenOperationException() {
+        Task task = savedTask(1L, subject, creator, null);
+        when(taskRepository.findById(1L)).thenReturn(Optional.of(task));
+
+        assertThatThrownBy(() -> taskService.update(1L, new UpdateTaskRequest("X", null, null, null), unrelated))
+                .isInstanceOf(ForbiddenOperationException.class);
+    }
+
+    @Test
+    void update_nonExistentTask_throwsEntityNotFoundException() {
+        when(taskRepository.findById(999L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> taskService.update(999L, new UpdateTaskRequest("X", null, null, null), creator))
+                .isInstanceOf(EntityNotFoundException.class);
+    }
+
+    // delete()
+
+    @Test
+    void delete_byCreator_deletesTask() {
+        Task task = savedTask(1L, subject, creator, null);
+        when(taskRepository.findById(1L)).thenReturn(Optional.of(task));
+
+        taskService.delete(1L, creator);
+
+        org.mockito.Mockito.verify(taskRepository).delete(task);
+    }
+
+    @Test
+    void delete_bySubjectWhoIsNotCreator_throwsForbiddenOperationException() {
+        Task task = savedTask(1L, subject, creator, null);
+        when(taskRepository.findById(1L)).thenReturn(Optional.of(task));
+
+        assertThatThrownBy(() -> taskService.delete(1L, subject))
+                .isInstanceOf(ForbiddenOperationException.class)
+                .hasMessageContaining("creator");
+    }
+
+    @Test
+    void delete_byUnrelatedEmployee_throwsForbiddenOperationException() {
+        Task task = savedTask(1L, subject, creator, null);
+        when(taskRepository.findById(1L)).thenReturn(Optional.of(task));
+
+        assertThatThrownBy(() -> taskService.delete(1L, unrelated))
+                .isInstanceOf(ForbiddenOperationException.class);
+    }
+
+    @Test
+    void delete_nonExistentTask_throwsEntityNotFoundException() {
+        when(taskRepository.findById(999L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> taskService.delete(999L, creator))
                 .isInstanceOf(EntityNotFoundException.class);
     }
 }

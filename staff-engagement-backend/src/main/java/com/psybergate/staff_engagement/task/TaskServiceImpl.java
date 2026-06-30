@@ -8,6 +8,7 @@ import com.psybergate.staff_engagement.interaction.dto.InteractionResponseDto;
 import com.psybergate.staff_engagement.task.dto.CreateStandaloneTaskRequest;
 import com.psybergate.staff_engagement.task.dto.CreateTaskFromInteractionRequest;
 import com.psybergate.staff_engagement.task.dto.TaskResponse;
+import com.psybergate.staff_engagement.task.dto.UpdateTaskRequest;
 import com.psybergate.staff_engagement.task.dto.UpdateTaskStatusRequest;
 import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
@@ -91,6 +92,37 @@ public class TaskServiceImpl implements TaskService {
 
         task.setStatus(request.status());
         return toResponse(taskRepository.save(task));
+    }
+
+    @Override
+    public TaskResponse update(Long id, UpdateTaskRequest request, Employee currentEmployee) {
+        Task task = taskRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Task not found: " + id));
+
+        boolean isSubject = task.getRelatesTo().getId().equals(currentEmployee.getId());
+        boolean isCreator = task.getCreatedBy().getId().equals(currentEmployee.getId());
+        if (!isSubject && !isCreator) {
+            throw new ForbiddenOperationException("Only the task subject or creator may edit it");
+        }
+
+        task.setTitle(request.title());
+        task.setDescription(request.description());
+        task.setDueDate(request.dueDate());
+        task.setAssignee(resolveAssignee(request.assigneeId()));
+        return toResponse(taskRepository.save(task));
+    }
+
+    @Override
+    @Transactional
+    public void delete(Long id, Employee currentEmployee) {
+        Task task = taskRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Task not found: " + id));
+
+        if (!task.getCreatedBy().getId().equals(currentEmployee.getId())) {
+            throw new ForbiddenOperationException("Only the task creator may delete it");
+        }
+
+        taskRepository.delete(task);
     }
 
     private Employee resolveAssignee(Long assigneeId) {

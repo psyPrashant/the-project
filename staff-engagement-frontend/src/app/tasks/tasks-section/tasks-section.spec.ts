@@ -7,6 +7,7 @@ import { vi, beforeEach, describe, it, expect } from 'vitest';
 import { TasksSectionComponent } from './tasks-section';
 import { TaskService } from '../task.service';
 import { AuthService } from '../../auth/auth.service';
+import { EmployeeService } from '../../employees/employee.service';
 import { Task } from '../task.models';
 
 const currentUserId = 1;
@@ -38,13 +39,26 @@ const doneTask: Task = {
 };
 
 describe('TasksSectionComponent', () => {
-  let taskService: { getByEmployee: ReturnType<typeof vi.fn>; updateStatus: ReturnType<typeof vi.fn> };
+  let taskService: {
+    getByEmployee: ReturnType<typeof vi.fn>;
+    updateStatus: ReturnType<typeof vi.fn>;
+    update: ReturnType<typeof vi.fn>;
+    delete: ReturnType<typeof vi.fn>;
+    createStandalone: ReturnType<typeof vi.fn>;
+    canEdit: ReturnType<typeof vi.fn>;
+    canDelete: ReturnType<typeof vi.fn>;
+  };
   const currentUser = signal(currentUserEmployee);
 
   beforeEach(() => {
     taskService = {
       getByEmployee: vi.fn().mockReturnValue(of([openTaskByMe, openTaskByOther, doneTask])),
-      updateStatus: vi.fn().mockReturnValue(of({ ...openTaskByMe, status: 'DONE' }))
+      updateStatus: vi.fn().mockReturnValue(of({ ...openTaskByMe, status: 'DONE' })),
+      update: vi.fn().mockReturnValue(of(openTaskByMe)),
+      delete: vi.fn().mockReturnValue(of(undefined)),
+      createStandalone: vi.fn().mockReturnValue(of(openTaskByMe)),
+      canEdit: vi.fn((task, user) => user !== null && (task.createdBy.id === user.id || task.relatesTo.id === user.id)),
+      canDelete: vi.fn((task, user) => user !== null && task.createdBy.id === user.id)
     };
 
     TestBed.configureTestingModule({
@@ -52,7 +66,8 @@ describe('TasksSectionComponent', () => {
       providers: [
         provideRouter([]),
         { provide: TaskService, useValue: taskService },
-        { provide: AuthService, useValue: { currentUser, loadCurrentUser: vi.fn().mockReturnValue(of(currentUserEmployee)) } }
+        { provide: AuthService, useValue: { currentUser, loadCurrentUser: vi.fn().mockReturnValue(of(currentUserEmployee)) } },
+        { provide: EmployeeService, useValue: { getAll: vi.fn().mockReturnValue(of([])) } }
       ]
     });
   });
@@ -126,5 +141,81 @@ describe('TasksSectionComponent', () => {
     const el: HTMLElement = fixture.nativeElement;
     expect(el.textContent).toContain('Other User');
     expect(el.textContent).toContain('2026-12-31');
+  });
+
+  it('shows Reopen button on done tasks the current user can update', async () => {
+    const fixture = createFixture();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const el: HTMLElement = fixture.nativeElement;
+    const reopenBtn = el.querySelector('[aria-label="Reopen task: Done task"]');
+    expect(reopenBtn).toBeTruthy();
+  });
+
+  it('reopenTask() calls updateStatus with OPEN', async () => {
+    const reopened: Task = { ...doneTask, status: 'OPEN' };
+    taskService.updateStatus.mockReturnValue(of(reopened));
+    const fixture = createFixture();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (fixture.componentInstance as any).reopenTask(doneTask);
+    await fixture.whenStable();
+
+    expect(taskService.updateStatus).toHaveBeenCalledWith(doneTask.id, { status: 'OPEN' });
+  });
+
+  it('shows edit button only for tasks the current user can edit', async () => {
+    const fixture = createFixture();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const el: HTMLElement = fixture.nativeElement;
+    const editBtns: NodeListOf<HTMLButtonElement> = el.querySelectorAll('button[aria-label^="Edit task"]');
+    const labels = Array.from(editBtns).map(b => b.getAttribute('aria-label'));
+    expect(labels).toContain('Edit task: My open task');
+    expect(labels).not.toContain('Edit task: Someone else task');
+  });
+
+  it('shows delete button only for tasks the current user created', async () => {
+    const fixture = createFixture();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const el: HTMLElement = fixture.nativeElement;
+    const deleteBtns: NodeListOf<HTMLButtonElement> = el.querySelectorAll('button[aria-label^="Delete task"]');
+    const labels = Array.from(deleteBtns).map(b => b.getAttribute('aria-label'));
+    expect(labels).toContain('Delete task: My open task');
+    expect(labels).not.toContain('Delete task: Someone else task');
+  });
+
+  it('deleteTask() calls taskService.delete and removes task from list', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    taskService.getByEmployee.mockReturnValue(of([openTaskByMe]));
+    const fixture = createFixture();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (fixture.componentInstance as any).deleteTask(openTaskByMe);
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(taskService.delete).toHaveBeenCalledWith(openTaskByMe.id);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    expect((fixture.componentInstance as any).openTasks()).toHaveLength(0);
+  });
+
+  it('deleteTask() does nothing when user cancels confirm', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(false);
+    const fixture = createFixture();
+    await fixture.whenStable();
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (fixture.componentInstance as any).deleteTask(openTaskByMe);
+
+    expect(taskService.delete).not.toHaveBeenCalled();
   });
 });
