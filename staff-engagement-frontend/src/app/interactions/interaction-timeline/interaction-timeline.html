@@ -85,6 +85,13 @@
                   </span>
                   <time class="text-sm text-gray-500" [attr.datetime]="interaction.date">{{ formatDate(interaction.date) }}</time>
                 </div>
+                <div class="flex items-center gap-2">
+                  <button type="button" (click)="createTaskFromInteraction(interaction)"
+                          class="rounded-md bg-white px-2.5 py-1.5 text-xs font-semibold text-indigo-600 border border-indigo-200 hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                          [attr.aria-label]="'Create follow-up task for interaction ' + interaction.id">
+                    Create task
+                  </button>
+                </div>
                 @if (isAuthor(interaction)) {
                   <div class="flex items-center gap-2">
                     <button type="button" (click)="editInteraction(interaction)"

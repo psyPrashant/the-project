@@ -52,5 +52,20 @@ export const routes: Routes = [
     path: 'interactions/:id/edit',
     canActivate: [authGuard],
     loadComponent: () => import('./interactions/interaction-form/interaction-form').then(m => m.InteractionFormComponent)
+  },
+  {
+    path: 'interactions/:id/create-task',
+    canActivate: [authGuard],
+    loadComponent: () => import('./tasks/create-task-from-interaction/create-task-from-interaction').then(m => m.CreateTaskFromInteractionComponent)
+  },
+  {
+    path: 'tasks/mine',
+    canActivate: [authGuard],
+    loadComponent: () => import('./tasks/my-tasks/my-tasks').then(m => m.MyTasksComponent)
+  },
+  {
+    path: 'tasks/new',
+    canActivate: [authGuard],
+    loadComponent: () => import('./tasks/create-task/create-task').then(m => m.CreateTaskComponent)
   }
 ];

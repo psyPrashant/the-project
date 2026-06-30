@@ -14,6 +14,7 @@ public class HookSteps {
     @Before
     public void cleanTestData() {
         JdbcTemplate jdbc = new JdbcTemplate(dataSource);
+        jdbc.update("DELETE FROM tasks");
         jdbc.update("DELETE FROM interactions");
         jdbc.update("DELETE FROM portfolio_education");
         jdbc.update("DELETE FROM portfolio_projects");

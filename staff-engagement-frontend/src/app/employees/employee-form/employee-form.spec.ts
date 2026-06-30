@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, ActivatedRoute, Router } from '@angular/router';
-import { of } from 'rxjs';
+import { of, Subject } from 'rxjs';
 import { vi } from 'vitest';
 
 import { EmployeeFormComponent } from './employee-form';
@@ -64,6 +64,88 @@ describe('EmployeeFormComponent — create mode', () => {
     const c = TestBed.createComponent(EmployeeFormComponent).componentInstance as unknown as FormInstance;
     expect(c.isEdit()).toBe(false);
   });
+
+  it('submitting starts as false', () => {
+    const c = TestBed.createComponent(EmployeeFormComponent).componentInstance as unknown as { submitting: () => boolean };
+    expect(c.submitting()).toBe(false);
+  });
+
+  it('navigates to the employee profile after a successful create', async () => {
+    const fixture = TestBed.createComponent(EmployeeFormComponent);
+    const navigateSpy = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    const c = fixture.componentInstance as unknown as FormInstance;
+    c.form.setValue({ firstName: 'Alice', lastName: 'Smith', email: 'alice@example.com', jobTitle: '', department: '', phone: '' });
+    c.onSubmit();
+    await fixture.whenStable();
+    expect(navigateSpy).toHaveBeenCalledWith(['/employees', mockEmployee.id]);
+  });
+
+  it('passes a non-empty jobTitle through to the service', () => {
+    vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    const c = TestBed.createComponent(EmployeeFormComponent).componentInstance as unknown as FormInstance;
+    c.form.setValue({ firstName: 'Alice', lastName: 'Smith', email: 'alice@example.com', jobTitle: 'Engineer', department: '', phone: '' });
+    c.onSubmit();
+    expect(serviceSpy.create).toHaveBeenCalledWith(expect.objectContaining({ jobTitle: 'Engineer' }));
+  });
+
+  it('maps an empty jobTitle to undefined before calling the service', () => {
+    vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    const c = TestBed.createComponent(EmployeeFormComponent).componentInstance as unknown as FormInstance;
+    c.form.setValue({ firstName: 'Alice', lastName: 'Smith', email: 'alice@example.com', jobTitle: '', department: '', phone: '' });
+    c.onSubmit();
+    expect(serviceSpy.create).toHaveBeenCalledWith(expect.objectContaining({ jobTitle: undefined }));
+  });
+
+  it('maps an empty department to undefined before calling the service', () => {
+    vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    const c = TestBed.createComponent(EmployeeFormComponent).componentInstance as unknown as FormInstance;
+    c.form.setValue({ firstName: 'Alice', lastName: 'Smith', email: 'alice@example.com', jobTitle: '', department: '', phone: '' });
+    c.onSubmit();
+    expect(serviceSpy.create).toHaveBeenCalledWith(expect.objectContaining({ department: undefined }));
+  });
+
+  it('passes non-empty phone through to the service', () => {
+    vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    const c = TestBed.createComponent(EmployeeFormComponent).componentInstance as unknown as FormInstance;
+    c.form.setValue({ firstName: 'Alice', lastName: 'Smith', email: 'alice@example.com', jobTitle: '', department: '', phone: '555-1234' });
+    c.onSubmit();
+    expect(serviceSpy.create).toHaveBeenCalledWith(expect.objectContaining({ phone: '555-1234' }));
+  });
+
+  it('maps empty phone to undefined before calling the service', () => {
+    vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    const c = TestBed.createComponent(EmployeeFormComponent).componentInstance as unknown as FormInstance;
+    c.form.setValue({ firstName: 'Alice', lastName: 'Smith', email: 'alice@example.com', jobTitle: '', department: '', phone: '' });
+    c.onSubmit();
+    expect(serviceSpy.create).toHaveBeenCalledWith(expect.objectContaining({ phone: undefined }));
+  });
+
+  it('does not call create() when the form is invalid', () => {
+    const c = TestBed.createComponent(EmployeeFormComponent).componentInstance as unknown as FormInstance;
+    c.onSubmit();
+    expect(serviceSpy.create).not.toHaveBeenCalled();
+  });
+
+  it('sets submitting to true while the request is in flight and false on success', async () => {
+    const subject = new Subject<typeof mockEmployee>();
+    (serviceSpy.create as ReturnType<typeof vi.fn>).mockReturnValue(subject.asObservable());
+
+    const fixture = TestBed.createComponent(EmployeeFormComponent);
+    vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+
+    const c = fixture.componentInstance as unknown as FormInstance;
+    c.form.setValue({ firstName: 'Alice', lastName: 'Smith', email: 'alice@example.com', jobTitle: '', department: '', phone: '' });
+    c.onSubmit();
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    expect((fixture.componentInstance as any)['submitting']()).toBe(true);
+
+    subject.next(mockEmployee);
+    await fixture.whenStable();
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    expect((fixture.componentInstance as any)['submitting']()).toBe(false);
+  });
 });
 
 describe('EmployeeFormComponent — edit mode', () => {
@@ -104,5 +186,14 @@ describe('EmployeeFormComponent — edit mode', () => {
   it('isEdit() returns true in edit mode', () => {
     const c = TestBed.createComponent(EmployeeFormComponent).componentInstance as unknown as FormInstance;
     expect(c.isEdit()).toBe(true);
+  });
+
+  it('navigates to the employee profile after a successful update', async () => {
+    const fixture = TestBed.createComponent(EmployeeFormComponent);
+    const navigateSpy = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    const c = fixture.componentInstance as unknown as FormInstance;
+    c.onSubmit();
+    await fixture.whenStable();
+    expect(navigateSpy).toHaveBeenCalledWith(['/employees', mockEmployee.id]);
   });
 });

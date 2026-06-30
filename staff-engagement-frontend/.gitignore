@@ -45,8 +45,9 @@ __screenshots__/
 /blob-report
 /playwright/.cache
 
-# Mutation testing reports
+# Stryker
 /reports
+/.stryker-tmp
 
 # System files
 .DS_Store
