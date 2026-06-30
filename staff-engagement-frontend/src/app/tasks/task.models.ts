@@ -40,3 +40,10 @@ export interface CreateStandaloneTaskRequest {
 export interface UpdateTaskStatusRequest {
   status: TaskStatus;
 }
+
+export interface UpdateTaskRequest {
+  title: string;
+  description?: string;
+  dueDate?: string;
+  assigneeId?: number;
+}

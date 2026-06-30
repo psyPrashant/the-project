@@ -7,6 +7,7 @@ import {
   CreateStandaloneTaskRequest,
   CreateTaskFromInteractionRequest,
   Task,
+  UpdateTaskRequest,
   UpdateTaskStatusRequest
 } from './task.models';
 
@@ -33,5 +34,13 @@ export class TaskService {
 
   updateStatus(id: number, request: UpdateTaskStatusRequest): Observable<Task> {
     return this.http.patch<Task>(`${this.baseUrl}/${id}/status`, request);
+  }
+
+  update(id: number, request: UpdateTaskRequest): Observable<Task> {
+    return this.http.put<Task>(`${this.baseUrl}/${id}`, request);
+  }
+
+  delete(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/${id}`);
   }
 }

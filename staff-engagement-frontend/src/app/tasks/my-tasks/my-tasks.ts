@@ -1,30 +1,91 @@
 import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { RouterLink } from '@angular/router';
 
+import { AuthService } from '../../auth/auth.service';
 import { TaskService } from '../task.service';
 import { Task } from '../task.models';
+import { TaskEditModalComponent } from '../task-edit-modal/task-edit-modal';
+import { CreateTaskModalComponent } from '../create-task-modal/create-task-modal';
 
 @Component({
   selector: 'app-my-tasks',
-  imports: [RouterLink],
+  imports: [TaskEditModalComponent, CreateTaskModalComponent],
   templateUrl: './my-tasks.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class MyTasksComponent {
   private readonly taskService = inject(TaskService);
+  private readonly authService = inject(AuthService);
   private readonly destroyRef = inject(DestroyRef);
+
+  protected readonly currentUser = this.authService.currentUser;
 
   protected readonly tasks = signal<Task[]>([]);
   protected readonly loading = signal(true);
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly markingDoneId = signal<number | null>(null);
+  protected readonly reopeningId = signal<number | null>(null);
+  protected readonly editingTask = signal<Task | null>(null);
+  protected readonly createModalOpen = signal(false);
+  protected readonly deletingId = signal<number | null>(null);
 
   protected readonly openTasks = computed(() => this.tasks().filter(t => t.status === 'OPEN'));
   protected readonly doneTasks = computed(() => this.tasks().filter(t => t.status === 'DONE'));
 
   constructor() {
+    if (this.currentUser() === null) {
+      this.authService.loadCurrentUser()
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({ error: () => { /* best-effort */ } });
+    }
     this.loadTasks();
+  }
+
+  protected canEdit(task: Task): boolean {
+    const user = this.currentUser();
+    if (user === null) return false;
+    return task.createdBy.id === user.id || task.relatesTo.id === user.id;
+  }
+
+  protected isCreator(task: Task): boolean {
+    const user = this.currentUser();
+    return user !== null && task.createdBy.id === user.id;
+  }
+
+  protected deleteTask(task: Task): void {
+    if (!confirm(`Delete task "${task.title}"?`)) return;
+    this.deletingId.set(task.id);
+    this.errorMessage.set(null);
+    this.taskService.delete(task.id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.tasks.update(list => list.filter(t => t.id !== task.id));
+          this.deletingId.set(null);
+        },
+        error: () => {
+          this.deletingId.set(null);
+          this.errorMessage.set('Failed to delete task. Please try again.');
+        }
+      });
+  }
+
+  protected onTaskCreated(task: Task): void {
+    this.tasks.update(list => [task, ...list]);
+    this.createModalOpen.set(false);
+  }
+
+  protected openEditModal(task: Task): void {
+    this.editingTask.set(task);
+  }
+
+  protected closeEditModal(): void {
+    this.editingTask.set(null);
+  }
+
+  protected onTaskEdited(updated: Task): void {
+    this.tasks.update(list => list.map(t => t.id === updated.id ? updated : t));
+    this.editingTask.set(null);
   }
 
   private loadTasks(): void {
@@ -40,6 +101,23 @@ export class MyTasksComponent {
         error: () => {
           this.loading.set(false);
           this.errorMessage.set('Failed to load tasks. Please try again.');
+        }
+      });
+  }
+
+  protected reopenTask(task: Task): void {
+    this.reopeningId.set(task.id);
+    this.errorMessage.set(null);
+    this.taskService.updateStatus(task.id, { status: 'OPEN' })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: updated => {
+          this.tasks.update(list => list.map(t => t.id === updated.id ? updated : t));
+          this.reopeningId.set(null);
+        },
+        error: () => {
+          this.reopeningId.set(null);
+          this.errorMessage.set('Failed to reopen task. Please try again.');
         }
       });
   }
