@@ -47,13 +47,17 @@ export class CreateTaskModalComponent {
     assigneeId: new FormControl<number | null>(null)
   });
 
-  constructor() {
-    this.employeeService.getAll()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({ next: list => this.employees.set(list) });
+  private employeesLoaded = false;
 
+  constructor() {
     effect(() => {
       if (!this.open()) return;
+      if (!this.employeesLoaded) {
+        this.employeesLoaded = true;
+        this.employeeService.getAll()
+          .pipe(takeUntilDestroyed(this.destroyRef))
+          .subscribe({ next: list => this.employees.set(list) });
+      }
       this.errorMessage.set(null);
       this.submitting.set(false);
       const prefilledId = this.relatesToId() ?? null;

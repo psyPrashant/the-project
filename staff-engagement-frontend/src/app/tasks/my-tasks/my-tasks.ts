@@ -42,14 +42,11 @@ export class MyTasksComponent {
   }
 
   protected canEdit(task: Task): boolean {
-    const user = this.currentUser();
-    if (user === null) return false;
-    return task.createdBy.id === user.id || task.relatesTo.id === user.id;
+    return this.taskService.canEdit(task, this.currentUser());
   }
 
   protected isCreator(task: Task): boolean {
-    const user = this.currentUser();
-    return user !== null && task.createdBy.id === user.id;
+    return this.taskService.canDelete(task, this.currentUser());
   }
 
   protected deleteTask(task: Task): void {

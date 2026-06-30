@@ -43,4 +43,14 @@ export class TaskService {
   delete(id: number): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/${id}`);
   }
+
+  canEdit(task: Task, user: { id: number } | null): boolean {
+    if (!user) return false;
+    return task.createdBy.id === user.id || task.relatesTo.id === user.id;
+  }
+
+  canDelete(task: Task, user: { id: number } | null): boolean {
+    if (!user) return false;
+    return task.createdBy.id === user.id;
+  }
 }

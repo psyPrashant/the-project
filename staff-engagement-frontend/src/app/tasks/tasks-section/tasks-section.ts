@@ -78,14 +78,11 @@ export class TasksSectionComponent {
   }
 
   protected canEdit(task: Task): boolean {
-    const user = this.currentUser();
-    if (user === null) return false;
-    return task.createdBy.id === user.id || task.relatesTo.id === user.id;
+    return this.taskService.canEdit(task, this.currentUser());
   }
 
   protected isCreator(task: Task): boolean {
-    const user = this.currentUser();
-    return user !== null && task.createdBy.id === user.id;
+    return this.taskService.canDelete(task, this.currentUser());
   }
 
   protected deleteTask(task: Task): void {
@@ -107,7 +104,7 @@ export class TasksSectionComponent {
   }
 
   protected onTaskCreated(task: Task): void {
-    this.tasks.update(list => [...list, task]);
+    this.tasks.update(list => [task, ...list]);
     this.createModalOpen.set(false);
   }
 
@@ -125,9 +122,7 @@ export class TasksSectionComponent {
   }
 
   protected canMarkDone(task: Task): boolean {
-    const user = this.currentUser();
-    if (user === null) return false;
-    return task.createdBy.id === user.id || task.relatesTo.id === user.id;
+    return this.taskService.canEdit(task, this.currentUser());
   }
 
   protected reopenTask(task: Task): void {

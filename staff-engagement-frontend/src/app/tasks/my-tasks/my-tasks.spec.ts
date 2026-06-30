@@ -44,6 +44,8 @@ describe('MyTasksComponent', () => {
     update: ReturnType<typeof vi.fn>;
     delete: ReturnType<typeof vi.fn>;
     createStandalone: ReturnType<typeof vi.fn>;
+    canEdit: ReturnType<typeof vi.fn>;
+    canDelete: ReturnType<typeof vi.fn>;
   };
   const currentUser = signal(mockEmployee);
 
@@ -53,7 +55,9 @@ describe('MyTasksComponent', () => {
       updateStatus: vi.fn().mockReturnValue(of({ ...openTask, status: 'DONE' })),
       update: vi.fn().mockReturnValue(of(openTask)),
       delete: vi.fn().mockReturnValue(of(undefined)),
-      createStandalone: vi.fn().mockReturnValue(of(openTask))
+      createStandalone: vi.fn().mockReturnValue(of(openTask)),
+      canEdit: vi.fn((task, user) => user !== null && (task.createdBy.id === user.id || task.relatesTo.id === user.id)),
+      canDelete: vi.fn((task, user) => user !== null && task.createdBy.id === user.id)
     };
 
     TestBed.configureTestingModule({

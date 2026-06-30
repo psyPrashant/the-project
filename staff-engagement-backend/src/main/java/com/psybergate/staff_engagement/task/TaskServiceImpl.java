@@ -113,6 +113,7 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
+    @Transactional
     public void delete(Long id, Employee currentEmployee) {
         Task task = taskRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Task not found: " + id));
