@@ -25,7 +25,6 @@ import com.psybergate.staff_engagement.portfolio.dto.ShowcaseLinkResponse;
 import com.psybergate.staff_engagement.portfolio.dto.UpdateEducationRequest;
 import com.psybergate.staff_engagement.portfolio.dto.UpdateProjectRequest;
 import com.psybergate.staff_engagement.portfolio.dto.UpdateShowcaseLinkRequest;
-import com.psybergate.staff_engagement.skills.SkillService;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.util.List;
@@ -45,9 +44,6 @@ class PortfolioControllerTest {
 
     @Mock
     private PortfolioService portfolioService;
-
-    @Mock
-    private SkillService skillService;
 
     @InjectMocks
     private PortfolioController portfolioController;
@@ -78,7 +74,7 @@ class PortfolioControllerTest {
         ShowcaseLinkResponse link = new ShowcaseLinkResponse(LINK_ID, EMPLOYEE_ID, "GitHub",
                 "https://github.com/example", 1);
         PortfolioResponse portfolio = new PortfolioResponse(EMPLOYEE_ID,
-                List.of(education), List.of(project), List.of(link), List.of());
+                List.of(education), List.of(project), List.of(link));
 
         when(portfolioService.getPortfolio(EMPLOYEE_ID)).thenReturn(portfolio);
 

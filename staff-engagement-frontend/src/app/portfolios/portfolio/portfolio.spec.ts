@@ -9,6 +9,7 @@ import { PortfolioResponse } from '../portfolio.models';
 import { EducationSectionComponent } from '../education-section/education-section';
 import { ProjectSectionComponent } from '../project-section/project-section';
 import { LinkSectionComponent } from '../link-section/link-section';
+import { SkillsService } from '../../skills/skills.service';
 
 const mockPortfolio: PortfolioResponse = {
   employeeId: 1,
@@ -32,6 +33,7 @@ describe('PortfolioComponent', () => {
       providers: [
         provideRouter([]),
         { provide: PortfolioService, useValue: serviceSpy },
+        { provide: SkillsService, useValue: { getEmployeeSkills: vi.fn().mockReturnValue(of([])) } },
         {
           provide: ActivatedRoute,
           useValue: {

@@ -126,7 +126,6 @@ class PortfolioCrudIT extends IntegrationTestBase {
         assertThat(portfolio.education()).isEmpty();
         assertThat(portfolio.projects()).isEmpty();
         assertThat(portfolio.links()).isEmpty();
-        assertThat(portfolio.skills()).isEmpty();
     }
 
     @Test
@@ -145,7 +144,6 @@ class PortfolioCrudIT extends IntegrationTestBase {
         assertThat(portfolio.education()).hasSize(1);
         assertThat(portfolio.projects()).hasSize(1);
         assertThat(portfolio.links()).hasSize(1);
-        assertThat(portfolio.skills()).isNotNull();
     }
 
     // Education tests

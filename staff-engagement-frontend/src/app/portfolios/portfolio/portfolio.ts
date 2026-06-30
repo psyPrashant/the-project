@@ -9,6 +9,8 @@ import { EducationSectionComponent } from '../education-section/education-sectio
 import { ProjectSectionComponent } from '../project-section/project-section';
 import { LinkSectionComponent } from '../link-section/link-section';
 import { SkillSectionComponent } from '../skill-section/skill-section';
+import { SkillsService } from '../../skills/skills.service';
+import { EmployeeSkillResponse } from '../../skills/skills.models';
 
 @Component({
   selector: 'app-portfolio',
@@ -18,6 +20,7 @@ import { SkillSectionComponent } from '../skill-section/skill-section';
 })
 export class PortfolioComponent {
   private readonly portfolioService = inject(PortfolioService);
+  private readonly skillsService = inject(SkillsService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
@@ -29,6 +32,7 @@ export class PortfolioComponent {
     { initialValue: 0 }
   );
   protected readonly portfolio = signal<PortfolioResponse | null>(null);
+  protected readonly skills = signal<EmployeeSkillResponse[]>([]);
   protected readonly loading = signal(true);
   protected readonly errorMessage = signal<string | null>(null);
 
@@ -37,6 +41,7 @@ export class PortfolioComponent {
       const id = this.employeeId();
       if (id > 0) {
         this.loadPortfolio(id);
+        this.loadSkills(id);
       } else {
         this.loading.set(false);
         this.errorMessage.set('Invalid employee ID.');
@@ -58,6 +63,13 @@ export class PortfolioComponent {
           this.errorMessage.set('Failed to load portfolio.');
         }
       });
+  }
+
+  protected loadSkills(id: number): void {
+    this.skillsService.getEmployeeSkills(id).subscribe({
+      next: skills => this.skills.set(skills),
+      error: () => this.skills.set([])
+    });
   }
 
   protected navigateToEmployee(): void {

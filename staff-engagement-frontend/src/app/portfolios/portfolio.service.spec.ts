@@ -20,8 +20,7 @@ describe('PortfolioService', () => {
     employeeId,
     education: [{ id: 1, employeeId, institution: 'Uni', qualification: 'BSc', fieldOfStudy: null, startYear: 2016, endYear: 2020, description: null }],
     projects: [{ id: 2, employeeId, name: 'Project', description: null, startDate: null, endDate: null, url: null }],
-    links: [{ id: 3, employeeId, label: 'GitHub', url: 'https://github.com', sortOrder: 1 }],
-    skills: []
+    links: [{ id: 3, employeeId, label: 'GitHub', url: 'https://github.com', sortOrder: 1 }]
   };
 
   beforeEach(() => {

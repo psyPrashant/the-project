@@ -35,8 +35,8 @@
 
       <app-skill-section
         [employeeId]="employeeId()"
-        [skills]="p.skills"
-        (changed)="loadPortfolio(employeeId())" />
+        [skills]="skills()"
+        (changed)="loadSkills(employeeId())" />
     } @else {
       <p class="text-gray-500 text-sm text-center py-12">Portfolio not found.</p>
     }

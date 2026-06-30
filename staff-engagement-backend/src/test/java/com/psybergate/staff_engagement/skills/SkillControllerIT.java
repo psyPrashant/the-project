@@ -250,32 +250,4 @@ class SkillControllerIT extends IntegrationTestBase {
                 .andExpect(status().isBadRequest());
     }
 
-    // ── Portfolio includes skills ─────────────────────────────────────────
-
-    @Test
-    void getPortfolio_includesSkillsSection() throws Exception {
-        EmployeeProfileResponse emp = createEmployee();
-        addSkill(emp.id(), "React", 2);
-        MvcResult result = mockMvc.perform(get("/api/employees/" + emp.id() + "/portfolio")
-                        .header("Authorization", "Bearer " + token))
-                .andExpect(status().isOk())
-                .andReturn();
-        JsonNode portfolio = objectMapper.readTree(result.getResponse().getContentAsString());
-        assertThat(portfolio.has("skills")).isTrue();
-        assertThat(portfolio.get("skills").isArray()).isTrue();
-        assertThat(portfolio.get("skills").size()).isEqualTo(1);
-        assertThat(portfolio.get("skills").get(0).get("skillName").asText()).isEqualTo("React");
-    }
-
-    @Test
-    void getPortfolio_noSkills_skillsFieldIsEmptyArray() throws Exception {
-        EmployeeProfileResponse emp = createEmployee();
-        MvcResult result = mockMvc.perform(get("/api/employees/" + emp.id() + "/portfolio")
-                        .header("Authorization", "Bearer " + token))
-                .andExpect(status().isOk())
-                .andReturn();
-        JsonNode portfolio = objectMapper.readTree(result.getResponse().getContentAsString());
-        assertThat(portfolio.has("skills")).isTrue();
-        assertThat(portfolio.get("skills")).isEmpty();
-    }
 }
