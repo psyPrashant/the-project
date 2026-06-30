@@ -1,17 +1,14 @@
 package com.psybergate.staff_engagement.skills;
 
 import com.psybergate.staff_engagement.common.exception.DuplicateResourceException;
-import com.psybergate.staff_engagement.employee.Employee;
 import com.psybergate.staff_engagement.employee.EmployeeService;
 import com.psybergate.staff_engagement.portfolio.PortfolioService;
-import com.psybergate.staff_engagement.portfolio.Project;
 import com.psybergate.staff_engagement.skills.dto.AddEmployeeSkillRequest;
 import com.psybergate.staff_engagement.skills.dto.EmployeeSkillResponse;
 import com.psybergate.staff_engagement.skills.dto.SkillSearchResultResponse;
 import com.psybergate.staff_engagement.skills.dto.SkillSummaryResponse;
 import com.psybergate.staff_engagement.skills.dto.UpdateEmployeeSkillRequest;
 import jakarta.persistence.EntityNotFoundException;
-import java.util.Comparator;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -61,17 +58,14 @@ public class SkillServiceImpl implements SkillService {
         if (!portfolioService.projectExists(projectId)) {
             throw new EntityNotFoundException("Project not found: " + projectId);
         }
-        Project project = new Project();
-        project.setId(projectId);
-        employeeSkill.getProjects().add(project);
-        return toResponse(employeeSkillRepository.save(employeeSkill));
+        employeeSkillRepository.insertSkillProject(employeeSkill.getId(), projectId);
+        return toResponse(employeeSkill);
     }
 
     @Override
     public void unlinkProject(Long employeeId, Long skillId, Long projectId) {
         EmployeeSkill employeeSkill = findEmployeeSkill(employeeId, skillId);
-        employeeSkill.getProjects().removeIf(p -> p.getId().equals(projectId));
-        employeeSkillRepository.save(employeeSkill);
+        employeeSkillRepository.deleteSkillProject(employeeSkill.getId(), projectId);
     }
 
     @Override
@@ -86,30 +80,13 @@ public class SkillServiceImpl implements SkillService {
     @Override
     @Transactional(readOnly = true)
     public List<SkillSummaryResponse> browseRegister() {
-        return skillRepository.findAllByOrderByNameAsc().stream()
-                .map(s -> new SkillSummaryResponse(
-                        s.getId(),
-                        s.getName(),
-                        skillRepository.countEmployeesBySkillId(s.getId())))
-                .toList();
+        return skillRepository.findSkillSummaries();
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<SkillSearchResultResponse> searchBySkill(String skillName) {
-        return employeeSkillRepository.findBySkillNameIgnoreCaseOrderByYearsDesc(skillName).stream()
-                .map(es -> {
-                    long projectCount = employeeSkillRepository.countProjectsByEmployeeSkillId(es.getId());
-                    Employee employee = employeeService.findById(es.getEmployeeId());
-                    return new SkillSearchResultResponse(
-                            es.getEmployeeId(),
-                            employee.getFirstName() + " " + employee.getLastName(),
-                            es.getYears(),
-                            projectCount);
-                })
-                .sorted(Comparator.comparingInt(SkillSearchResultResponse::years).reversed()
-                        .thenComparingLong(SkillSearchResultResponse::projectCount).reversed())
-                .toList();
+        return employeeSkillRepository.searchBySkillName(skillName);
     }
 
     private Skill findOrCreate(String name) {

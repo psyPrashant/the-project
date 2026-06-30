@@ -25,6 +25,7 @@ import com.psybergate.staff_engagement.portfolio.dto.ShowcaseLinkResponse;
 import com.psybergate.staff_engagement.portfolio.dto.UpdateEducationRequest;
 import com.psybergate.staff_engagement.portfolio.dto.UpdateProjectRequest;
 import com.psybergate.staff_engagement.portfolio.dto.UpdateShowcaseLinkRequest;
+import com.psybergate.staff_engagement.skills.SkillService;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.util.List;
@@ -44,6 +45,9 @@ class PortfolioControllerTest {
 
     @Mock
     private PortfolioService portfolioService;
+
+    @Mock
+    private SkillService skillService;
 
     @InjectMocks
     private PortfolioController portfolioController;

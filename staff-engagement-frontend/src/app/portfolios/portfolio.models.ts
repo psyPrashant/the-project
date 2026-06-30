@@ -1,3 +1,5 @@
+import { EmployeeSkillResponse } from '../skills/skills.models';
+
 export interface EducationResponse {
   id: number;
   employeeId: number;
@@ -72,8 +74,6 @@ export interface UpdateShowcaseLinkRequest {
   url: string;
   sortOrder?: number | null;
 }
-
-import { EmployeeSkillResponse } from '../skills/skills.models';
 
 export interface PortfolioResponse {
   employeeId: number;

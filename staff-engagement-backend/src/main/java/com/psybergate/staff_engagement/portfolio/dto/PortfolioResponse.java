@@ -10,4 +10,7 @@ public record PortfolioResponse(
         List<ShowcaseLinkResponse> links,
         List<EmployeeSkillResponse> skills
 ) {
+    public PortfolioResponse withSkills(List<EmployeeSkillResponse> skills) {
+        return new PortfolioResponse(employeeId, education, projects, links, skills);
+    }
 }

@@ -45,7 +45,7 @@
       </div>
 
       @if (saveError()) {
-        <p role="alert" class="text-xs text-red-600" aria-live="polite">{{ saveError() }}</p>
+        <p role="alert" class="text-xs text-red-600">{{ saveError() }}</p>
       }
 
       <div class="flex gap-2">
@@ -63,6 +63,10 @@
         </button>
       </div>
     </form>
+  }
+
+  @if (deleteError()) {
+    <p role="alert" class="mt-2 text-xs text-red-600">{{ deleteError() }}</p>
   }
 
   @if (skills().length === 0) {

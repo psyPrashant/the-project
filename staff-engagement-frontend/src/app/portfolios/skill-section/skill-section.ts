@@ -31,6 +31,7 @@ export class SkillSectionComponent {
   protected readonly submitting = signal(false);
   protected readonly deletingId = signal<number | null>(null);
   protected readonly saveError = signal<string | null>(null);
+  protected readonly deleteError = signal<string | null>(null);
 
   protected readonly form = new FormGroup({
     skillName: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
@@ -76,6 +77,7 @@ export class SkillSectionComponent {
 
   protected deleteSkill(skillId: number): void {
     this.deletingId.set(skillId);
+    this.deleteError.set(null);
     this.skillsService.deleteSkill(this.employeeId(), skillId)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
@@ -83,7 +85,10 @@ export class SkillSectionComponent {
           this.deletingId.set(null);
           this.changed.emit();
         },
-        error: () => this.deletingId.set(null)
+        error: (err) => {
+          this.deletingId.set(null);
+          this.deleteError.set(err?.error?.message ?? 'Failed to remove skill.');
+        }
       });
   }
 }

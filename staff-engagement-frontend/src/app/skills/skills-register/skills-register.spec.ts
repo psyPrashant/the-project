@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { FormControl } from '@angular/forms';
 import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { vi } from 'vitest';
@@ -6,6 +7,11 @@ import { vi } from 'vitest';
 import { SkillsRegisterComponent } from './skills-register';
 import { SkillsService } from '../skills.service';
 import { SkillSearchResultResponse, SkillSummaryResponse } from '../skills.models';
+
+type ComponentInternals = {
+  searchControl: FormControl<string>;
+  searchResults: () => SkillSearchResultResponse[] | null;
+};
 
 const mockRegister: SkillSummaryResponse[] = [
   { id: 1, name: 'Angular', employeeCount: 2 },
@@ -56,7 +62,8 @@ describe('SkillsRegisterComponent', () => {
     const fixture = TestBed.createComponent(SkillsRegisterComponent);
     fixture.detectChanges();
 
-    fixture.componentInstance['searchControl'].setValue('Angular');
+    const comp = fixture.componentInstance as unknown as ComponentInternals;
+    comp.searchControl.setValue('Angular');
     fixture.detectChanges();
 
     expect(serviceSpy.searchBySkill).toHaveBeenCalledWith('Angular');
@@ -68,13 +75,14 @@ describe('SkillsRegisterComponent', () => {
     const fixture = TestBed.createComponent(SkillsRegisterComponent);
     fixture.detectChanges();
 
-    fixture.componentInstance['searchControl'].setValue('Angular');
+    const comp = fixture.componentInstance as unknown as ComponentInternals;
+    comp.searchControl.setValue('Angular');
     fixture.detectChanges();
 
-    fixture.componentInstance['searchControl'].setValue('');
+    comp.searchControl.setValue('');
     fixture.detectChanges();
 
-    expect(fixture.componentInstance['searchResults']()).toBeNull();
+    expect(comp.searchResults()).toBeNull();
   });
 
   it('shows "No employees found" when search returns empty list', () => {
@@ -82,7 +90,8 @@ describe('SkillsRegisterComponent', () => {
     const fixture = TestBed.createComponent(SkillsRegisterComponent);
     fixture.detectChanges();
 
-    fixture.componentInstance['searchControl'].setValue('COBOL');
+    const comp = fixture.componentInstance as unknown as ComponentInternals;
+    comp.searchControl.setValue('COBOL');
     fixture.detectChanges();
 
     const text = (fixture.nativeElement as HTMLElement).textContent ?? '';

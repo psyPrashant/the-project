@@ -10,6 +10,7 @@ import com.psybergate.staff_engagement.portfolio.dto.ShowcaseLinkResponse;
 import com.psybergate.staff_engagement.portfolio.dto.UpdateEducationRequest;
 import com.psybergate.staff_engagement.portfolio.dto.UpdateProjectRequest;
 import com.psybergate.staff_engagement.portfolio.dto.UpdateShowcaseLinkRequest;
+import com.psybergate.staff_engagement.skills.SkillService;
 import jakarta.validation.Valid;
 import java.net.URI;
 import lombok.RequiredArgsConstructor;
@@ -29,10 +30,12 @@ import org.springframework.web.bind.annotation.RestController;
 public class PortfolioController {
 
     private final PortfolioService portfolioService;
+    private final SkillService skillService;
 
     @GetMapping
     public ResponseEntity<PortfolioResponse> getPortfolio(@PathVariable Long employeeId) {
-        return ResponseEntity.ok(portfolioService.getPortfolio(employeeId));
+        PortfolioResponse portfolio = portfolioService.getPortfolio(employeeId);
+        return ResponseEntity.ok(portfolio.withSkills(skillService.getSkillsForEmployee(employeeId)));
     }
 
     // Education
