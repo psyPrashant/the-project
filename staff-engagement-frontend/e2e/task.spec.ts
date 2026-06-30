@@ -55,7 +55,7 @@ test.describe('Task management', () => {
     // Create a task for the first employee in the list
     await page.getByRole('link', { name: 'People' }).click();
     await page.waitForURL('**/people');
-    await page.getByRole('link').filter({ hasText: /\w+ \w+/ }).first().click();
+    await page.getByRole('main').getByRole('link').first().click();
     await page.waitForURL('**/people/**');
 
     const profileUrl = page.url();
