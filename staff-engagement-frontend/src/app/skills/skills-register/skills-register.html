@@ -1,0 +1,81 @@
+<div class="min-h-screen bg-gray-50 py-8 px-4">
+  <div class="max-w-4xl mx-auto space-y-6">
+
+    <div class="flex items-center gap-4">
+      <a routerLink="/home"
+         class="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-700 border border-gray-300 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 inline-block">
+        ← Home
+      </a>
+      <h1 class="text-2xl font-semibold text-gray-900">Skills Register</h1>
+    </div>
+
+    <!-- Search by skill dropdown -->
+    <section aria-labelledby="search-heading" class="bg-white rounded-lg shadow p-6">
+      <h2 id="search-heading" class="text-lg font-semibold text-gray-900 mb-4">Who's strong on…?</h2>
+
+      <div>
+        <label for="skillSearch" class="block text-sm font-medium text-gray-700 mb-1">Select a skill</label>
+        @if (loading()) {
+          <p class="text-sm text-gray-400 italic">Loading skills…</p>
+        } @else {
+          <select
+            id="skillSearch"
+            [formControl]="searchControl"
+            class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+            aria-controls="search-results">
+            <option value="">— Select a skill —</option>
+            @for (skill of register(); track skill.id) {
+              <option [value]="skill.name">{{ skill.name }}</option>
+            }
+          </select>
+        }
+      </div>
+
+      @if (searching()) {
+        <p class="mt-3 text-sm text-gray-500" aria-live="polite" aria-busy="true">Searching…</p>
+      } @else if (searchResults() !== null) {
+        <div id="search-results" aria-live="polite" class="mt-4">
+          @if (searchResults()!.length === 0) {
+            <p class="text-sm text-gray-500">No employees found with that skill.</p>
+          } @else {
+            <h3 class="text-sm font-medium text-gray-700 mb-2">Ranked results</h3>
+            <ul class="divide-y divide-gray-100" aria-label="Search results">
+              @for (result of searchResults()!; track result.employeeId) {
+                <li class="py-3 flex items-center justify-between">
+                  <span class="font-medium text-gray-900">{{ result.employeeName }}</span>
+                  <span class="text-sm text-gray-500">
+                    {{ result.years }} yr{{ result.years !== 1 ? 's' : '' }} ·
+                    {{ result.projectCount }} project{{ result.projectCount !== 1 ? 's' : '' }}
+                  </span>
+                </li>
+              }
+            </ul>
+          }
+        </div>
+      }
+    </section>
+
+    <!-- Browse all skills -->
+    <section aria-labelledby="browse-heading" class="bg-white rounded-lg shadow p-6">
+      <h2 id="browse-heading" class="text-lg font-semibold text-gray-900 mb-4">All Skills</h2>
+
+      @if (loading()) {
+        <p class="text-sm text-gray-500" aria-live="polite" aria-busy="true">Loading…</p>
+      } @else if (register().length === 0) {
+        <p class="text-sm text-gray-500">No skills recorded yet.</p>
+      } @else {
+        <ul class="divide-y divide-gray-100" aria-label="All skills">
+          @for (skill of register(); track skill.id) {
+            <li class="py-3 flex items-center justify-between">
+              <span class="font-medium text-gray-900">{{ skill.name }}</span>
+              <span class="text-sm text-gray-500">
+                {{ skill.employeeCount }} employee{{ skill.employeeCount !== 1 ? 's' : '' }}
+              </span>
+            </li>
+          }
+        </ul>
+      }
+    </section>
+
+  </div>
+</div>

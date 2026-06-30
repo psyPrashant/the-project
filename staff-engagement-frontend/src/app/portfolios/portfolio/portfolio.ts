@@ -8,10 +8,11 @@ import { PortfolioResponse } from '../portfolio.models';
 import { EducationSectionComponent } from '../education-section/education-section';
 import { ProjectSectionComponent } from '../project-section/project-section';
 import { LinkSectionComponent } from '../link-section/link-section';
+import { SkillSectionComponent } from '../skill-section/skill-section';
 
 @Component({
   selector: 'app-portfolio',
-  imports: [EducationSectionComponent, ProjectSectionComponent, LinkSectionComponent, RouterLink],
+  imports: [EducationSectionComponent, ProjectSectionComponent, LinkSectionComponent, SkillSectionComponent, RouterLink],
   templateUrl: './portfolio.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })

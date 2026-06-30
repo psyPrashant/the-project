@@ -1,6 +1,8 @@
 package com.psybergate.staff_engagement.portfolio;
 
 import com.psybergate.staff_engagement.employee.EmployeeService;
+import com.psybergate.staff_engagement.skills.SkillService;
+import com.psybergate.staff_engagement.skills.dto.EmployeeSkillResponse;
 import com.psybergate.staff_engagement.portfolio.dto.CreateEducationRequest;
 import com.psybergate.staff_engagement.portfolio.dto.CreateProjectRequest;
 import com.psybergate.staff_engagement.portfolio.dto.CreateShowcaseLinkRequest;
@@ -14,6 +16,8 @@ import com.psybergate.staff_engagement.portfolio.dto.UpdateShowcaseLinkRequest;
 import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,15 +31,21 @@ public class PortfolioServiceImpl implements PortfolioService {
     private final ProjectRepository projectRepository;
     private final ShowcaseLinkRepository showcaseLinkRepository;
 
+    @Lazy
+    @Autowired
+    private SkillService skillService;
+
     @Override
     @Transactional(readOnly = true)
     public PortfolioResponse getPortfolio(Long employeeId) {
         validateEmployeeExists(employeeId);
+        List<EmployeeSkillResponse> skills = skillService.getSkillsForEmployee(employeeId);
         return new PortfolioResponse(
                 employeeId,
                 educationRepository.findByEmployeeIdOrdered(employeeId).stream().map(this::toEducationResponse).toList(),
                 projectRepository.findByEmployeeIdOrdered(employeeId).stream().map(this::toProjectResponse).toList(),
-                showcaseLinkRepository.findByEmployeeIdOrdered(employeeId).stream().map(this::toShowcaseLinkResponse).toList());
+                showcaseLinkRepository.findByEmployeeIdOrdered(employeeId).stream().map(this::toShowcaseLinkResponse).toList(),
+                skills);
     }
 
     @Override
@@ -145,6 +155,12 @@ public class PortfolioServiceImpl implements PortfolioService {
                 .filter(l -> l.getEmployeeId().equals(employeeId))
                 .orElseThrow(() -> new EntityNotFoundException("Showcase link not found: " + linkId));
         showcaseLinkRepository.delete(link);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean projectExists(Long projectId) {
+        return projectRepository.existsById(projectId);
     }
 
     private void validateEmployeeExists(Long employeeId) {

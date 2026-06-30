@@ -73,9 +73,12 @@ export interface UpdateShowcaseLinkRequest {
   sortOrder?: number | null;
 }
 
+import { EmployeeSkillResponse } from '../skills/skills.models';
+
 export interface PortfolioResponse {
   employeeId: number;
   education: EducationResponse[];
   projects: ProjectResponse[];
   links: ShowcaseLinkResponse[];
+  skills: EmployeeSkillResponse[];
 }

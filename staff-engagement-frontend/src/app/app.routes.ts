@@ -67,5 +67,10 @@ export const routes: Routes = [
     path: 'tasks/new',
     canActivate: [authGuard],
     loadComponent: () => import('./tasks/create-task/create-task').then(m => m.CreateTaskComponent)
+  },
+  {
+    path: 'skills',
+    canActivate: [authGuard],
+    loadComponent: () => import('./skills/skills-register/skills-register').then(m => m.SkillsRegisterComponent)
   }
 ];

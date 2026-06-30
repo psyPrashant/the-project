@@ -38,4 +38,6 @@ public interface PortfolioService {
     ShowcaseLinkResponse updateLink(Long employeeId, Long linkId, UpdateShowcaseLinkRequest request);
 
     void deleteLink(Long employeeId, Long linkId);
+
+    boolean projectExists(Long projectId);
 }

@@ -74,7 +74,7 @@ class PortfolioControllerTest {
         ShowcaseLinkResponse link = new ShowcaseLinkResponse(LINK_ID, EMPLOYEE_ID, "GitHub",
                 "https://github.com/example", 1);
         PortfolioResponse portfolio = new PortfolioResponse(EMPLOYEE_ID,
-                List.of(education), List.of(project), List.of(link));
+                List.of(education), List.of(project), List.of(link), List.of());
 
         when(portfolioService.getPortfolio(EMPLOYEE_ID)).thenReturn(portfolio);
 

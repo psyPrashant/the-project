@@ -118,3 +118,130 @@ WHERE e.email = 'john.smith@psybergate.com'
   AND NOT EXISTS (
     SELECT 1 FROM portfolio_links pl WHERE pl.employee_id = e.id AND pl.label = 'GitHub'
   );
+
+-- ---------------------------------------------------------------------------
+-- Canonical skills (task 8.1). Unique by LOWER(name) via functional index;
+-- NOT EXISTS guard keeps re-runs idempotent.
+-- ---------------------------------------------------------------------------
+INSERT INTO skill (name) SELECT 'Angular'     WHERE NOT EXISTS (SELECT 1 FROM skill WHERE LOWER(name) = 'angular');
+INSERT INTO skill (name) SELECT 'Java'        WHERE NOT EXISTS (SELECT 1 FROM skill WHERE LOWER(name) = 'java');
+INSERT INTO skill (name) SELECT 'Spring Boot' WHERE NOT EXISTS (SELECT 1 FROM skill WHERE LOWER(name) = 'spring boot');
+INSERT INTO skill (name) SELECT 'SQL'         WHERE NOT EXISTS (SELECT 1 FROM skill WHERE LOWER(name) = 'sql');
+INSERT INTO skill (name) SELECT 'TypeScript'  WHERE NOT EXISTS (SELECT 1 FROM skill WHERE LOWER(name) = 'typescript');
+INSERT INTO skill (name) SELECT 'Docker'      WHERE NOT EXISTS (SELECT 1 FROM skill WHERE LOWER(name) = 'docker');
+
+-- ---------------------------------------------------------------------------
+-- Employee–skill links with varied years (task 8.2). Jane and John each have
+-- multiple skills so that the "who's strong on X?" search returns a ranked list.
+-- ---------------------------------------------------------------------------
+INSERT INTO employee_skill (employee_id, skill_id, years)
+SELECT e.id, s.id, 6
+FROM employees e, skill s
+WHERE e.email = 'jane.doe@psybergate.com' AND LOWER(s.name) = 'angular'
+  AND NOT EXISTS (SELECT 1 FROM employee_skill es WHERE es.employee_id = e.id AND es.skill_id = s.id);
+
+INSERT INTO employee_skill (employee_id, skill_id, years)
+SELECT e.id, s.id, 6
+FROM employees e, skill s
+WHERE e.email = 'jane.doe@psybergate.com' AND LOWER(s.name) = 'typescript'
+  AND NOT EXISTS (SELECT 1 FROM employee_skill es WHERE es.employee_id = e.id AND es.skill_id = s.id);
+
+INSERT INTO employee_skill (employee_id, skill_id, years)
+SELECT e.id, s.id, 4
+FROM employees e, skill s
+WHERE e.email = 'jane.doe@psybergate.com' AND LOWER(s.name) = 'spring boot'
+  AND NOT EXISTS (SELECT 1 FROM employee_skill es WHERE es.employee_id = e.id AND es.skill_id = s.id);
+
+INSERT INTO employee_skill (employee_id, skill_id, years)
+SELECT e.id, s.id, 8
+FROM employees e, skill s
+WHERE e.email = 'john.smith@psybergate.com' AND LOWER(s.name) = 'java'
+  AND NOT EXISTS (SELECT 1 FROM employee_skill es WHERE es.employee_id = e.id AND es.skill_id = s.id);
+
+INSERT INTO employee_skill (employee_id, skill_id, years)
+SELECT e.id, s.id, 6
+FROM employees e, skill s
+WHERE e.email = 'john.smith@psybergate.com' AND LOWER(s.name) = 'spring boot'
+  AND NOT EXISTS (SELECT 1 FROM employee_skill es WHERE es.employee_id = e.id AND es.skill_id = s.id);
+
+INSERT INTO employee_skill (employee_id, skill_id, years)
+SELECT e.id, s.id, 3
+FROM employees e, skill s
+WHERE e.email = 'john.smith@psybergate.com' AND LOWER(s.name) = 'docker'
+  AND NOT EXISTS (SELECT 1 FROM employee_skill es WHERE es.employee_id = e.id AND es.skill_id = s.id);
+
+INSERT INTO employee_skill (employee_id, skill_id, years)
+SELECT e.id, s.id, 5
+FROM employees e, skill s
+WHERE e.email = 'admin@psybergate.com' AND LOWER(s.name) = 'sql'
+  AND NOT EXISTS (SELECT 1 FROM employee_skill es WHERE es.employee_id = e.id AND es.skill_id = s.id);
+
+INSERT INTO employee_skill (employee_id, skill_id, years)
+SELECT e.id, s.id, 2
+FROM employees e, skill s
+WHERE e.email = 'admin@psybergate.com' AND LOWER(s.name) = 'docker'
+  AND NOT EXISTS (SELECT 1 FROM employee_skill es WHERE es.employee_id = e.id AND es.skill_id = s.id);
+
+-- ---------------------------------------------------------------------------
+-- Link skills to portfolio projects (task 8.3). Gives non-zero projectCount
+-- values so the ranked search returns meaningful results.
+-- ---------------------------------------------------------------------------
+-- Jane: Angular → Staff Engagement Platform
+INSERT INTO employee_skill_project (employee_skill_id, project_id)
+SELECT es.id, pp.id
+FROM employee_skill es
+JOIN skill s ON es.skill_id = s.id
+JOIN employees e ON es.employee_id = e.id
+JOIN portfolio_projects pp ON pp.employee_id = e.id
+WHERE e.email = 'jane.doe@psybergate.com'
+  AND LOWER(s.name) = 'angular'
+  AND pp.name = 'Staff Engagement Platform'
+  AND NOT EXISTS (
+    SELECT 1 FROM employee_skill_project esp
+    WHERE esp.employee_skill_id = es.id AND esp.project_id = pp.id
+  );
+
+-- Jane: Spring Boot → Staff Engagement Platform
+INSERT INTO employee_skill_project (employee_skill_id, project_id)
+SELECT es.id, pp.id
+FROM employee_skill es
+JOIN skill s ON es.skill_id = s.id
+JOIN employees e ON es.employee_id = e.id
+JOIN portfolio_projects pp ON pp.employee_id = e.id
+WHERE e.email = 'jane.doe@psybergate.com'
+  AND LOWER(s.name) = 'spring boot'
+  AND pp.name = 'Staff Engagement Platform'
+  AND NOT EXISTS (
+    SELECT 1 FROM employee_skill_project esp
+    WHERE esp.employee_skill_id = es.id AND esp.project_id = pp.id
+  );
+
+-- John: Java → Billing Service Migration
+INSERT INTO employee_skill_project (employee_skill_id, project_id)
+SELECT es.id, pp.id
+FROM employee_skill es
+JOIN skill s ON es.skill_id = s.id
+JOIN employees e ON es.employee_id = e.id
+JOIN portfolio_projects pp ON pp.employee_id = e.id
+WHERE e.email = 'john.smith@psybergate.com'
+  AND LOWER(s.name) = 'java'
+  AND pp.name = 'Billing Service Migration'
+  AND NOT EXISTS (
+    SELECT 1 FROM employee_skill_project esp
+    WHERE esp.employee_skill_id = es.id AND esp.project_id = pp.id
+  );
+
+-- John: Spring Boot → Billing Service Migration
+INSERT INTO employee_skill_project (employee_skill_id, project_id)
+SELECT es.id, pp.id
+FROM employee_skill es
+JOIN skill s ON es.skill_id = s.id
+JOIN employees e ON es.employee_id = e.id
+JOIN portfolio_projects pp ON pp.employee_id = e.id
+WHERE e.email = 'john.smith@psybergate.com'
+  AND LOWER(s.name) = 'spring boot'
+  AND pp.name = 'Billing Service Migration'
+  AND NOT EXISTS (
+    SELECT 1 FROM employee_skill_project esp
+    WHERE esp.employee_skill_id = es.id AND esp.project_id = pp.id
+  );
