@@ -19,17 +19,20 @@ test.describe('Task management', () => {
     await page.getByRole('link', { name: 'My Tasks' }).click();
     await page.waitForURL('**/tasks');
 
-    // Create a new standalone task
-    await page.getByRole('link', { name: 'New task' }).click();
-    await page.waitForURL('**/tasks/new');
+    const title = `E2E test task ${Date.now()}`;
 
-    await page.getByLabel('Title').fill('E2E test task');
+    // Open create modal via the "New task" button
+    await page.getByRole('button', { name: 'New task' }).click();
+    await expect(page.getByRole('dialog')).toBeVisible();
+
+    await page.getByLabel('Title').fill(title);
     const subjectSelect = page.getByLabel('Relates to');
     await subjectSelect.selectOption({ index: 1 });
     await page.getByRole('button', { name: 'Create task' }).click();
 
-    // Redirects to My Tasks
-    await page.waitForURL('**/tasks');
+    // Modal closes and task appears in the list without navigation
+    await expect(page.getByRole('dialog')).not.toBeVisible();
+    await expect(page.getByText(title)).toBeVisible();
   });
 
   test('mark a task as done', async ({ page }) => {
@@ -37,6 +40,7 @@ test.describe('Task management', () => {
 
     const title = `Task to mark done ${Date.now()}`;
 
+    // Create via the /tasks/new route (still works for backwards compat)
     await page.goto('/tasks/new');
     await page.getByLabel('Relates to').selectOption({ index: 1 });
     await page.getByLabel('Title').fill(title);
@@ -52,25 +56,23 @@ test.describe('Task management', () => {
   test('tasks appear in the Tasks section on the employee profile', async ({ page }) => {
     await login(page);
 
-    // Create a task for the first employee in the list
+    // Navigate to the first employee profile
     await page.getByRole('link', { name: 'People' }).click();
     await page.waitForURL('**/people');
     await page.getByRole('main').getByRole('link').first().click();
     await page.waitForURL('**/people/**');
 
-    const profileUrl = page.url();
     const title = `Profile task ${Date.now()}`;
 
-    // Use the "New task" button in the profile header
-    await page.getByRole('link', { name: 'New task' }).first().click();
-    await page.waitForURL('**/tasks/new');
-    await page.getByLabel('Relates to').selectOption({ index: 1 });
+    // Open create modal via the "New task" button in the Tasks section
+    await page.getByRole('button', { name: 'New task' }).click();
+    await expect(page.getByRole('dialog')).toBeVisible();
+
     await page.getByLabel('Title').fill(title);
     await page.getByRole('button', { name: 'Create task' }).click();
-    await page.waitForURL('**/tasks');
 
-    // Navigate back to the profile and verify the task appears
-    await page.goto(profileUrl);
+    // Modal closes and task appears inline — no navigation away from profile
+    await expect(page.getByRole('dialog')).not.toBeVisible();
     await expect(page.getByText(title)).toBeVisible();
   });
 
