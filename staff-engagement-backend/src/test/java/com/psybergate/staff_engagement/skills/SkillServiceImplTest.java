@@ -102,24 +102,18 @@ class SkillServiceImplTest {
 
     @Test
     void searchBySkill_multipleResults_sortedByYearsDescThenProjectCountDesc() {
-        Skill angular = Skill.builder().id(1L).name("Angular").build();
-        EmployeeSkill es1 = EmployeeSkill.builder().id(10L).employeeId(1L).skill(angular).years(5).build();
-        EmployeeSkill es2 = EmployeeSkill.builder().id(11L).employeeId(2L).skill(angular).years(3).build();
-        EmployeeSkill es3 = EmployeeSkill.builder().id(12L).employeeId(3L).skill(angular).years(5).build();
+        // Sorting is performed inside the JPQL query; the service delegates directly to the repo.
+        // The mock returns results already in ranked order (Carol: 5 yrs 4 proj > Alice: 5 yrs 2 proj > Bob: 3 yrs).
+        SkillSearchResultResponse carol = new SkillSearchResultResponse(3L, "Carol C", "Angular", 5, 4);
+        SkillSearchResultResponse alice = new SkillSearchResultResponse(1L, "Alice A", "Angular", 5, 2);
+        SkillSearchResultResponse bob   = new SkillSearchResultResponse(2L, "Bob B",   "Angular", 3, 1);
 
-        when(employeeSkillRepository.findBySkillNameIgnoreCaseOrderByYearsDesc("Angular"))
-                .thenReturn(List.of(es1, es3, es2));
-        when(employeeSkillRepository.countProjectsByEmployeeSkillId(10L)).thenReturn(2L);
-        when(employeeSkillRepository.countProjectsByEmployeeSkillId(11L)).thenReturn(1L);
-        when(employeeSkillRepository.countProjectsByEmployeeSkillId(12L)).thenReturn(4L);
-        when(employeeService.findById(1L)).thenReturn(Employee.builder().id(1L).firstName("Alice").lastName("A").build());
-        when(employeeService.findById(2L)).thenReturn(Employee.builder().id(2L).firstName("Bob").lastName("B").build());
-        when(employeeService.findById(3L)).thenReturn(Employee.builder().id(3L).firstName("Carol").lastName("C").build());
+        when(employeeSkillRepository.searchBySkillName("Angular"))
+                .thenReturn(List.of(carol, alice, bob));
 
         List<SkillSearchResultResponse> results = skillService.searchBySkill("Angular");
 
         assertThat(results).hasSize(3);
-        // es3 (5 years, 4 projects) before es1 (5 years, 2 projects) before es2 (3 years)
         assertThat(results.get(0).employeeId()).isEqualTo(3L);
         assertThat(results.get(1).employeeId()).isEqualTo(1L);
         assertThat(results.get(2).employeeId()).isEqualTo(2L);
@@ -129,7 +123,7 @@ class SkillServiceImplTest {
 
     @Test
     void searchBySkill_noMatches_returnsEmptyList() {
-        when(employeeSkillRepository.findBySkillNameIgnoreCaseOrderByYearsDesc("COBOL"))
+        when(employeeSkillRepository.searchBySkillName("COBOL"))
                 .thenReturn(List.of());
 
         assertThat(skillService.searchBySkill("COBOL")).isEmpty();

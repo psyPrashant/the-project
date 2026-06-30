@@ -15,6 +15,7 @@ export interface SkillSummaryResponse {
 export interface SkillSearchResultResponse {
   employeeId: number;
   employeeName: string;
+  skillName: string;
   years: number;
   projectCount: number;
 }

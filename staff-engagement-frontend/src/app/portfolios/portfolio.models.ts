@@ -1,3 +1,5 @@
+import { EmployeeSkillResponse } from '../skills/skills.models';
+
 export interface EducationResponse {
   id: number;
   employeeId: number;
@@ -78,4 +80,5 @@ export interface PortfolioResponse {
   education: EducationResponse[];
   projects: ProjectResponse[];
   links: ShowcaseLinkResponse[];
+  skills: EmployeeSkillResponse[];
 }

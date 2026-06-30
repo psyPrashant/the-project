@@ -9,13 +9,13 @@ import { PortfolioResponse } from '../portfolio.models';
 import { EducationSectionComponent } from '../education-section/education-section';
 import { ProjectSectionComponent } from '../project-section/project-section';
 import { LinkSectionComponent } from '../link-section/link-section';
-import { SkillsService } from '../../skills/skills.service';
 
 const mockPortfolio: PortfolioResponse = {
   employeeId: 1,
   education: [{ id: 1, employeeId: 1, institution: 'Uni', qualification: 'BSc', fieldOfStudy: null, startYear: null, endYear: null, description: null }],
   projects: [{ id: 2, employeeId: 1, name: 'Project', description: null, startDate: null, endDate: null, url: null }],
-  links: [{ id: 3, employeeId: 1, label: 'GitHub', url: 'https://github.com', sortOrder: null }]
+  links: [{ id: 3, employeeId: 1, label: 'GitHub', url: 'https://github.com', sortOrder: null }],
+  skills: []
 };
 
 describe('PortfolioComponent', () => {
@@ -33,7 +33,6 @@ describe('PortfolioComponent', () => {
       providers: [
         provideRouter([]),
         { provide: PortfolioService, useValue: serviceSpy },
-        { provide: SkillsService, useValue: { getEmployeeSkills: vi.fn().mockReturnValue(of([])) } },
         {
           provide: ActivatedRoute,
           useValue: {

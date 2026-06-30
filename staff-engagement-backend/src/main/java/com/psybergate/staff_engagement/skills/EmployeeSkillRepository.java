@@ -17,13 +17,13 @@ interface EmployeeSkillRepository extends JpaRepository<EmployeeSkill, Long> {
     boolean existsByEmployeeIdAndSkillId(Long employeeId, Long skillId);
 
     @Query("SELECT new com.psybergate.staff_engagement.skills.dto.SkillSearchResultResponse(" +
-           "es.employeeId, CONCAT(e.firstName, ' ', e.lastName), es.years, COUNT(p)) " +
+           "es.employeeId, CONCAT(e.firstName, ' ', e.lastName), s.name, es.years, COUNT(p)) " +
            "FROM EmployeeSkill es " +
            "JOIN es.skill s " +
            "JOIN Employee e ON e.id = es.employeeId " +
            "LEFT JOIN es.projects p " +
            "WHERE LOWER(s.name) = LOWER(:skillName) " +
-           "GROUP BY es.employeeId, e.firstName, e.lastName, es.years " +
+           "GROUP BY es.employeeId, e.firstName, e.lastName, s.name, es.years " +
            "ORDER BY es.years DESC, COUNT(p) DESC")
     List<SkillSearchResultResponse> searchBySkillName(@Param("skillName") String skillName);
 
