@@ -77,7 +77,7 @@ export class CreateTaskComponent {
       .subscribe({
         next: () => {
           this.submitting.set(false);
-          void this.router.navigate(['/tasks/mine']);
+          void this.router.navigate(['/tasks']);
         },
         error: () => {
           this.submitting.set(false);
@@ -87,6 +87,6 @@ export class CreateTaskComponent {
   }
 
   protected cancel(): void {
-    void this.router.navigate(['/tasks/mine']);
+    void this.router.navigate(['/tasks']);
   }
 }

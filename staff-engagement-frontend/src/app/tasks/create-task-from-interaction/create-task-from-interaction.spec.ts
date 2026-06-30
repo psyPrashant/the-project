@@ -111,7 +111,7 @@ describe('CreateTaskFromInteractionComponent', () => {
       }));
     });
 
-    it('navigates to /tasks/mine after successful submit', async () => {
+    it('navigates to /tasks after successful submit', async () => {
       const fixture = TestBed.createComponent(CreateTaskFromInteractionComponent);
       fixture.detectChanges();
       await fixture.whenStable();
@@ -122,7 +122,7 @@ describe('CreateTaskFromInteractionComponent', () => {
       fixture.componentInstance['onSubmit']();
       await fixture.whenStable();
 
-      expect(navigateSpy).toHaveBeenCalledWith(['/tasks/mine']);
+      expect(navigateSpy).toHaveBeenCalledWith(['/tasks']);
     });
 
     it('shows error message when createFromInteraction fails', async () => {

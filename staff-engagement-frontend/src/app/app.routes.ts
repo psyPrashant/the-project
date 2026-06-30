@@ -47,16 +47,6 @@ export const routes: Routes = [
         loadComponent: () => import('./tasks/create-task/create-task').then(m => m.CreateTaskComponent)
       },
       {
-        path: 'interactions/new',
-        loadComponent: () =>
-          import('./interactions/interaction-form/interaction-form').then(m => m.InteractionFormComponent)
-      },
-      {
-        path: 'interactions/:id/edit',
-        loadComponent: () =>
-          import('./interactions/interaction-form/interaction-form').then(m => m.InteractionFormComponent)
-      },
-      {
         path: 'interactions/:id/create-task',
         loadComponent: () =>
           import('./tasks/create-task-from-interaction/create-task-from-interaction').then(
