@@ -87,4 +87,65 @@ test.describe('Task management', () => {
     await page.getByRole('button', { name: 'Create task' }).click();
     await expect(page.getByText('Title is required')).toBeVisible();
   });
+
+  test('reopen a done task', async ({ page }) => {
+    await login(page);
+
+    const title = `Task to reopen ${Date.now()}`;
+
+    await page.goto('/tasks/new');
+    await page.getByLabel('Relates to').selectOption({ index: 1 });
+    await page.getByLabel('Title').fill(title);
+    await page.getByRole('button', { name: 'Create task' }).click();
+    await page.waitForURL('**/tasks');
+
+    await page.getByRole('button', { name: `Mark task done: ${title}` }).click();
+    await expect(page.locator('section[aria-label="Done tasks"]').getByText(title)).toBeVisible();
+
+    await page.getByRole('button', { name: `Reopen task: ${title}` }).click();
+    await expect(page.locator('section[aria-label="Open tasks"]').getByText(title)).toBeVisible();
+    await expect(page.locator('section[aria-label="Done tasks"]').getByText(title)).not.toBeVisible();
+  });
+
+  test('edit a task title inline', async ({ page }) => {
+    await login(page);
+
+    const original = `Edit me ${Date.now()}`;
+    const updated = `Edited ${Date.now()}`;
+
+    await page.goto('/tasks/new');
+    await page.getByLabel('Relates to').selectOption({ index: 1 });
+    await page.getByLabel('Title').fill(original);
+    await page.getByRole('button', { name: 'Create task' }).click();
+    await page.waitForURL('**/tasks');
+
+    await page.getByRole('button', { name: `Edit task: ${original}` }).click();
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toBeVisible();
+
+    await dialog.getByLabel('Title').clear();
+    await dialog.getByLabel('Title').fill(updated);
+    await dialog.getByRole('button', { name: 'Save' }).click();
+
+    await expect(dialog).not.toBeVisible();
+    await expect(page.getByText(updated)).toBeVisible();
+    await expect(page.getByText(original)).not.toBeVisible();
+  });
+
+  test('delete a task', async ({ page }) => {
+    await login(page);
+
+    const title = `Delete me ${Date.now()}`;
+
+    await page.goto('/tasks/new');
+    await page.getByLabel('Relates to').selectOption({ index: 1 });
+    await page.getByLabel('Title').fill(title);
+    await page.getByRole('button', { name: 'Create task' }).click();
+    await page.waitForURL('**/tasks');
+
+    page.once('dialog', d => d.accept());
+    await page.getByRole('button', { name: `Delete task: ${title}` }).click();
+
+    await expect(page.getByText(title)).not.toBeVisible();
+  });
 });
