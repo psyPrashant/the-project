@@ -23,15 +23,15 @@ test.describe('Task management', () => {
 
     // Open create modal via the "New task" button
     await page.getByRole('button', { name: 'New task' }).click();
-    await expect(page.getByRole('dialog')).toBeVisible();
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toBeVisible();
 
-    await page.getByLabel('Title').fill(title);
-    const subjectSelect = page.getByLabel('Relates to');
-    await subjectSelect.selectOption({ index: 1 });
-    await page.getByRole('button', { name: 'Create task' }).click();
+    await dialog.getByLabel('Title').fill(title);
+    await dialog.getByLabel('Relates to').selectOption({ index: 1 });
+    await dialog.getByRole('button', { name: 'Create task' }).click();
 
     // Modal closes and task appears in the list without navigation
-    await expect(page.getByRole('dialog')).not.toBeVisible();
+    await expect(dialog).not.toBeVisible();
     await expect(page.getByText(title)).toBeVisible();
   });
 
@@ -66,13 +66,14 @@ test.describe('Task management', () => {
 
     // Open create modal via the "New task" button in the Tasks section
     await page.getByRole('button', { name: 'New task' }).click();
-    await expect(page.getByRole('dialog')).toBeVisible();
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toBeVisible();
 
-    await page.getByLabel('Title').fill(title);
-    await page.getByRole('button', { name: 'Create task' }).click();
+    await dialog.getByLabel('Title').fill(title);
+    await dialog.getByRole('button', { name: 'Create task' }).click();
 
     // Modal closes and task appears inline — no navigation away from profile
-    await expect(page.getByRole('dialog')).not.toBeVisible();
+    await expect(dialog).not.toBeVisible();
     await expect(page.getByText(title)).toBeVisible();
   });
 
