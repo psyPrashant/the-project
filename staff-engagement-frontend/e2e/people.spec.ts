@@ -35,7 +35,7 @@ test.describe('People — Show archived toggle', () => {
     const unique = `toggle-${Date.now()}`;
     await createEmployee(page, 'ToggleTest', 'Person', `${unique}@example.com`);
 
-    await page.getByRole('button', { name: 'Archive' }).click();
+    await page.getByRole('button', { name: 'Archive', exact: true }).click();
     await expect(page.getByText('Archived', { exact: true })).toBeVisible();
 
     await page.getByRole('link', { name: 'People' }).first().click();
@@ -58,16 +58,16 @@ test.describe('People — Unarchive employee', () => {
     const unique = `unarchive-${Date.now()}`;
     await createEmployee(page, 'UnarchiveTest', 'Person', `${unique}@example.com`);
 
-    await page.getByRole('button', { name: 'Archive' }).click();
+    await page.getByRole('button', { name: 'Archive', exact: true }).click();
     await expect(page.getByText('Archived', { exact: true })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Archive' })).not.toBeVisible();
-    await expect(page.getByRole('button', { name: 'Unarchive' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Archive', exact: true })).not.toBeVisible();
+    await expect(page.getByRole('button', { name: 'Unarchive', exact: true })).toBeVisible();
 
-    await page.getByRole('button', { name: 'Unarchive' }).click();
+    await page.getByRole('button', { name: 'Unarchive', exact: true }).click();
 
     await expect(page.getByText('Archived', { exact: true })).not.toBeVisible();
-    await expect(page.getByRole('button', { name: 'Archive' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Unarchive' })).not.toBeVisible();
+    await expect(page.getByRole('button', { name: 'Archive', exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Unarchive', exact: true })).not.toBeVisible();
     await expect(page).toHaveURL(/\/people\/\d+/);
   });
 
@@ -77,10 +77,10 @@ test.describe('People — Unarchive employee', () => {
     const unique = `relist-${Date.now()}`;
     await createEmployee(page, 'RelistTest', 'Person', `${unique}@example.com`);
 
-    await page.getByRole('button', { name: 'Archive' }).click();
+    await page.getByRole('button', { name: 'Archive', exact: true }).click();
     await expect(page.getByText('Archived', { exact: true })).toBeVisible();
 
-    await page.getByRole('button', { name: 'Unarchive' }).click();
+    await page.getByRole('button', { name: 'Unarchive', exact: true }).click();
     await expect(page.getByText('Archived', { exact: true })).not.toBeVisible();
 
     await page.getByRole('link', { name: 'People' }).first().click();
