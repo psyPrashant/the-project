@@ -49,6 +49,31 @@ test.describe('Task management', () => {
     ).toBeVisible();
   });
 
+  test('tasks appear in the Tasks section on the employee profile', async ({ page }) => {
+    await login(page);
+
+    // Create a task for the first employee in the list
+    await page.getByRole('link', { name: 'People' }).click();
+    await page.waitForURL('**/people');
+    await page.getByRole('link').filter({ hasText: /\w+ \w+/ }).first().click();
+    await page.waitForURL('**/people/**');
+
+    const profileUrl = page.url();
+    const title = `Profile task ${Date.now()}`;
+
+    // Use the "New task" button in the profile header
+    await page.getByRole('link', { name: 'New task' }).first().click();
+    await page.waitForURL('**/tasks/new');
+    await page.getByLabel('Relates to').selectOption({ index: 1 });
+    await page.getByLabel('Title').fill(title);
+    await page.getByRole('button', { name: 'Create task' }).click();
+    await page.waitForURL('**/tasks');
+
+    // Navigate back to the profile and verify the task appears
+    await page.goto(profileUrl);
+    await expect(page.getByText(title)).toBeVisible();
+  });
+
   test('validation error when submitting task form with empty title', async ({ page }) => {
     await login(page);
     await page.goto('/tasks/new');

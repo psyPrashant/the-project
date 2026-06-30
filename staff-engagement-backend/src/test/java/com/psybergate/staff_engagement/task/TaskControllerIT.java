@@ -272,6 +272,52 @@ class TaskControllerIT extends IntegrationTestBase {
                 .andExpect(status().isNotFound());
     }
 
+    // GET /api/tasks?relatesToId={id}
+
+    @Test
+    void getByRelatesTo_returnsAllTasksForEmployee() throws Exception {
+        EmployeeProfileResponse subject = createEmployee(adminToken);
+        createStandaloneTask(subject.id(), "Task by admin", adminToken);
+        createStandaloneTask(subject.id(), "Task by jane", janeToken);
+
+        MvcResult result = mockMvc.perform(get("/api/tasks")
+                        .param("relatesToId", subject.id().toString())
+                        .header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        List<TaskResponse> tasks = objectMapper.readValue(
+                result.getResponse().getContentAsString(),
+                new TypeReference<List<TaskResponse>>() {});
+        assertThat(tasks).hasSize(2);
+        assertThat(tasks).allMatch(t -> t.relatesTo().id().equals(subject.id()));
+        assertThat(tasks).anyMatch(t -> t.title().equals("Task by admin"));
+        assertThat(tasks).anyMatch(t -> t.title().equals("Task by jane"));
+    }
+
+    @Test
+    void getByRelatesTo_employeeWithNoTasks_returnsEmptyList() throws Exception {
+        EmployeeProfileResponse subject = createEmployee(adminToken);
+
+        MvcResult result = mockMvc.perform(get("/api/tasks")
+                        .param("relatesToId", subject.id().toString())
+                        .header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        List<TaskResponse> tasks = objectMapper.readValue(
+                result.getResponse().getContentAsString(),
+                new TypeReference<List<TaskResponse>>() {});
+        assertThat(tasks).isEmpty();
+    }
+
+    @Test
+    void getByRelatesTo_missingParam_returns400() throws Exception {
+        mockMvc.perform(get("/api/tasks")
+                        .header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isBadRequest());
+    }
+
     // T5 — Due date and assignee
 
     @Test

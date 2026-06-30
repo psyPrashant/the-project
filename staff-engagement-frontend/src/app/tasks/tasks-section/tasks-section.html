@@ -1,0 +1,74 @@
+<div class="flex items-center justify-between mb-3">
+  <h2 class="m-0 text-[13px] font-semibold uppercase tracking-wider text-muted">Tasks</h2>
+  <a
+    [routerLink]="['/tasks/new']"
+    class="inline-flex items-center gap-1 rounded-[7px] border border-hairline bg-card px-2.5 py-1 text-[12px] font-semibold text-ink-body no-underline hover:bg-page"
+  >
+    <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+    New task
+  </a>
+</div>
+
+@if (errorMessage()) {
+  <div role="alert" aria-live="polite" class="mb-3 rounded-[10px] border border-[#fecdd3] bg-[#fff1f2] px-3 py-2 text-xs text-accent-rose">
+    {{ errorMessage() }}
+  </div>
+}
+
+@if (loading()) {
+  <p class="py-6 text-center text-sm text-muted" aria-live="polite" aria-busy="true">Loading…</p>
+} @else if (openTasks().length === 0 && doneTasks().length === 0) {
+  <div class="flex flex-col items-center justify-center rounded-card border border-dashed border-hairline bg-card px-6 py-8 text-center">
+    <p class="text-[13px] text-muted">No tasks yet.</p>
+  </div>
+} @else {
+
+  @if (openTasks().length > 0) {
+    <ul class="flex list-none flex-col gap-2 p-0" aria-label="Open tasks">
+      @for (task of openTasks(); track task.id) {
+        <li class="rounded-card border border-hairline bg-card px-4 py-3 shadow-card">
+          <div class="flex items-start gap-3">
+            <div class="flex-1 min-w-0">
+              <p class="text-[13px] font-semibold text-ink truncate">{{ task.title }}</p>
+              @if (task.description) {
+                <p class="mt-0.5 text-[12px] text-ink-soft">{{ task.description }}</p>
+              }
+              <p class="mt-1 text-[11px] text-muted">
+                {{ task.createdBy.firstName }} {{ task.createdBy.lastName }}
+                @if (task.dueDate) {
+                  · Due {{ task.dueDate }}
+                }
+              </p>
+            </div>
+            @if (canMarkDone(task)) {
+              <button
+                type="button"
+                (click)="markDone(task)"
+                [disabled]="markingDoneId() === task.id"
+                class="flex-none inline-flex items-center gap-1 rounded-[6px] border border-hairline bg-card px-2.5 py-1 text-[11px] font-semibold text-ink-body hover:bg-page disabled:opacity-50 disabled:cursor-not-allowed"
+                [attr.aria-label]="'Mark task done: ' + task.title"
+              >
+                <svg aria-hidden="true" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+                {{ markingDoneId() === task.id ? 'Saving…' : 'Done' }}
+              </button>
+            }
+          </div>
+        </li>
+      }
+    </ul>
+  }
+
+  @if (doneTasks().length > 0) {
+    <ul class="mt-2 flex list-none flex-col gap-2 p-0" aria-label="Done tasks">
+      @for (task of doneTasks(); track task.id) {
+        <li class="flex items-center gap-3 rounded-card border border-hairline bg-card px-4 py-3 opacity-50 shadow-card">
+          <div class="flex h-4 w-4 flex-none items-center justify-center rounded-full bg-accent-green/10 text-accent-green" aria-hidden="true">
+            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
+          </div>
+          <p class="text-[13px] font-medium text-ink-soft line-through truncate">{{ task.title }}</p>
+        </li>
+      }
+    </ul>
+  }
+
+}

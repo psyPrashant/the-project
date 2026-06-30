@@ -165,6 +165,32 @@ class TaskServiceImplTest {
     }
 
     @Test
+    void getByRelatesTo_returnsTasksForEmployee() {
+        Task task1 = savedTask(1L, subject, creator, null);
+        Task task2 = savedTask(2L, subject, unrelated, null);
+
+        when(taskRepository.findByRelatesToId(subject.getId())).thenReturn(List.of(task1, task2));
+        lenient().when(employeeService.toResponse(subject)).thenReturn(subjectResponse);
+        lenient().when(employeeService.toResponse(creator)).thenReturn(creatorResponse);
+        lenient().when(employeeService.toResponse(unrelated))
+                .thenReturn(new EmployeeResponse(3L, "other@example.com", "Other", "User"));
+
+        List<TaskResponse> result = taskService.getByRelatesTo(subject.getId());
+
+        assertThat(result).hasSize(2);
+        assertThat(result).allMatch(t -> t.relatesTo().id().equals(subject.getId()));
+    }
+
+    @Test
+    void getByRelatesTo_noTasks_returnsEmptyList() {
+        when(taskRepository.findByRelatesToId(subject.getId())).thenReturn(List.of());
+
+        List<TaskResponse> result = taskService.getByRelatesTo(subject.getId());
+
+        assertThat(result).isEmpty();
+    }
+
+    @Test
     void updateStatus_bySubject_updatesStatus() {
         Task task = savedTask(1L, subject, creator, null);
         when(taskRepository.findById(1L)).thenReturn(Optional.of(task));

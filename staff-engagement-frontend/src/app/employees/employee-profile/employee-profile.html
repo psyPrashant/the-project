@@ -50,16 +50,10 @@
             class="rounded-[8px] border border-hairline bg-card px-3 py-2.5 text-[13px] font-semibold text-ink-soft hover:bg-page disabled:opacity-50"
           >{{ archiving() ? 'Archiving…' : 'Archive' }}</button>
         }
-        <button
-          type="button"
-          disabled
-          aria-label="New task — coming soon"
-          title="Tasks aren't built yet"
-          class="inline-flex cursor-not-allowed items-center gap-1.5 rounded-[8px] border border-hairline bg-card px-3 py-2.5 text-[13px] font-semibold text-ink-strong opacity-60"
-        >
-          New task
-          <span class="rounded-[5px] bg-hairline-soft px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted">soon</span>
-        </button>
+        <a
+          [routerLink]="['/tasks/new']"
+          class="inline-flex items-center gap-1.5 rounded-[8px] border border-hairline bg-card px-3 py-2.5 text-[13px] font-semibold text-ink-strong no-underline hover:bg-page"
+        >New task</a>
       </div>
     </div>
 
@@ -68,7 +62,9 @@
       <!-- Left column -->
       <div class="flex min-w-0 flex-col gap-[18px]">
         <app-interactions-section [subjectId]="emp.id" />
-        <app-coming-soon screen="Tasks" [bare]="true" />
+        <section class="rounded-card border border-hairline bg-card p-5 shadow-card">
+          <app-tasks-section [subjectId]="emp.id" />
+        </section>
       </div>
 
       <!-- Right column -->

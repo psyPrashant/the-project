@@ -12,6 +12,7 @@ import { ProjectSectionComponent } from '../../portfolios/project-section/projec
 import { LinkSectionComponent } from '../../portfolios/link-section/link-section';
 import { InteractionsSectionComponent } from '../../interactions/interactions-section/interactions-section';
 import { ComingSoonComponent } from '../../shell/coming-soon/coming-soon';
+import { TasksSectionComponent } from '../../tasks/tasks-section/tasks-section';
 import { avatarColor, initials } from '../../shared/avatar';
 
 /**
@@ -25,6 +26,7 @@ import { avatarColor, initials } from '../../shared/avatar';
     RouterLink,
     EmployeeFormModalComponent,
     InteractionsSectionComponent,
+    TasksSectionComponent,
     EducationSectionComponent,
     ProjectSectionComponent,
     LinkSectionComponent,

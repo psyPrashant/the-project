@@ -11,6 +11,7 @@ import com.psybergate.staff_engagement.common.exception.DuplicateResourceExcepti
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -37,6 +38,11 @@ public class GlobalExceptionHandler {
 				.map(fe -> fe.getField() + ": " + fe.getDefaultMessage())
 				.collect(Collectors.joining("; "));
 		return response(HttpStatus.BAD_REQUEST, detail.isBlank() ? "Validation failed" : detail);
+	}
+
+	@ExceptionHandler(MissingServletRequestParameterException.class)
+	public ResponseEntity<ErrorResponse> missingParam(MissingServletRequestParameterException ex) {
+		return response(HttpStatus.BAD_REQUEST, "Missing required parameter: " + ex.getParameterName());
 	}
 
 	@ExceptionHandler(EntityNotFoundException.class)
