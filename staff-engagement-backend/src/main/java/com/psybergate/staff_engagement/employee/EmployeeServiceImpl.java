@@ -44,11 +44,26 @@ public class EmployeeServiceImpl implements EmployeeService {
 
 	@Override
 	@Transactional(readOnly = true)
-	public List<EmployeeProfileResponse> getEmployees(String query) {
-		List<Employee> employees = (query != null && !query.isBlank())
-				? employeeRepository.searchActiveByName(query)
-				: employeeRepository.findByArchivedFalse();
+	public List<EmployeeProfileResponse> getEmployees(String query, boolean includeArchived) {
+		List<Employee> employees;
+		if (includeArchived) {
+			employees = (query != null && !query.isBlank())
+					? employeeRepository.searchAllByName(query)
+					: employeeRepository.findAllByOrderByLastNameAscFirstNameAsc();
+		} else {
+			employees = (query != null && !query.isBlank())
+					? employeeRepository.searchActiveByName(query)
+					: employeeRepository.findByArchivedFalse();
+		}
 		return employees.stream().map(this::toProfileResponse).toList();
+	}
+
+	@Override
+	public EmployeeProfileResponse unarchive(Long id) {
+		Employee employee = employeeRepository.findById(id)
+				.orElseThrow(() -> new EntityNotFoundException("Employee not found: " + id));
+		employee.setArchived(false);
+		return toProfileResponse(employeeRepository.save(employee));
 	}
 
 	@Override

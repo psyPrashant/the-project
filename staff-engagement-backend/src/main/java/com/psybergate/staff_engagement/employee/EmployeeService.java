@@ -21,7 +21,9 @@ public interface EmployeeService {
 
 	EmployeeResponse toResponse(Employee employee);
 
-	List<EmployeeProfileResponse> getEmployees(String query);
+	List<EmployeeProfileResponse> getEmployees(String query, boolean includeArchived);
+
+	EmployeeProfileResponse unarchive(Long id);
 
 	EmployeeProfileResponse createEmployee(CreateEmployeeRequest request);
 

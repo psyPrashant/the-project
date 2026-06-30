@@ -1,17 +1,13 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
-import { catchError, debounceTime, distinctUntilChanged, of, switchMap } from 'rxjs';
+import { catchError, combineLatest, debounceTime, distinctUntilChanged, of, startWith, switchMap } from 'rxjs';
 
 import { EmployeeService } from '../employee.service';
 import { EmployeeProfileResponse } from '../employee.models';
 import { EmployeeFormModalComponent } from '../employee-form-modal/employee-form-modal';
 import { avatarColor, initials } from '../../shared/avatar';
 
-/**
- * People (TSP-44) — the employee directory as a searchable card list. "Add employee" opens a
- * modal. The backend list returns only active employees, so there is no client archived toggle.
- */
 @Component({
   selector: 'app-employee-list',
   imports: [RouterLink, EmployeeFormModalComponent],
@@ -26,19 +22,27 @@ export class EmployeeListComponent {
   protected readonly initials = initials;
 
   protected readonly searchQuery = signal('');
+  protected readonly showArchived = signal(false);
   protected readonly addOpen = signal(false);
 
   protected readonly employees = toSignal(
-    toObservable(this.searchQuery).pipe(
-      debounceTime(300),
-      distinctUntilChanged(),
-      switchMap(q => this.employeeService.getAll(q || undefined).pipe(catchError(() => of([]))))
+    combineLatest([
+      toObservable(this.searchQuery).pipe(startWith(''), debounceTime(300), distinctUntilChanged()),
+      toObservable(this.showArchived)
+    ]).pipe(
+      switchMap(([q, includeArchived]) =>
+        this.employeeService.getAll(q || undefined, includeArchived || undefined).pipe(catchError(() => of([])))
+      )
     ),
     { initialValue: [] as EmployeeProfileResponse[] }
   );
 
   protected onSearch(event: Event): void {
     this.searchQuery.set((event.target as HTMLInputElement).value);
+  }
+
+  protected onToggleArchived(event: Event): void {
+    this.showArchived.set((event.target as HTMLInputElement).checked);
   }
 
   protected openAdd(): void {

@@ -16,6 +16,18 @@
     </button>
   </div>
 
+  <div class="mb-4 flex items-center gap-2.5">
+    <input
+      id="show-archived"
+      type="checkbox"
+      [checked]="showArchived()"
+      (change)="onToggleArchived($event)"
+      aria-controls="people-list"
+      class="h-4 w-4 rounded border-hairline accent-brand"
+    />
+    <label for="show-archived" class="text-[13px] text-ink-soft cursor-pointer select-none">Show archived</label>
+  </div>
+
   <div class="relative my-5 max-w-[420px]">
     <label for="people-search" class="sr-only">Search people</label>
     <svg
@@ -34,7 +46,7 @@
   </div>
 
   @if (employees().length > 0) {
-    <ul class="flex list-none flex-col gap-2.5 p-0">
+    <ul id="people-list" class="flex list-none flex-col gap-2.5 p-0">
       @for (p of employees(); track p.id) {
         <li>
           <a

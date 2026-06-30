@@ -89,7 +89,7 @@ class EmployeeServiceImplTest {
 				Employee.builder().id(2L).firstName("Eve").lastName("Green").email("eve@example.com").build()
 		));
 
-		assertThat(employeeService.getEmployees(null)).hasSize(2);
+		assertThat(employeeService.getEmployees(null, false)).hasSize(2);
 	}
 
 	@Test
@@ -98,7 +98,7 @@ class EmployeeServiceImplTest {
 				Employee.builder().id(1L).firstName("Jane").lastName("Doe").email("jane@example.com").build()
 		));
 
-		List<EmployeeProfileResponse> result = employeeService.getEmployees("Jane");
+		List<EmployeeProfileResponse> result = employeeService.getEmployees("Jane", false);
 
 		assertThat(result).hasSize(1);
 		assertThat(result.get(0).firstName()).isEqualTo("Jane");
@@ -108,7 +108,30 @@ class EmployeeServiceImplTest {
 	void getEmployees_withQueryNoMatches_returnsEmptyList() {
 		when(employeeRepository.searchActiveByName("NoMatch")).thenReturn(List.of());
 
-		assertThat(employeeService.getEmployees("NoMatch")).isEmpty();
+		assertThat(employeeService.getEmployees("NoMatch", false)).isEmpty();
+	}
+
+	@Test
+	void getEmployees_includeArchived_noQuery_returnsAllEmployees() {
+		Employee active = Employee.builder().id(1L).firstName("Active").lastName("A").email("a@example.com").archived(false).build();
+		Employee archived = Employee.builder().id(2L).firstName("Archived").lastName("B").email("b@example.com").archived(true).build();
+		when(employeeRepository.findAllByOrderByLastNameAscFirstNameAsc()).thenReturn(List.of(active, archived));
+
+		List<EmployeeProfileResponse> result = employeeService.getEmployees(null, true);
+
+		assertThat(result).hasSize(2);
+		assertThat(result).extracting(EmployeeProfileResponse::archived).containsExactlyInAnyOrder(false, true);
+	}
+
+	@Test
+	void getEmployees_includeArchived_withQuery_searchesAllEmployees() {
+		Employee archived = Employee.builder().id(2L).firstName("Jane").lastName("Archived").email("jane@example.com").archived(true).build();
+		when(employeeRepository.searchAllByName("Jane")).thenReturn(List.of(archived));
+
+		List<EmployeeProfileResponse> result = employeeService.getEmployees("Jane", true);
+
+		assertThat(result).hasSize(1);
+		assertThat(result.get(0).archived()).isTrue();
 	}
 
 	// updateEmployee
@@ -156,6 +179,31 @@ class EmployeeServiceImplTest {
 		when(employeeRepository.findById(99L)).thenReturn(Optional.empty());
 
 		assertThatThrownBy(() -> employeeService.archive(99L))
+				.isInstanceOf(EntityNotFoundException.class);
+	}
+
+	// unarchive
+
+	@Test
+	void unarchive_setsArchivedFalseAndReturnsProfile() {
+		Employee employee = Employee.builder()
+				.id(1L).firstName("Grace").lastName("Lee").email("grace@example.com").archived(true).build();
+		when(employeeRepository.findById(1L)).thenReturn(Optional.of(employee));
+		when(employeeRepository.save(employee)).thenReturn(employee);
+
+		EmployeeProfileResponse result = employeeService.unarchive(1L);
+
+		assertThat(employee.isArchived()).isFalse();
+		assertThat(result.archived()).isFalse();
+		assertThat(result.id()).isEqualTo(1L);
+		verify(employeeRepository).save(employee);
+	}
+
+	@Test
+	void unarchive_unknownId_throwsEntityNotFoundException() {
+		when(employeeRepository.findById(99L)).thenReturn(Optional.empty());
+
+		assertThatThrownBy(() -> employeeService.unarchive(99L))
 				.isInstanceOf(EntityNotFoundException.class);
 	}
 }
