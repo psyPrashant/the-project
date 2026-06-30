@@ -3,6 +3,9 @@ package com.psybergate.staff_engagement.skills;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.psybergate.staff_engagement.common.exception.DuplicateResourceException;
@@ -12,6 +15,8 @@ import com.psybergate.staff_engagement.portfolio.PortfolioService;
 import com.psybergate.staff_engagement.skills.dto.AddEmployeeSkillRequest;
 import com.psybergate.staff_engagement.skills.dto.EmployeeSkillResponse;
 import com.psybergate.staff_engagement.skills.dto.SkillSearchResultResponse;
+import com.psybergate.staff_engagement.skills.dto.SkillSummaryResponse;
+import com.psybergate.staff_engagement.skills.dto.UpdateEmployeeSkillRequest;
 import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
 import java.util.Optional;
@@ -127,6 +132,106 @@ class SkillServiceImplTest {
                 .thenReturn(List.of());
 
         assertThat(skillService.searchBySkill("COBOL")).isEmpty();
+    }
+
+    // updateEmployeeSkill: persists new years and returns updated response
+
+    @Test
+    void updateEmployeeSkill_validRequest_updatesYears() {
+        Skill skill = Skill.builder().id(1L).name("Go").build();
+        EmployeeSkill existing = EmployeeSkill.builder().id(SKILL_ENTRY_ID).employeeId(EMP_ID).skill(skill).years(2).build();
+        when(employeeSkillRepository.findByEmployeeIdAndId(EMP_ID, SKILL_ENTRY_ID)).thenReturn(Optional.of(existing));
+        EmployeeSkill saved = EmployeeSkill.builder().id(SKILL_ENTRY_ID).employeeId(EMP_ID).skill(skill).years(7).build();
+        when(employeeSkillRepository.save(any(EmployeeSkill.class))).thenReturn(saved);
+        when(employeeSkillRepository.countProjectsByEmployeeSkillId(SKILL_ENTRY_ID)).thenReturn(0L);
+
+        EmployeeSkillResponse response = skillService.updateEmployeeSkill(EMP_ID, SKILL_ENTRY_ID, new UpdateEmployeeSkillRequest(7));
+
+        assertThat(response.years()).isEqualTo(7);
+        verify(employeeSkillRepository).save(any(EmployeeSkill.class));
+    }
+
+    @Test
+    void updateEmployeeSkill_unknownEntry_throwsEntityNotFoundException() {
+        when(employeeSkillRepository.findByEmployeeIdAndId(EMP_ID, 99L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> skillService.updateEmployeeSkill(EMP_ID, 99L, new UpdateEmployeeSkillRequest(5)))
+                .isInstanceOf(EntityNotFoundException.class);
+    }
+
+    // removeEmployeeSkill: delegates to repository delete
+
+    @Test
+    void removeEmployeeSkill_existingEntry_deletesIt() {
+        Skill skill = Skill.builder().id(1L).name("Go").build();
+        EmployeeSkill existing = EmployeeSkill.builder().id(SKILL_ENTRY_ID).employeeId(EMP_ID).skill(skill).years(2).build();
+        when(employeeSkillRepository.findByEmployeeIdAndId(EMP_ID, SKILL_ENTRY_ID)).thenReturn(Optional.of(existing));
+
+        skillService.removeEmployeeSkill(EMP_ID, SKILL_ENTRY_ID);
+
+        verify(employeeSkillRepository).delete(existing);
+    }
+
+    @Test
+    void removeEmployeeSkill_unknownEntry_throwsEntityNotFoundException() {
+        when(employeeSkillRepository.findByEmployeeIdAndId(EMP_ID, 99L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> skillService.removeEmployeeSkill(EMP_ID, 99L))
+                .isInstanceOf(EntityNotFoundException.class);
+    }
+
+    // linkProject: guards against unknown project, then inserts join-table row
+
+    @Test
+    void linkProject_validRequest_insertsLinkAndReturnsResponse() {
+        long projectId = 5L;
+        Skill skill = Skill.builder().id(1L).name("Angular").build();
+        EmployeeSkill existing = EmployeeSkill.builder().id(SKILL_ENTRY_ID).employeeId(EMP_ID).skill(skill).years(3).build();
+        when(employeeSkillRepository.findByEmployeeIdAndId(EMP_ID, SKILL_ENTRY_ID)).thenReturn(Optional.of(existing));
+        when(portfolioService.projectExists(projectId)).thenReturn(true);
+        when(employeeSkillRepository.countProjectsByEmployeeSkillId(SKILL_ENTRY_ID)).thenReturn(1L);
+
+        EmployeeSkillResponse response = skillService.linkProject(EMP_ID, SKILL_ENTRY_ID, projectId);
+
+        verify(employeeSkillRepository).insertSkillProject(SKILL_ENTRY_ID, projectId);
+        assertThat(response.projectCount()).isEqualTo(1L);
+    }
+
+    @Test
+    void linkProject_unknownProject_throwsEntityNotFoundException() {
+        long projectId = 99L;
+        Skill skill = Skill.builder().id(1L).name("Angular").build();
+        EmployeeSkill existing = EmployeeSkill.builder().id(SKILL_ENTRY_ID).employeeId(EMP_ID).skill(skill).years(3).build();
+        when(employeeSkillRepository.findByEmployeeIdAndId(EMP_ID, SKILL_ENTRY_ID)).thenReturn(Optional.of(existing));
+        when(portfolioService.projectExists(projectId)).thenReturn(false);
+
+        assertThatThrownBy(() -> skillService.linkProject(EMP_ID, SKILL_ENTRY_ID, projectId))
+                .isInstanceOf(EntityNotFoundException.class);
+        verify(employeeSkillRepository, never()).insertSkillProject(anyLong(), anyLong());
+    }
+
+    // unlinkProject: delegates to repository delete join-table row
+
+    @Test
+    void unlinkProject_existingLink_deletesIt() {
+        long projectId = 5L;
+        Skill skill = Skill.builder().id(1L).name("Angular").build();
+        EmployeeSkill existing = EmployeeSkill.builder().id(SKILL_ENTRY_ID).employeeId(EMP_ID).skill(skill).years(3).build();
+        when(employeeSkillRepository.findByEmployeeIdAndId(EMP_ID, SKILL_ENTRY_ID)).thenReturn(Optional.of(existing));
+
+        skillService.unlinkProject(EMP_ID, SKILL_ENTRY_ID, projectId);
+
+        verify(employeeSkillRepository).deleteSkillProject(SKILL_ENTRY_ID, projectId);
+    }
+
+    // browseRegister: delegates to skill repository
+
+    @Test
+    void browseRegister_returnsDelegatedList() {
+        List<SkillSummaryResponse> summaries = List.of(new SkillSummaryResponse(1L, "Angular", 3L));
+        when(skillRepository.findSkillSummaries()).thenReturn(summaries);
+
+        assertThat(skillService.browseRegister()).isSameAs(summaries);
     }
 
     // projectCount derivation

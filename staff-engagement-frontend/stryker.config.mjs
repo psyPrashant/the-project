@@ -1,7 +1,10 @@
 /** @type {import('@stryker-mutator/api/core').PartialStrykerOptions} */
 export default {
-  mutate: ['src/app/portfolios/portfolio.service.ts'],
-  command: 'npx ng test --watch=false --include="src/app/portfolios/**/*.spec.ts" --progress=false',
+  mutate: [
+    'src/app/skills/skills.service.ts',
+    'src/app/skills/skills-register/skills-register.ts',
+  ],
+  command: 'npx ng test --watch=false --include="src/app/skills/**/*.spec.ts" --progress=false',
   testRunner: 'command',
   reporters: ['html', 'json', 'progress', 'clear-text'],
   coverageAnalysis: 'off',

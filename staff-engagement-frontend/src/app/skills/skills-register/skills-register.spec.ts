@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { FormControl } from '@angular/forms';
 import { provideRouter } from '@angular/router';
-import { of } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 import { vi } from 'vitest';
 
 import { SkillsRegisterComponent } from './skills-register';
@@ -11,6 +11,9 @@ import { SkillSearchResultResponse, SkillSummaryResponse } from '../skills.model
 type ComponentInternals = {
   searchControl: FormControl<string>;
   searchResults: () => SkillSearchResultResponse[] | null;
+  loading: () => boolean;
+  searching: () => boolean;
+  register: () => SkillSummaryResponse[];
 };
 
 const mockRegister: SkillSummaryResponse[] = [
@@ -19,7 +22,7 @@ const mockRegister: SkillSummaryResponse[] = [
 ];
 
 const mockSearchResults: SkillSearchResultResponse[] = [
-  { employeeId: 1, employeeName: 'Jane Doe', years: 6, projectCount: 1 }
+  { employeeId: 1, employeeName: 'Jane Doe', skillName: 'Angular', years: 6, projectCount: 1 }
 ];
 
 describe('SkillsRegisterComponent', () => {
@@ -96,5 +99,86 @@ describe('SkillsRegisterComponent', () => {
 
     const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
     expect(text).toContain('No employees found');
+  });
+
+  it('shows loading state initially and clears it after register loads', () => {
+    const subject = new Subject<SkillSummaryResponse[]>();
+    (serviceSpy.browseRegister as ReturnType<typeof vi.fn>).mockReturnValue(subject.asObservable());
+
+    const fixture = TestBed.createComponent(SkillsRegisterComponent);
+    const comp = fixture.componentInstance as unknown as ComponentInternals;
+
+    expect(comp.loading()).toBe(true);
+    expect(comp.searching()).toBe(false);
+    expect(comp.register()).toEqual([]);
+    expect(comp.searchControl.value).toBe('');
+
+    subject.next(mockRegister);
+    subject.complete();
+    fixture.detectChanges();
+
+    expect(comp.loading()).toBe(false);
+    expect(comp.register()).toEqual(mockRegister);
+  });
+
+  it('sets loading to false when browseRegister errors', () => {
+    (serviceSpy.browseRegister as ReturnType<typeof vi.fn>).mockReturnValue(throwError(() => new Error('fail')));
+    const fixture = TestBed.createComponent(SkillsRegisterComponent);
+    fixture.detectChanges();
+
+    const comp = fixture.componentInstance as unknown as ComponentInternals;
+    expect(comp.loading()).toBe(false);
+    expect(comp.register()).toEqual([]);
+  });
+
+  it('sets searching to true while search is in flight and false when it completes', () => {
+    const searchSubject = new Subject<SkillSearchResultResponse[]>();
+    (serviceSpy.searchBySkill as ReturnType<typeof vi.fn>).mockReturnValue(searchSubject.asObservable());
+
+    const fixture = TestBed.createComponent(SkillsRegisterComponent);
+    fixture.detectChanges();
+
+    const comp = fixture.componentInstance as unknown as ComponentInternals;
+    comp.searchControl.setValue('Angular');
+    fixture.detectChanges();
+
+    expect(comp.searching()).toBe(true);
+
+    searchSubject.next(mockSearchResults);
+    searchSubject.complete();
+    fixture.detectChanges();
+
+    expect(comp.searching()).toBe(false);
+    expect(comp.searchResults()).toEqual(mockSearchResults);
+  });
+
+  it('sets searching to false when searchBySkill errors', () => {
+    (serviceSpy.searchBySkill as ReturnType<typeof vi.fn>).mockReturnValue(throwError(() => new Error('fail')));
+
+    const fixture = TestBed.createComponent(SkillsRegisterComponent);
+    fixture.detectChanges();
+
+    const comp = fixture.componentInstance as unknown as ComponentInternals;
+    comp.searchControl.setValue('Angular');
+    fixture.detectChanges();
+
+    expect(comp.searching()).toBe(false);
+  });
+
+  it('does not update searchResults when searchBySkill emits null', () => {
+    const fixture = TestBed.createComponent(SkillsRegisterComponent);
+    fixture.detectChanges();
+
+    const comp = fixture.componentInstance as unknown as ComponentInternals;
+    comp.searchControl.setValue('Angular');
+    fixture.detectChanges();
+    expect(comp.searchResults()).toEqual(mockSearchResults);
+
+    (serviceSpy.searchBySkill as ReturnType<typeof vi.fn>)
+      .mockReturnValue(of(null as unknown as SkillSearchResultResponse[]));
+    comp.searchControl.setValue('React');
+    fixture.detectChanges();
+
+    expect(comp.searchResults()).toEqual(mockSearchResults);
   });
 });
