@@ -40,6 +40,11 @@ public class GlobalExceptionHandler {
 		return response(HttpStatus.BAD_REQUEST, detail.isBlank() ? "Validation failed" : detail);
 	}
 
+	@ExceptionHandler(MissingServletRequestParameterException.class)
+	public ResponseEntity<ErrorResponse> missingParam(MissingServletRequestParameterException ex) {
+		return response(HttpStatus.BAD_REQUEST, "Missing required parameter: " + ex.getParameterName());
+	}
+
 	@ExceptionHandler(EntityNotFoundException.class)
 	public ResponseEntity<ErrorResponse> notFound(EntityNotFoundException ex) {
 		return response(HttpStatus.NOT_FOUND, ex.getMessage());

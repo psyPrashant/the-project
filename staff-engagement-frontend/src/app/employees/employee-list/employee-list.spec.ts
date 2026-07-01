@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { provideRouter, Router } from '@angular/router';
+import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { vi, afterEach, beforeEach, describe, it, expect } from 'vitest';
 
@@ -7,10 +7,9 @@ import { EmployeeListComponent } from './employee-list';
 import { EmployeeService } from '../employee.service';
 import { EmployeeProfileResponse } from '../employee.models';
 
-const mockEmployees: EmployeeProfileResponse[] = [
-  { id: 1, firstName: 'Alice', lastName: 'Smith', email: 'alice@example.com', jobTitle: 'Dev', department: 'Tech', phone: null, archived: false },
-  { id: 2, firstName: 'Bob', lastName: 'Jones', email: 'bob@example.com', jobTitle: null, department: null, phone: null, archived: false }
-];
+const activeEmployee: EmployeeProfileResponse = { id: 1, firstName: 'Alice', lastName: 'Smith', email: 'alice@example.com', jobTitle: 'Dev', department: 'Tech', phone: null, archived: false };
+const archivedEmployee: EmployeeProfileResponse = { id: 2, firstName: 'Bob', lastName: 'Jones', email: 'bob@example.com', jobTitle: null, department: null, phone: null, archived: true };
+const mockEmployees: EmployeeProfileResponse[] = [activeEmployee];
 
 describe('EmployeeListComponent', () => {
   let employeeServiceSpy: Partial<EmployeeService>;
@@ -34,45 +33,75 @@ describe('EmployeeListComponent', () => {
     vi.useRealTimers();
   });
 
-  it('renders employee names from the service', () => {
+  function render() {
     const fixture = TestBed.createComponent(EmployeeListComponent);
     fixture.detectChanges();
     vi.advanceTimersByTime(300);
     fixture.detectChanges();
+    return fixture;
+  }
+
+  it('renders active employees as cards with names', () => {
+    const fixture = render();
     const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
-    expect(text).toContain('Alice');
-    expect(text).toContain('Bob');
+    expect(text).toContain('Alice Smith');
+  });
+
+  it('links each person to their profile under /people', () => {
+    const fixture = render();
+    const link = (fixture.nativeElement as HTMLElement).querySelector(
+      'a[href="/people/1"]'
+    );
+    expect(link).not.toBeNull();
   });
 
   it('shows empty state when no employees returned', () => {
     (employeeServiceSpy.getAll as ReturnType<typeof vi.fn>).mockReturnValue(of([]));
-    const fixture = TestBed.createComponent(EmployeeListComponent);
-    fixture.detectChanges();
-    vi.advanceTimersByTime(300);
-    fixture.detectChanges();
-    expect((fixture.nativeElement as HTMLElement).textContent).toContain('No employees found');
+    const fixture = render();
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('No people found');
   });
 
-  it('navigates to employee profile on row click', () => {
-    const fixture = TestBed.createComponent(EmployeeListComponent);
-    const router = TestBed.inject(Router);
-    const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
-    fixture.detectChanges();
-    vi.advanceTimersByTime(300);
-    fixture.detectChanges();
-
-    const row = (fixture.nativeElement as HTMLElement).querySelector('tbody tr') as HTMLElement;
-    row?.click();
-
-    expect(navigateSpy).toHaveBeenCalledWith(['/employees', 1]);
+  it('has an Add employee button', () => {
+    const fixture = render();
+    const button = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll('button')
+    ).find(b => b.textContent?.includes('Add employee'));
+    expect(button).toBeTruthy();
   });
 
-  it('contains a link to create a new employee', () => {
-    const fixture = TestBed.createComponent(EmployeeListComponent);
-    fixture.detectChanges();
+  it('has a Show archived toggle defaulting to unchecked', () => {
+    const fixture = render();
+    const checkbox = (fixture.nativeElement as HTMLElement).querySelector<HTMLInputElement>('#show-archived');
+    expect(checkbox).not.toBeNull();
+    expect(checkbox?.checked).toBe(false);
+  });
+
+  it('calls getAll with includeArchived=true when toggle is checked', () => {
+    (employeeServiceSpy.getAll as ReturnType<typeof vi.fn>).mockReturnValue(of([activeEmployee, archivedEmployee]));
+    const fixture = render();
+    const checkbox = (fixture.nativeElement as HTMLElement).querySelector<HTMLInputElement>('#show-archived')!;
+    checkbox.checked = true;
+    checkbox.dispatchEvent(new Event('change'));
     vi.advanceTimersByTime(300);
     fixture.detectChanges();
-    const link = (fixture.nativeElement as HTMLElement).querySelector('a[href="/employees/new"]');
-    expect(link).not.toBeNull();
+    expect(employeeServiceSpy.getAll).toHaveBeenCalledWith(undefined, true);
+  });
+
+  it('shows archived employee with Archived badge when toggle is on', () => {
+    (employeeServiceSpy.getAll as ReturnType<typeof vi.fn>).mockReturnValue(of([activeEmployee, archivedEmployee]));
+    const fixture = render();
+    const checkbox = (fixture.nativeElement as HTMLElement).querySelector<HTMLInputElement>('#show-archived')!;
+    checkbox.checked = true;
+    checkbox.dispatchEvent(new Event('change'));
+    vi.advanceTimersByTime(300);
+    fixture.detectChanges();
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('Bob Jones');
+    expect(text).toContain('Archived');
+  });
+
+  it('calls getAll without includeArchived when toggle is off', () => {
+    const fixture = render();
+    expect(employeeServiceSpy.getAll).toHaveBeenCalledWith(undefined, undefined);
   });
 });

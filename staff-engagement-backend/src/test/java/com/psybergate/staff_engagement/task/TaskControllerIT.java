@@ -1,9 +1,11 @@
 package com.psybergate.staff_engagement.task;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -19,6 +21,7 @@ import com.psybergate.staff_engagement.interaction.dto.InteractionResponseDto;
 import com.psybergate.staff_engagement.task.dto.CreateStandaloneTaskRequest;
 import com.psybergate.staff_engagement.task.dto.CreateTaskFromInteractionRequest;
 import com.psybergate.staff_engagement.task.dto.TaskResponse;
+import com.psybergate.staff_engagement.task.dto.UpdateTaskRequest;
 import com.psybergate.staff_engagement.task.dto.UpdateTaskStatusRequest;
 import java.time.LocalDate;
 import java.util.List;
@@ -272,7 +275,164 @@ class TaskControllerIT extends IntegrationTestBase {
                 .andExpect(status().isNotFound());
     }
 
+    // GET /api/tasks?relatesToId={id}
+
+    @Test
+    void getByRelatesTo_returnsAllTasksForEmployee() throws Exception {
+        EmployeeProfileResponse subject = createEmployee(adminToken);
+        createStandaloneTask(subject.id(), "Task by admin", adminToken);
+        createStandaloneTask(subject.id(), "Task by jane", janeToken);
+
+        MvcResult result = mockMvc.perform(get("/api/tasks")
+                        .param("relatesToId", subject.id().toString())
+                        .header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        List<TaskResponse> tasks = objectMapper.readValue(
+                result.getResponse().getContentAsString(),
+                new TypeReference<List<TaskResponse>>() {});
+        assertThat(tasks).hasSize(2);
+        assertThat(tasks).allMatch(t -> t.relatesTo().id().equals(subject.id()));
+        assertThat(tasks).anyMatch(t -> t.title().equals("Task by admin"));
+        assertThat(tasks).anyMatch(t -> t.title().equals("Task by jane"));
+    }
+
+    @Test
+    void getByRelatesTo_employeeWithNoTasks_returnsEmptyList() throws Exception {
+        EmployeeProfileResponse subject = createEmployee(adminToken);
+
+        MvcResult result = mockMvc.perform(get("/api/tasks")
+                        .param("relatesToId", subject.id().toString())
+                        .header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        List<TaskResponse> tasks = objectMapper.readValue(
+                result.getResponse().getContentAsString(),
+                new TypeReference<List<TaskResponse>>() {});
+        assertThat(tasks).isEmpty();
+    }
+
+    @Test
+    void getByRelatesTo_missingParam_returns400() throws Exception {
+        mockMvc.perform(get("/api/tasks")
+                        .header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isBadRequest());
+    }
+
     // T5 — Due date and assignee
+
+    // PUT /api/tasks/{id}
+
+    @Test
+    void update_byCreator_returns200WithUpdatedTitle() throws Exception {
+        EmployeeProfileResponse subject = createEmployee(adminToken);
+        TaskResponse task = createStandaloneTask(subject.id(), "Original title", adminToken);
+        String body = objectMapper.writeValueAsString(new UpdateTaskRequest("Updated title", null, null, null));
+
+        MvcResult result = mockMvc.perform(put("/api/tasks/" + task.id())
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        TaskResponse updated = objectMapper.readValue(result.getResponse().getContentAsString(), TaskResponse.class);
+        assertThat(updated.title()).isEqualTo("Updated title");
+        assertThat(updated.id()).isEqualTo(task.id());
+    }
+
+    @Test
+    void update_bySubject_returns200() throws Exception {
+        TaskResponse task = createStandaloneTask(janeEmployeeId, "Subject's task", adminToken);
+        String body = objectMapper.writeValueAsString(new UpdateTaskRequest("Edited by Jane", null, null, null));
+
+        MvcResult result = mockMvc.perform(put("/api/tasks/" + task.id())
+                        .header("Authorization", "Bearer " + janeToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        TaskResponse updated = objectMapper.readValue(result.getResponse().getContentAsString(), TaskResponse.class);
+        assertThat(updated.title()).isEqualTo("Edited by Jane");
+    }
+
+    @Test
+    void update_byUnrelatedEmployee_returns403() throws Exception {
+        EmployeeProfileResponse subject = createEmployee(adminToken);
+        TaskResponse task = createStandaloneTask(subject.id(), "Protected", adminToken);
+        String body = objectMapper.writeValueAsString(new UpdateTaskRequest("Hijacked", null, null, null));
+
+        mockMvc.perform(put("/api/tasks/" + task.id())
+                        .header("Authorization", "Bearer " + janeToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void update_nonExistentTask_returns404() throws Exception {
+        String body = objectMapper.writeValueAsString(new UpdateTaskRequest("Ghost", null, null, null));
+
+        mockMvc.perform(put("/api/tasks/999999999")
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void update_blankTitle_returns400() throws Exception {
+        EmployeeProfileResponse subject = createEmployee(adminToken);
+        TaskResponse task = createStandaloneTask(subject.id(), "Valid", adminToken);
+        String body = "{\"title\":\"\"}";
+
+        mockMvc.perform(put("/api/tasks/" + task.id())
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isBadRequest());
+    }
+
+    // DELETE /api/tasks/{id}
+
+    @Test
+    void delete_byCreator_returns204() throws Exception {
+        EmployeeProfileResponse subject = createEmployee(adminToken);
+        TaskResponse task = createStandaloneTask(subject.id(), "To delete", adminToken);
+
+        mockMvc.perform(delete("/api/tasks/" + task.id())
+                        .header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void delete_bySubjectNotCreator_returns403() throws Exception {
+        TaskResponse task = createStandaloneTask(janeEmployeeId, "Jane's protected", adminToken);
+
+        mockMvc.perform(delete("/api/tasks/" + task.id())
+                        .header("Authorization", "Bearer " + janeToken))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void delete_byUnrelatedEmployee_returns403() throws Exception {
+        EmployeeProfileResponse subject = createEmployee(adminToken);
+        TaskResponse task = createStandaloneTask(subject.id(), "Other protected", adminToken);
+
+        mockMvc.perform(delete("/api/tasks/" + task.id())
+                        .header("Authorization", "Bearer " + janeToken))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void delete_nonExistentTask_returns404() throws Exception {
+        mockMvc.perform(delete("/api/tasks/999999999")
+                        .header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isNotFound());
+    }
 
     @Test
     void createStandalone_withDueDateAndAssignee_returns201WithBothFields() throws Exception {

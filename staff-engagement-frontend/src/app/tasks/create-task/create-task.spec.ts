@@ -119,7 +119,7 @@ describe('CreateTaskComponent', () => {
     }));
   });
 
-  it('navigates to /tasks/mine after successful submit', async () => {
+  it('navigates to /tasks after successful submit', async () => {
     const fixture = TestBed.createComponent(CreateTaskComponent);
     fixture.detectChanges();
     await fixture.whenStable();
@@ -130,7 +130,7 @@ describe('CreateTaskComponent', () => {
     fixture.componentInstance['onSubmit']();
     await fixture.whenStable();
 
-    expect(navigateSpy).toHaveBeenCalledWith(['/tasks/mine']);
+    expect(navigateSpy).toHaveBeenCalledWith(['/tasks']);
   });
 
   it('passes non-empty dueDate through to the service', async () => {

@@ -32,8 +32,9 @@ public class EmployeeController {
 
 	@GetMapping
 	public ResponseEntity<List<EmployeeProfileResponse>> list(
-			@RequestParam(required = false) String search) {
-		return ResponseEntity.ok(employeeService.getEmployees(search));
+			@RequestParam(required = false) String search,
+			@RequestParam(defaultValue = "false") boolean includeArchived) {
+		return ResponseEntity.ok(employeeService.getEmployees(search, includeArchived));
 	}
 
 	@GetMapping("/{id}")
@@ -52,5 +53,10 @@ public class EmployeeController {
 	public ResponseEntity<Void> archive(@PathVariable Long id) {
 		employeeService.archive(id);
 		return ResponseEntity.noContent().build();
+	}
+
+	@PatchMapping("/{id}/unarchive")
+	public ResponseEntity<EmployeeProfileResponse> unarchive(@PathVariable Long id) {
+		return ResponseEntity.ok(employeeService.unarchive(id));
 	}
 }

@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;-webkit-font-smoothing:antialiased;}
+  input,textarea,select,button{font-family:inherit;}
+  ::placeholder{color:#9aa1ab;}
+  @keyframes ovIn{from{opacity:0;}to{opacity:1;}}
+  @keyframes mdIn{from{opacity:0;transform:translateY(8px) scale(.99);}to{opacity:1;transform:none;}}
+  .scrl::-webkit-scrollbar{width:10px;height:10px;}
+  .scrl::-webkit-scrollbar-thumb{background:#dfe2e7;border-radius:6px;border:3px solid #f7f8fa;}
+</style>
+</helmet>
+
+<div style="display:flex;height:100vh;width:100%;background:#f7f8fa;color:#1a1d21;overflow:hidden;">
+
+  <!-- SIDEBAR -->
+  <aside style="flex:0 0 250px;width:250px;background:#fff;border-right:1px solid #e9ebef;display:flex;flex-direction:column;padding:18px 14px;">
+    <div style="display:flex;align-items:center;gap:10px;padding:4px 8px 0;">
+      <div style="width:26px;height:26px;border-radius:7px;background:#3b5bdb;display:flex;align-items:center;justify-content:center;">
+        <div style="width:11px;height:11px;border-radius:50%;border:2px solid #fff;"></div>
+      </div>
+      <div style="font-size:15px;font-weight:700;letter-spacing:-.01em;">Engage</div>
+    </div>
+
+    <nav style="display:flex;flex-direction:column;gap:2px;margin-top:22px;">
+      <button onClick="{{ goDashboard }}" style="{{ nav.dashboard }}">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.6"/></svg>
+        My Dashboard
+      </button>
+      <button onClick="{{ goPeople }}" style="{{ nav.people }}">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c0-3 2.5-5 5.5-5s5.5 2 5.5 5"/><circle cx="17" cy="8.5" r="2.6" opacity=".55"/><path d="M16 14.2c2.6.2 4.5 2.1 4.5 4.8" opacity=".55"/></svg>
+        People
+      </button>
+      <button onClick="{{ goSkills }}" style="{{ nav.skills }}">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="11" width="3.4" height="9" rx="1"/><rect x="10.3" y="6" width="3.4" height="14" rx="1"/><rect x="16.6" y="14" width="3.4" height="6" rx="1"/></svg>
+        Skills Register
+      </button>
+      <button onClick="{{ goTasks }}" style="{{ nav.tasks }}">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="3.5"/><path d="M8.5 12.3l2.4 2.4 4.6-5"/></svg>
+        My Tasks
+        <span style="{{ taskBadge }}">{{ myTaskCount }}</span>
+      </button>
+    </nav>
+
+    <div style="margin-top:auto;border-top:1px solid #eef0f3;padding-top:12px;">
+      <div style="font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:#9aa1ab;font-weight:600;padding:0 4px 7px;">Signed in as</div>
+      <div style="display:flex;align-items:center;gap:9px;padding:0 4px;">
+        <div style="width:30px;height:30px;border-radius:50%;flex:0 0 30px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:600;background:{{ me.bg }};">{{ me.initials }}</div>
+        <select value="{{ currentUserId }}" onChange="{{ onSelectUser }}" style="flex:1;min-width:0;border:1px solid #e3e6ea;border-radius:7px;padding:6px 8px;font-size:12.5px;font-weight:500;color:#1a1d21;background:#fff;cursor:pointer;">
+          <sc-for list="{{ userOptions }}" as="u" hint-placeholder-count="3"><option value="{{ u.id }}">{{ u.label }}</option></sc-for>
+        </select>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="scrl" style="flex:1;min-width:0;overflow-y:auto;">
+
+    <!-- ============ DASHBOARD ============ -->
+    <sc-if value="{{ isDashboard }}" hint-placeholder-val="{{ true }}">
+    <div data-screen-label="My Dashboard" style="max-width:1080px;margin:0 auto;padding:30px 38px 60px;">
+      <div style="display:flex;align-items:center;gap:15px;">
+        <div style="width:50px;height:50px;border-radius:50%;flex:0 0 50px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px;font-weight:600;background:{{ me.bg }};">{{ me.initials }}</div>
+        <div>
+          <h1 style="margin:0;font-size:24px;font-weight:700;letter-spacing:-.02em;">{{ dash.greeting }}, {{ me.firstName }}</h1>
+          <p style="margin:4px 0 0;color:#6b7280;font-size:13.5px;">{{ me.role }} · {{ me.team }} · here's what relates to you</p>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:13px;margin-top:24px;">
+        <div style="background:#fff;border:1px solid #e9ebef;border-radius:13px;padding:16px 18px;box-shadow:0 1px 2px rgba(16,24,40,.04);">
+          <div style="font-size:28px;font-weight:750;letter-spacing:-.02em;color:#3b5bdb;">{{ dash.openCount }}</div>
+          <div style="font-size:12.5px;color:#6b7280;margin-top:2px;">Open tasks about you</div>
+        </div>
+        <div style="background:#fff;border:1px solid #e9ebef;border-radius:13px;padding:16px 18px;box-shadow:0 1px 2px rgba(16,24,40,.04);">
+          <div style="font-size:28px;font-weight:750;letter-spacing:-.02em;color:#0891b2;">{{ dash.assignedCount }}</div>
+          <div style="font-size:12.5px;color:#6b7280;margin-top:2px;">Assigned to you</div>
+        </div>
+        <div style="background:#fff;border:1px solid #e9ebef;border-radius:13px;padding:16px 18px;box-shadow:0 1px 2px rgba(16,24,40,.04);">
+          <div style="font-size:28px;font-weight:750;letter-spacing:-.02em;color:#7c3aed;">{{ dash.intCount }}</div>
+          <div style="font-size:12.5px;color:#6b7280;margin-top:2px;">Interactions about you</div>
+        </div>
+        <div style="background:#fff;border:1px solid #e9ebef;border-radius:13px;padding:16px 18px;box-shadow:0 1px 2px rgba(16,24,40,.04);">
+          <div style="font-size:28px;font-weight:750;letter-spacing:-.02em;color:#15803d;">{{ dash.skillCount }}</div>
+          <div style="font-size:12.5px;color:#6b7280;margin-top:2px;">Skills on record</div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1.3fr 1fr;gap:18px;margin-top:18px;align-items:start;">
+
+        <div style="display:flex;flex-direction:column;gap:18px;min-width:0;">
+          <!-- my open tasks -->
+          <section style="background:#fff;border:1px solid #e9ebef;border-radius:14px;padding:18px 20px;box-shadow:0 1px 2px rgba(16,24,40,.04);">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+              <h2 style="margin:0;font-size:15px;font-weight:700;">Your open tasks</h2>
+              <button onClick="{{ goTasks }}" style="border:none;background:transparent;color:#3b5bdb;font-size:12.5px;font-weight:600;cursor:pointer;padding:0;">View all →</button>
+            </div>
+            <sc-if value="{{ dash.hasOpen }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;">
+              <sc-for list="{{ dash.openTasks }}" as="t" hint-placeholder-count="3">
+                <div style="display:flex;align-items:flex-start;gap:11px;padding:11px 12px;border:1px solid #eef0f3;border-radius:10px;">
+                  <button onClick="{{ t.onComplete }}" title="Complete" style="margin-top:1px;width:18px;height:18px;flex:0 0 18px;border-radius:5px;border:1.6px solid #c7cdd6;background:#fff;cursor:pointer;" style-hover="border-color:#3b5bdb;"></button>
+                  <div style="flex:1;min-width:0;">
+                    <div style="font-size:13.5px;font-weight:550;">{{ t.title }}</div>
+                    <div style="display:flex;flex-wrap:wrap;gap:9px;margin-top:4px;font-size:11.5px;color:#9aa1ab;">
+                      <span>logged by {{ t.creatorName }}</span>
+                      <sc-if value="{{ t.fromInteraction }}" hint-placeholder-val="{{ false }}"><span style="color:#3b5bdb;">↳ from interaction</span></sc-if>
+                      <sc-if value="{{ t.hasDue }}" hint-placeholder-val="{{ false }}"><span>· due {{ t.dueLabel }}</span></sc-if>
+                    </div>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+            </sc-if>
+            <sc-if value="{{ dash.noOpen }}" hint-placeholder-val="{{ false }}"><div style="color:#9aa1ab;font-size:13px;padding:14px 0 4px;">Nothing open relates to you. Nice.</div></sc-if>
+          </section>
+
+          <!-- assigned to me -->
+          <sc-if value="{{ dash.hasAssigned }}" hint-placeholder-val="{{ false }}">
+          <section style="background:#fff;border:1px solid #e9ebef;border-radius:14px;padding:18px 20px;box-shadow:0 1px 2px rgba(16,24,40,.04);">
+            <h2 style="margin:0 0 4px;font-size:15px;font-weight:700;">Assigned to you</h2>
+            <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;">
+              <sc-for list="{{ dash.assignedTasks }}" as="t" hint-placeholder-count="2">
+                <div style="display:flex;align-items:flex-start;gap:11px;padding:11px 12px;border:1px solid #eef0f3;border-radius:10px;">
+                  <button onClick="{{ t.onComplete }}" title="Complete" style="margin-top:1px;width:18px;height:18px;flex:0 0 18px;border-radius:5px;border:1.6px solid #c7cdd6;background:#fff;cursor:pointer;" style-hover="border-color:#0891b2;"></button>
+                  <div style="flex:1;min-width:0;">
+                    <div style="font-size:13.5px;font-weight:550;">{{ t.title }}</div>
+                    <div style="display:flex;flex-wrap:wrap;gap:9px;margin-top:4px;font-size:11.5px;color:#9aa1ab;"><span>relates to {{ t.relatesToName }}</span><sc-if value="{{ t.hasDue }}" hint-placeholder-val="{{ false }}"><span>· due {{ t.dueLabel }}</span></sc-if></div>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </section>
+          </sc-if>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:18px;min-width:0;">
+          <!-- recent interactions about me -->
+          <section style="background:#fff;border:1px solid #e9ebef;border-radius:14px;padding:18px 20px;box-shadow:0 1px 2px rgba(16,24,40,.04);">
+            <h2 style="margin:0 0 2px;font-size:15px;font-weight:700;">Recent about you</h2>
+            <div style="font-size:11.5px;color:#9aa1ab;margin-bottom:6px;">Interactions colleagues logged with you</div>
+            <sc-if value="{{ dash.hasRecent }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;flex-direction:column;">
+              <sc-for list="{{ dash.recent }}" as="x" hint-placeholder-count="3">
+                <div style="display:flex;gap:11px;padding:12px 0;border-top:1px solid #f1f3f6;">
+                  <div style="width:28px;height:28px;border-radius:50%;flex:0 0 28px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:10.5px;font-weight:600;background:{{ x.authorBg }};">{{ x.authorInitials }}</div>
+                  <div style="flex:1;min-width:0;">
+                    <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;"><span style="font-size:12.5px;font-weight:600;">{{ x.authorName }}</span><span style="font-size:10.5px;font-weight:600;padding:1.5px 6px;border-radius:5px;color:{{ x.typeColor }};background:{{ x.typeBg }};">{{ x.typeLabel }}</span><span style="font-size:11px;color:#9aa1ab;">{{ x.dateLabel }}</span></div>
+                    <p style="margin:5px 0 0;font-size:12.5px;line-height:1.45;color:#475467;">{{ x.note }}</p>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+            </sc-if>
+            <sc-if value="{{ dash.noRecent }}" hint-placeholder-val="{{ false }}"><div style="color:#9aa1ab;font-size:13px;padding:12px 0 4px;">No interactions logged about you yet.</div></sc-if>
+          </section>
+
+          <!-- my top skills -->
+          <section style="background:#fff;border:1px solid #e9ebef;border-radius:14px;padding:18px 20px;box-shadow:0 1px 2px rgba(16,24,40,.04);">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+              <h2 style="margin:0;font-size:15px;font-weight:700;">Your top skills</h2>
+              <button onClick="{{ dash.onOpenMe }}" style="border:none;background:transparent;color:#3b5bdb;font-size:12.5px;font-weight:600;cursor:pointer;padding:0;">Full profile →</button>
+            </div>
+            <sc-if value="{{ dash.hasSkills }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;flex-direction:column;gap:13px;">
+              <sc-for list="{{ dash.skills }}" as="s" hint-placeholder-count="4">
+                <div>
+                  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
+                    <span style="font-size:13px;font-weight:600;">{{ s.name }}</span>
+                    <span style="font-size:11.5px;color:#6b7280;">{{ s.years }}y · {{ s.projectCount }} proj</span>
+                  </div>
+                  <div style="height:6px;border-radius:4px;background:#eef0f3;overflow:hidden;"><div style="height:6px;border-radius:4px;background:#3b5bdb;width:{{ s.barW }};"></div></div>
+                </div>
+              </sc-for>
+            </div>
+            </sc-if>
+            <sc-if value="{{ dash.noSkills }}" hint-placeholder-val="{{ false }}"><div style="color:#9aa1ab;font-size:13px;">No skills recorded yet.</div></sc-if>
+          </section>
+        </div>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- ============ PEOPLE ============ -->
+    <sc-if value="{{ isPeople }}" hint-placeholder-val="{{ true }}">
+    <div style="max-width:1080px;margin:0 auto;padding:30px 38px 60px;">
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:4px;">
+        <div>
+          <h1 style="margin:0;font-size:24px;font-weight:700;letter-spacing:-.02em;">People</h1>
+          <p style="margin:5px 0 0;color:#6b7280;font-size:13.5px;">{{ peopleCount }} active · everything hangs off a person</p>
+        </div>
+        <button onClick="{{ openAdd }}" style="border:none;background:#3b5bdb;color:#fff;font-size:13px;font-weight:600;padding:9px 14px;border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;" style-hover="background:#3350c4;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg> Add employee
+        </button>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;margin:20px 0 22px;">
+        <div style="position:relative;flex:1;max-width:420px;">
+          <svg style="position:absolute;left:12px;top:50%;transform:translateY(-50%);" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9aa1ab" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+          <input value="{{ searchVal }}" onInput="{{ onSearch }}" placeholder="Search by name, role or team…" style="width:100%;padding:10px 12px 10px 36px;border:1px solid #e3e6ea;border-radius:9px;font-size:14px;background:#fff;outline:none;" style-focus="border-color:#3b5bdb;box-shadow:0 0 0 3px #eef1fd;" />
+        </div>
+        <button onClick="{{ toggleArchived }}" style="{{ archivedToggleStyle }}">
+          <span style="width:14px;height:14px;border-radius:4px;border:1.6px solid currentColor;display:inline-flex;align-items:center;justify-content:center;">{{ archivedCheck }}</span>
+          Show archived
+        </button>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <sc-for list="{{ peopleList }}" as="p" hint-placeholder-count="6">
+          <div onClick="{{ p.onOpen }}" style="{{ p.cardStyle }}" style-hover="border-color:#c7d0e8;box-shadow:0 4px 14px rgba(16,24,40,.08);">
+            <div style="display:flex;align-items:center;gap:14px;flex:0 0 250px;min-width:0;">
+              <div style="width:44px;height:44px;border-radius:50%;flex:0 0 44px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:15px;font-weight:600;background:{{ p.bg }};opacity:{{ p.avatarOpacity }};">{{ p.initials }}</div>
+              <div style="min-width:0;">
+                <div style="display:flex;align-items:center;gap:7px;"><span style="font-size:15px;font-weight:650;letter-spacing:-.01em;">{{ p.name }}</span><sc-if value="{{ p.archived }}" hint-placeholder-val="{{ false }}"><span style="font-size:10px;font-weight:600;color:#9aa1ab;background:#f1f3f6;border-radius:5px;padding:2px 6px;text-transform:uppercase;letter-spacing:.04em;">Archived</span></sc-if></div>
+                <div style="font-size:12.5px;color:#6b7280;">{{ p.role }} · {{ p.team }}</div>
+              </div>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;flex:1;min-width:0;">
+              <sc-for list="{{ p.topSkills }}" as="s" hint-placeholder-count="3">
+                <span style="font-size:11.5px;font-weight:550;color:#475467;background:#f1f3f6;border-radius:6px;padding:3px 8px;white-space:nowrap;">{{ s.label }}</span>
+              </sc-for>
+            </div>
+            <div style="display:flex;gap:22px;flex:0 0 auto;align-items:center;font-size:12px;color:#6b7280;padding-left:8px;">
+              <div style="text-align:right;"><div style="font-size:16px;font-weight:700;color:#1a1d21;">{{ p.skillCount }}</div><div style="font-size:11px;">skills</div></div>
+              <div style="text-align:right;min-width:64px;"><div style="font-size:16px;font-weight:700;color:#1a1d21;">{{ p.interactionCount }}</div><div style="font-size:11px;">{{ p.interactionWord }}</div></div>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c7cdd6" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+      <sc-if value="{{ peopleEmpty }}" hint-placeholder-val="{{ false }}">
+        <div style="text-align:center;color:#9aa1ab;font-size:14px;padding:48px 0;">No people match “{{ searchVal }}”.</div>
+      </sc-if>
+    </div>
+    </sc-if>
+
+    <!-- ============ PROFILE ============ -->
+    <sc-if value="{{ isProfile }}" hint-placeholder-val="{{ false }}">
+    <div data-screen-label="Employee profile" style="max-width:1080px;margin:0 auto;padding:22px 38px 70px;">
+      <button onClick="{{ goPeople }}" style="display:inline-flex;align-items:center;gap:6px;border:none;background:transparent;color:#6b7280;font-size:13px;font-weight:500;cursor:pointer;padding:6px 0;margin-bottom:8px;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 6l-6 6 6 6"/></svg> People
+      </button>
+
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:20px;background:#fff;border:1px solid #e9ebef;border-radius:14px;padding:22px 24px;box-shadow:0 1px 2px rgba(16,24,40,.04);">
+        <div style="display:flex;gap:16px;align-items:center;">
+          <div style="width:60px;height:60px;border-radius:50%;flex:0 0 60px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:22px;font-weight:600;background:{{ profile.emp.bg }};">{{ profile.emp.initials }}</div>
+          <div>
+            <div style="display:flex;align-items:center;gap:9px;"><h1 style="margin:0;font-size:23px;font-weight:700;letter-spacing:-.02em;">{{ profile.emp.name }}</h1><sc-if value="{{ profile.emp.archived }}" hint-placeholder-val="{{ false }}"><span style="font-size:11px;font-weight:600;color:#9aa1ab;background:#f1f3f6;border-radius:6px;padding:3px 8px;text-transform:uppercase;letter-spacing:.04em;">Archived</span></sc-if></div>
+            <div style="font-size:14px;color:#475467;margin-top:3px;">{{ profile.emp.role }} · {{ profile.emp.team }}</div>
+            <div style="display:flex;gap:14px;margin-top:9px;font-size:12.5px;color:#6b7280;">
+              <span>{{ profile.emp.email }}</span>
+              <a href="{{ profile.emp.githubUrl }}" target="_blank" style="color:#3b5bdb;text-decoration:none;font-weight:500;">{{ profile.emp.githubLabel }}</a>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;gap:9px;flex:0 0 auto;align-items:center;">
+          <button onClick="{{ profile.onEdit }}" title="Edit employee" style="border:1px solid #e3e6ea;background:#fff;color:#344054;font-size:13px;font-weight:600;padding:9px 12px;border-radius:8px;cursor:pointer;" style-hover="background:#f7f8fa;">Edit</button>
+          <button onClick="{{ profile.onArchive }}" title="Archive / restore" style="border:1px solid #e3e6ea;background:#fff;color:#6b7280;font-size:13px;font-weight:600;padding:9px 12px;border-radius:8px;cursor:pointer;" style-hover="background:#f7f8fa;">{{ profile.archiveLabel }}</button>
+          <button onClick="{{ profile.onNewTask }}" style="border:1px solid #e3e6ea;background:#fff;color:#344054;font-size:13px;font-weight:600;padding:9px 13px;border-radius:8px;cursor:pointer;" style-hover="background:#f7f8fa;">New task</button>
+          <button onClick="{{ profile.onLog }}" style="border:none;background:#3b5bdb;color:#fff;font-size:13px;font-weight:600;padding:9px 14px;border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;" style-hover="background:#3350c4;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg> Log interaction
+          </button>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1.55fr 1fr;gap:18px;margin-top:18px;align-items:start;">
+
+        <!-- LEFT COLUMN -->
+        <div style="display:flex;flex-direction:column;gap:18px;min-width:0;">
+
+          <!-- interactions -->
+          <section style="background:#fff;border:1px solid #e9ebef;border-radius:14px;padding:18px 20px;box-shadow:0 1px 2px rgba(16,24,40,.04);">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+              <h2 style="margin:0;font-size:15px;font-weight:700;">Interactions</h2>
+              <span style="font-size:12px;color:#9aa1ab;">{{ profile.intNote }}</span>
+            </div>
+            <sc-if value="{{ profile.showFilters }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;gap:8px;margin:10px 0 4px;">
+                <select value="{{ intType }}" onChange="{{ onIntType }}" style="border:1px solid #e3e6ea;border-radius:7px;padding:6px 8px;font-size:12.5px;color:#344054;background:#fff;cursor:pointer;outline:none;">
+                  <sc-for list="{{ intTypeOptions }}" as="o" hint-placeholder-count="6"><option value="{{ o.id }}">{{ o.label }}</option></sc-for>
+                </select>
+                <sc-if value="{{ profile.showAuthorFilter }}" hint-placeholder-val="{{ false }}">
+                <select value="{{ intAuthor }}" onChange="{{ onIntAuthor }}" style="border:1px solid #e3e6ea;border-radius:7px;padding:6px 8px;font-size:12.5px;color:#344054;background:#fff;cursor:pointer;outline:none;">
+                  <sc-for list="{{ intAuthorOptions }}" as="o" hint-placeholder-count="3"><option value="{{ o.id }}">{{ o.label }}</option></sc-for>
+                </select>
+                </sc-if>
+              </div>
+            </sc-if>
+            <sc-if value="{{ profile.hasInteractions }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;flex-direction:column;margin-top:8px;">
+              <sc-for list="{{ profile.interactions }}" as="x" hint-placeholder-count="3">
+                <div style="display:flex;gap:12px;padding:14px 0;border-top:1px solid #f1f3f6;">
+                  <div style="width:30px;height:30px;border-radius:50%;flex:0 0 30px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:600;background:{{ x.authorBg }};">{{ x.authorInitials }}</div>
+                  <div style="flex:1;min-width:0;">
+                    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                      <span style="font-size:13px;font-weight:600;">{{ x.authorName }}</span>
+                      <span style="font-size:11px;font-weight:600;padding:2px 7px;border-radius:5px;color:{{ x.typeColor }};background:{{ x.typeBg }};">{{ x.typeLabel }}</span>
+                      <span style="font-size:11.5px;color:#9aa1ab;">{{ x.dateLabel }}</span>
+                      <sc-if value="{{ x.isMine }}" hint-placeholder-val="{{ false }}"><span style="font-size:11px;color:#9aa1ab;">· you</span></sc-if>
+                    </div>
+                    <p style="margin:6px 0 0;font-size:13.5px;line-height:1.5;color:#344054;">{{ x.note }}</p>
+                    <div style="display:flex;gap:14px;margin-top:9px;">
+                      <button onClick="{{ x.onSpawnTask }}" style="display:inline-flex;align-items:center;gap:5px;border:none;background:transparent;color:#3b5bdb;font-size:12.5px;font-weight:600;cursor:pointer;padding:0;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg> Create task
+                      </button>
+                      <sc-if value="{{ x.isMine }}" hint-placeholder-val="{{ false }}">
+                        <button onClick="{{ x.onDelete }}" style="border:none;background:transparent;color:#9aa1ab;font-size:12.5px;font-weight:500;cursor:pointer;padding:0;" style-hover="color:#be123c;">Delete</button>
+                      </sc-if>
+                    </div>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+            </sc-if>
+            <sc-if value="{{ profile.filterEmpty }}" hint-placeholder-val="{{ false }}">
+              <div style="color:#9aa1ab;font-size:13px;padding:16px 0 6px;">No interactions match these filters.</div>
+            </sc-if>
+            <sc-if value="{{ profile.noInteractions }}" hint-placeholder-val="{{ false }}">
+              <div style="color:#9aa1ab;font-size:13px;padding:18px 0 8px;">No interactions logged yet. Use <b style="color:#475467;">Log interaction</b> to start the history.</div>
+            </sc-if>
+          </section>
+
+          <!-- tasks for this person -->
+          <section style="background:#fff;border:1px solid #e9ebef;border-radius:14px;padding:18px 20px;box-shadow:0 1px 2px rgba(16,24,40,.04);">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+              <h2 style="margin:0;font-size:15px;font-weight:700;">Tasks relating to {{ profile.emp.firstName }}</h2>
+              <span style="font-size:12px;color:#9aa1ab;">{{ profile.taskNote }}</span>
+            </div>
+            <sc-if value="{{ profile.hasTasks }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;flex-direction:column;gap:8px;margin-top:6px;">
+              <sc-for list="{{ profile.tasks }}" as="t" hint-placeholder-count="2">
+                <div style="display:flex;align-items:flex-start;gap:11px;padding:11px 12px;border:1px solid #eef0f3;border-radius:10px;background:{{ t.rowBg }};">
+                  <button onClick="{{ t.onComplete }}" title="Toggle complete" style="margin-top:1px;width:18px;height:18px;flex:0 0 18px;border-radius:5px;border:1.6px solid {{ t.checkBorder }};background:{{ t.checkBg }};cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" style="opacity:{{ t.checkOpacity }};"><path d="M5 12.5l4 4 10-10"/></svg>
+                  </button>
+                  <div style="flex:1;min-width:0;">
+                    <div style="font-size:13.5px;font-weight:550;color:{{ t.titleColor }};text-decoration:{{ t.titleDeco }};">{{ t.title }}</div>
+                    <div style="display:flex;flex-wrap:wrap;gap:9px;margin-top:4px;font-size:11.5px;color:#9aa1ab;">
+                      <span>logged by {{ t.creatorName }}</span>
+                      <sc-if value="{{ t.hasAssignee }}" hint-placeholder-val="{{ false }}"><span style="color:#0891b2;">→ {{ t.assigneeName }}</span></sc-if>
+                      <sc-if value="{{ t.fromInteraction }}" hint-placeholder-val="{{ false }}"><span style="color:#3b5bdb;">↳ from interaction</span></sc-if>
+                      <sc-if value="{{ t.hasDue }}" hint-placeholder-val="{{ false }}"><span>· due {{ t.dueLabel }}</span></sc-if>
+                    </div>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+            </sc-if>
+            <sc-if value="{{ profile.noTasks }}" hint-placeholder-val="{{ false }}">
+              <div style="color:#9aa1ab;font-size:13px;padding:8px 0;">No tasks yet.</div>
+            </sc-if>
+          </section>
+        </div>
+
+        <!-- RIGHT COLUMN — PORTFOLIO -->
+        <div style="display:flex;flex-direction:column;gap:18px;min-width:0;">
+
+          <!-- skills register -->
+          <section style="background:#fff;border:1px solid #e9ebef;border-radius:14px;padding:18px 20px;box-shadow:0 1px 2px rgba(16,24,40,.04);">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+              <h2 style="margin:0;font-size:15px;font-weight:700;">Skills</h2>
+              <button onClick="{{ profile.onAddSkill }}" style="border:none;background:transparent;color:#3b5bdb;font-size:12.5px;font-weight:600;cursor:pointer;padding:0;display:inline-flex;align-items:center;gap:4px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg>Add</button>
+            </div>
+            <div style="font-size:11.5px;color:#9aa1ab;margin:2px 0 12px;">years · projects (derived) · proficiency</div>
+            <sc-if value="{{ profile.hasSkills }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;flex-direction:column;gap:15px;">
+              <sc-for list="{{ profile.skills }}" as="s" hint-placeholder-count="4">
+                <div>
+                  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
+                    <div style="display:flex;align-items:center;gap:7px;"><span style="font-size:13px;font-weight:600;">{{ s.name }}</span><span style="font-size:10.5px;font-weight:600;color:{{ s.levelColor }};background:{{ s.levelBg }};border-radius:5px;padding:1.5px 7px;">{{ s.level }}</span></div>
+                    <span style="font-size:11.5px;color:#6b7280;">{{ s.years }}y · {{ s.projectCount }} proj</span>
+                  </div>
+                  <div style="height:6px;border-radius:4px;background:#eef0f3;overflow:hidden;"><div style="height:6px;border-radius:4px;background:#3b5bdb;width:{{ s.barW }};"></div></div>
+                  <div style="display:flex;gap:12px;margin-top:5px;font-size:11px;color:#9aa1ab;">
+                    <span>★ {{ s.endorsements }} endorsements</span>
+                    <span>last used {{ s.lastUsed }}</span>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+            </sc-if>
+            <sc-if value="{{ profile.noSkills }}" hint-placeholder-val="{{ false }}"><div style="color:#9aa1ab;font-size:13px;">No skills recorded.</div></sc-if>
+          </section>
+
+          <!-- projects -->
+          <section style="background:#fff;border:1px solid #e9ebef;border-radius:14px;padding:18px 20px;box-shadow:0 1px 2px rgba(16,24,40,.04);">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+              <h2 style="margin:0;font-size:15px;font-weight:700;">Projects</h2>
+              <button style="border:none;background:transparent;color:#3b5bdb;font-size:12.5px;font-weight:600;cursor:pointer;padding:0;display:inline-flex;align-items:center;gap:4px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg>Add</button>
+            </div>
+            <sc-if value="{{ profile.hasProjects }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;flex-direction:column;gap:11px;">
+              <sc-for list="{{ profile.projects }}" as="pr" hint-placeholder-count="3">
+                <div>
+                  <div style="font-size:13px;font-weight:600;">{{ pr.name }}</div>
+                  <div style="font-size:12px;color:#6b7280;line-height:1.45;margin-top:2px;">{{ pr.desc }}</div>
+                  <div style="font-size:11px;color:#9aa1ab;margin-top:2px;">{{ pr.period }}</div>
+                </div>
+              </sc-for>
+            </div>
+            </sc-if>
+            <sc-if value="{{ profile.noProjects }}" hint-placeholder-val="{{ false }}"><div style="color:#9aa1ab;font-size:13px;">No projects recorded.</div></sc-if>
+          </section>
+
+          <!-- education -->
+          <section style="background:#fff;border:1px solid #e9ebef;border-radius:14px;padding:18px 20px;box-shadow:0 1px 2px rgba(16,24,40,.04);">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+              <h2 style="margin:0;font-size:15px;font-weight:700;">Education</h2>
+              <button style="border:none;background:transparent;color:#3b5bdb;font-size:12.5px;font-weight:600;cursor:pointer;padding:0;display:inline-flex;align-items:center;gap:4px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg>Add</button>
+            </div>
+            <sc-for list="{{ profile.education }}" as="ed" hint-placeholder-count="1">
+              <div style="margin-bottom:9px;">
+                <div style="font-size:13px;font-weight:600;">{{ ed.degree }}</div>
+                <div style="font-size:12px;color:#6b7280;">{{ ed.school }} · {{ ed.year }}</div>
+              </div>
+            </sc-for>
+          </section>
+
+          <!-- links -->
+          <section style="background:#fff;border:1px solid #e9ebef;border-radius:14px;padding:18px 20px;box-shadow:0 1px 2px rgba(16,24,40,.04);">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+              <h2 style="margin:0;font-size:15px;font-weight:700;">Public links</h2>
+              <button style="border:none;background:transparent;color:#3b5bdb;font-size:12.5px;font-weight:600;cursor:pointer;padding:0;display:inline-flex;align-items:center;gap:4px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg>Add</button>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:7px;">
+              <sc-for list="{{ profile.links }}" as="ln" hint-placeholder-count="2">
+                <a href="{{ ln.url }}" target="_blank" style="display:flex;align-items:center;gap:8px;font-size:13px;color:#3b5bdb;text-decoration:none;font-weight:500;">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 14a5 5 0 007 0l2-2a5 5 0 00-7-7l-1 1"/><path d="M14 10a5 5 0 00-7 0l-2 2a5 5 0 007 7l1-1"/></svg>
+                  {{ ln.label }}
+                </a>
+              </sc-for>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- ============ SKILLS REGISTER ============ -->
+    <sc-if value="{{ isSkills }}" hint-placeholder-val="{{ false }}">
+    <div data-screen-label="Skills Register" style="max-width:1080px;margin:0 auto;padding:30px 38px 60px;">
+      <h1 style="margin:0;font-size:24px;font-weight:700;letter-spacing:-.02em;">Skills Register</h1>
+      <p style="margin:5px 0 0;color:#6b7280;font-size:13.5px;">Quantified experience per skill — pick one to answer “Who's strong on it?”. Project counts are derived from linked projects.</p>
+
+      <div style="display:grid;grid-template-columns:300px 1fr;gap:22px;margin-top:22px;align-items:start;">
+        <!-- skill list -->
+        <div>
+          <input value="{{ skillSearchVal }}" onInput="{{ onSkillSearch }}" placeholder="Filter skills…" style="width:100%;padding:9px 11px;border:1px solid #e3e6ea;border-radius:9px;font-size:13.5px;background:#fff;outline:none;margin-bottom:10px;" style-focus="border-color:#3b5bdb;box-shadow:0 0 0 3px #eef1fd;" />
+          <div style="display:flex;flex-direction:column;gap:3px;">
+            <sc-for list="{{ skillList }}" as="sk" hint-placeholder-count="8">
+              <button onClick="{{ sk.onClick }}" style="{{ sk.style }}">
+                <span>{{ sk.name }}</span>
+                <span style="font-size:11.5px;font-weight:600;color:{{ sk.countColor }};background:{{ sk.countBg }};border-radius:20px;padding:1px 8px;">{{ sk.peopleCount }}</span>
+              </button>
+            </sc-for>
+          </div>
+        </div>
+
+        <!-- ranked answer -->
+        <div style="background:#fff;border:1px solid #e9ebef;border-radius:14px;padding:22px 24px;box-shadow:0 1px 2px rgba(16,24,40,.04);">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:14px;">
+            <div>
+              <h2 style="margin:0 0 2px;font-size:18px;font-weight:700;letter-spacing:-.01em;">Who's strong on {{ skillQuery.name }}?</h2>
+              <div style="font-size:12.5px;color:#9aa1ab;margin-bottom:16px;">{{ skillQuery.sortNote }}</div>
+            </div>
+            <div style="display:flex;background:#f1f3f6;border-radius:8px;padding:3px;flex:0 0 auto;">
+              <button onClick="{{ onSortYears }}" style="{{ skillQuery.sortYearsStyle }}">Years</button>
+              <button onClick="{{ onSortProjects }}" style="{{ skillQuery.sortProjStyle }}">Projects</button>
+            </div>
+          </div>
+          <sc-if value="{{ skillQuery.hasRows }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;flex-direction:column;">
+            <div style="display:grid;grid-template-columns:34px 1fr 70px 78px;gap:10px;padding:0 4px 8px;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#9aa1ab;font-weight:600;">
+              <span></span><span>Person</span><span style="text-align:right;">Years</span><span style="text-align:right;">Projects</span>
+            </div>
+            <sc-for list="{{ skillQuery.rows }}" as="r" hint-placeholder-count="4">
+              <div onClick="{{ r.onOpen }}" style="display:grid;grid-template-columns:34px 1fr 70px 78px;gap:10px;align-items:center;padding:11px 4px;border-top:1px solid #f1f3f6;cursor:pointer;" style-hover="background:#fafbfc;">
+                <div style="font-size:13px;font-weight:700;color:{{ r.rankColor }};text-align:center;">{{ r.rank }}</div>
+                <div style="display:flex;align-items:center;gap:10px;min-width:0;">
+                  <div style="width:32px;height:32px;border-radius:50%;flex:0 0 32px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:600;background:{{ r.bg }};">{{ r.initials }}</div>
+                  <div style="min-width:0;">
+                    <div style="font-size:13.5px;font-weight:600;">{{ r.name }}</div>
+                    <div style="font-size:11.5px;color:#9aa1ab;">{{ r.role }}</div>
+                  </div>
+                </div>
+                <div style="text-align:right;font-size:14px;font-weight:650;">{{ r.years }}<span style="font-size:11px;color:#9aa1ab;font-weight:500;">y</span></div>
+                <div style="text-align:right;">
+                  <span style="font-size:13px;font-weight:600;">{{ r.projectCount }}</span>
+                  <div style="height:5px;border-radius:3px;background:#eef0f3;margin-top:4px;overflow:hidden;"><div style="height:5px;background:#7c3aed;border-radius:3px;width:{{ r.barW }};"></div></div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+          </sc-if>
+          <sc-if value="{{ skillQuery.empty }}" hint-placeholder-val="{{ false }}">
+            <div style="color:#9aa1ab;font-size:14px;padding:36px 0;text-align:center;">Nobody is recorded with this skill yet.</div>
+          </sc-if>
+        </div>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- ============ MY TASKS ============ -->
+    <sc-if value="{{ isTasks }}" hint-placeholder-val="{{ false }}">
+    <div data-screen-label="My Tasks" style="max-width:760px;margin:0 auto;padding:30px 38px 60px;">
+      <h1 style="margin:0;font-size:24px;font-weight:700;letter-spacing:-.02em;">My Tasks</h1>
+      <p style="margin:5px 0 0;color:#6b7280;font-size:13.5px;">Tasks relating to <b style="color:#344054;">{{ me.name }}</b>, regardless of who created them.</p>
+
+      <sc-if value="{{ myTasksAnyOpen }}" hint-placeholder-val="{{ true }}">
+      <div style="margin-top:22px;">
+        <div style="font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:#9aa1ab;font-weight:600;margin-bottom:9px;">Relates to me · {{ myOpenCount }}</div>
+        <div style="display:flex;flex-direction:column;gap:9px;">
+          <sc-for list="{{ myOpenTasks }}" as="t" hint-placeholder-count="3">
+            <div style="display:flex;align-items:flex-start;gap:12px;background:#fff;border:1px solid #e9ebef;border-radius:11px;padding:13px 15px;box-shadow:0 1px 2px rgba(16,24,40,.04);">
+              <button onClick="{{ t.onComplete }}" title="Complete" style="margin-top:1px;width:19px;height:19px;flex:0 0 19px;border-radius:6px;border:1.7px solid #c7cdd6;background:#fff;cursor:pointer;" style-hover="border-color:#3b5bdb;"></button>
+              <div style="flex:1;min-width:0;">
+                <div style="font-size:14px;font-weight:600;">{{ t.title }}</div>
+                <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:5px;font-size:12px;color:#9aa1ab;">
+                  <span>logged by {{ t.creatorName }}</span>
+                  <sc-if value="{{ t.hasAssignee }}" hint-placeholder-val="{{ false }}"><span style="color:#0891b2;">→ {{ t.assigneeName }}</span></sc-if>
+                  <sc-if value="{{ t.fromInteraction }}" hint-placeholder-val="{{ false }}"><span style="color:#3b5bdb;">↳ from interaction</span></sc-if>
+                  <sc-if value="{{ t.hasDue }}" hint-placeholder-val="{{ false }}"><span>· due {{ t.dueLabel }}</span></sc-if>
+                </div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      </sc-if>
+      <sc-if value="{{ myTasksNoOpen }}" hint-placeholder-val="{{ false }}">
+        <div style="margin-top:22px;background:#fff;border:1px dashed #dfe2e7;border-radius:12px;padding:34px;text-align:center;color:#9aa1ab;font-size:14px;">Nothing relates to you right now.</div>
+      </sc-if>
+
+      <sc-if value="{{ assignedAny }}" hint-placeholder-val="{{ false }}">
+      <div style="margin-top:26px;">
+        <div style="font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:#9aa1ab;font-weight:600;margin-bottom:9px;">Assigned to me · {{ assignedCount }}</div>
+        <div style="display:flex;flex-direction:column;gap:9px;">
+          <sc-for list="{{ assignedTasks }}" as="t" hint-placeholder-count="1">
+            <div style="display:flex;align-items:flex-start;gap:12px;background:#fff;border:1px solid #e9ebef;border-radius:11px;padding:13px 15px;box-shadow:0 1px 2px rgba(16,24,40,.04);">
+              <button onClick="{{ t.onComplete }}" title="Complete" style="margin-top:1px;width:19px;height:19px;flex:0 0 19px;border-radius:6px;border:1.7px solid #c7cdd6;background:#fff;cursor:pointer;" style-hover="border-color:#0891b2;"></button>
+              <div style="flex:1;min-width:0;">
+                <div style="font-size:14px;font-weight:600;">{{ t.title }}</div>
+                <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:5px;font-size:12px;color:#9aa1ab;">
+                  <span>relates to {{ t.relatesToName }}</span>
+                  <span>· logged by {{ t.creatorName }}</span>
+                  <sc-if value="{{ t.hasDue }}" hint-placeholder-val="{{ false }}"><span>· due {{ t.dueLabel }}</span></sc-if>
+                </div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ myTasksAnyDone }}" hint-placeholder-val="{{ false }}">
+      <div style="margin-top:26px;">
+        <div style="font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:#9aa1ab;font-weight:600;margin-bottom:9px;">Done · {{ myDoneCount }}</div>
+        <div style="display:flex;flex-direction:column;gap:9px;">
+          <sc-for list="{{ myDoneTasks }}" as="t" hint-placeholder-count="1">
+            <div style="display:flex;align-items:flex-start;gap:12px;background:#fbfcfd;border:1px solid #eef0f3;border-radius:11px;padding:13px 15px;">
+              <button onClick="{{ t.onComplete }}" title="Reopen" style="margin-top:1px;width:19px;height:19px;flex:0 0 19px;border-radius:6px;border:1.7px solid #15803d;background:#15803d;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><path d="M5 12.5l4 4 10-10"/></svg>
+              </button>
+              <div style="flex:1;min-width:0;">
+                <div style="font-size:14px;font-weight:550;color:#9aa1ab;text-decoration:line-through;">{{ t.title }}</div>
+                <div style="margin-top:5px;font-size:12px;color:#b6bcc6;">logged by {{ t.creatorName }}</div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      </sc-if>
+    </div>
+    </sc-if>
+
+  </main>
+
+  <!-- ============ MODAL ============ -->
+  <sc-if value="{{ modalOpen }}" hint-placeholder-val="{{ false }}">
+  <div onClick="{{ closeModal }}" style="position:fixed;inset:0;background:rgba(16,24,40,.45);display:flex;align-items:center;justify-content:center;z-index:50;animation:ovIn .12s ease;padding:20px;">
+    <div onClick="{{ stop }}" style="width:480px;max-width:100%;max-height:90vh;overflow-y:auto;background:#fff;border-radius:16px;box-shadow:0 24px 60px rgba(16,24,40,.3);animation:mdIn .16s ease;">
+      <div style="padding:20px 22px;border-bottom:1px solid #eef0f3;display:flex;align-items:center;justify-content:space-between;">
+        <h3 style="margin:0;font-size:16.5px;font-weight:700;letter-spacing:-.01em;">{{ modalTitle }}</h3>
+        <button onClick="{{ closeModal }}" style="border:none;background:transparent;cursor:pointer;color:#9aa1ab;padding:2px;display:flex;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      </div>
+      <div style="padding:20px 22px;">
+
+        <!-- interaction form -->
+        <sc-if value="{{ isInteractionModal }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex;flex-direction:column;gap:15px;">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div>
+              <label style="display:block;font-size:12px;font-weight:600;color:#475467;margin-bottom:5px;">Type</label>
+              <select value="{{ draft.type }}" onChange="{{ onDraftType }}" style="width:100%;padding:9px 10px;border:1px solid #e3e6ea;border-radius:8px;font-size:13.5px;background:#fff;cursor:pointer;outline:none;">
+                <sc-for list="{{ typeOptions }}" as="o" hint-placeholder-count="5"><option value="{{ o.id }}">{{ o.label }}</option></sc-for>
+              </select>
+            </div>
+            <div>
+              <label style="display:block;font-size:12px;font-weight:600;color:#475467;margin-bottom:5px;">Date</label>
+              <input type="date" value="{{ draft.date }}" onChange="{{ onDraftDate }}" style="width:100%;padding:8px 10px;border:1px solid #e3e6ea;border-radius:8px;font-size:13.5px;background:#fff;outline:none;" />
+            </div>
+          </div>
+          <div>
+            <label style="display:block;font-size:12px;font-weight:600;color:#475467;margin-bottom:5px;">Note</label>
+            <textarea value="{{ draft.note }}" onInput="{{ onDraftNote }}" rows="4" placeholder="What did you discuss?" style="width:100%;padding:10px 11px;border:1px solid #e3e6ea;border-radius:8px;font-size:13.5px;line-height:1.5;resize:vertical;outline:none;" style-focus="border-color:#3b5bdb;box-shadow:0 0 0 3px #eef1fd;"></textarea>
+          </div>
+          <sc-if value="{{ draft.error }}" hint-placeholder-val="{{ false }}"><div style="font-size:12.5px;color:#be123c;">{{ draft.error }}</div></sc-if>
+        </div>
+        </sc-if>
+
+        <!-- task form -->
+        <sc-if value="{{ isTaskModal }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:15px;">
+          <div style="font-size:12.5px;color:#6b7280;background:#f7f8fa;border-radius:8px;padding:9px 11px;">Relates to <b style="color:#1a1d21;">{{ draft.relatesToName }}</b> · logged by you</div>
+          <sc-if value="{{ draft.contextNote }}" hint-placeholder-val="{{ false }}">
+            <div style="font-size:12.5px;color:#475467;border-left:3px solid #c7d0e8;padding:2px 0 2px 11px;line-height:1.5;">↳ {{ draft.contextNote }}</div>
+          </sc-if>
+          <div>
+            <label style="display:block;font-size:12px;font-weight:600;color:#475467;margin-bottom:5px;">Task</label>
+            <input value="{{ draft.title }}" onInput="{{ onDraftTitle }}" placeholder="e.g. Pair with Thabo on Angular ramp-up" style="width:100%;padding:9px 11px;border:1px solid #e3e6ea;border-radius:8px;font-size:13.5px;outline:none;" style-focus="border-color:#3b5bdb;box-shadow:0 0 0 3px #eef1fd;" />
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div>
+              <label style="display:block;font-size:12px;font-weight:600;color:#475467;margin-bottom:5px;">Assign to</label>
+              <select value="{{ draft.assignee }}" onChange="{{ onDraftAssignee }}" style="width:100%;padding:9px 10px;border:1px solid #e3e6ea;border-radius:8px;font-size:13.5px;background:#fff;cursor:pointer;outline:none;">
+                <sc-for list="{{ assigneeOptions }}" as="o" hint-placeholder-count="3"><option value="{{ o.id }}">{{ o.label }}</option></sc-for>
+              </select>
+            </div>
+            <div>
+              <label style="display:block;font-size:12px;font-weight:600;color:#475467;margin-bottom:5px;">Due (optional)</label>
+              <input type="date" value="{{ draft.due }}" onChange="{{ onDraftDue }}" style="width:100%;padding:8px 10px;border:1px solid #e3e6ea;border-radius:8px;font-size:13.5px;outline:none;" />
+            </div>
+          </div>
+          <sc-if value="{{ draft.error }}" hint-placeholder-val="{{ false }}"><div style="font-size:12.5px;color:#be123c;">{{ draft.error }}</div></sc-if>
+        </div>
+        </sc-if>
+
+        <!-- employee form -->
+        <sc-if value="{{ isEmployeeModal }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:14px;">
+          <div>
+            <label style="display:block;font-size:12px;font-weight:600;color:#475467;margin-bottom:5px;">Full name</label>
+            <input value="{{ draft.name }}" onInput="{{ onDraftName }}" placeholder="e.g. Naledi Khumalo" style="width:100%;padding:9px 11px;border:1px solid #e3e6ea;border-radius:8px;font-size:13.5px;outline:none;" style-focus="border-color:#3b5bdb;box-shadow:0 0 0 3px #eef1fd;" />
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div>
+              <label style="display:block;font-size:12px;font-weight:600;color:#475467;margin-bottom:5px;">Role</label>
+              <input value="{{ draft.role }}" onInput="{{ onDraftRole }}" placeholder="e.g. Backend Engineer" style="width:100%;padding:9px 11px;border:1px solid #e3e6ea;border-radius:8px;font-size:13.5px;outline:none;" />
+            </div>
+            <div>
+              <label style="display:block;font-size:12px;font-weight:600;color:#475467;margin-bottom:5px;">Team</label>
+              <input value="{{ draft.team }}" onInput="{{ onDraftTeam }}" placeholder="e.g. Platform" style="width:100%;padding:9px 11px;border:1px solid #e3e6ea;border-radius:8px;font-size:13.5px;outline:none;" />
+            </div>
+          </div>
+          <div>
+            <label style="display:block;font-size:12px;font-weight:600;color:#475467;margin-bottom:5px;">Email</label>
+            <input value="{{ draft.email }}" onInput="{{ onDraftEmail }}" placeholder="name@acme.co" style="width:100%;padding:9px 11px;border:1px solid #e3e6ea;border-radius:8px;font-size:13.5px;outline:none;" />
+          </div>
+          <sc-if value="{{ draft.error }}" hint-placeholder-val="{{ false }}"><div style="font-size:12.5px;color:#be123c;">{{ draft.error }}</div></sc-if>
+        </div>
+        </sc-if>
+
+        <!-- skill form -->
+        <sc-if value="{{ isSkillModal }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:14px;">
+          <div style="display:grid;grid-template-columns:1.4fr .9fr 1fr;gap:12px;">
+            <div>
+              <label style="display:block;font-size:12px;font-weight:600;color:#475467;margin-bottom:5px;">Skill</label>
+              <input value="{{ draft.name }}" onInput="{{ onDraftName }}" placeholder="e.g. Angular" style="width:100%;padding:9px 11px;border:1px solid #e3e6ea;border-radius:8px;font-size:13.5px;outline:none;" style-focus="border-color:#3b5bdb;box-shadow:0 0 0 3px #eef1fd;" />
+            </div>
+            <div>
+              <label style="display:block;font-size:12px;font-weight:600;color:#475467;margin-bottom:5px;">Years</label>
+              <input type="number" min="0" value="{{ draft.years }}" onInput="{{ onDraftYears }}" placeholder="0" style="width:100%;padding:9px 11px;border:1px solid #e3e6ea;border-radius:8px;font-size:13.5px;outline:none;" />
+            </div>
+            <div>
+              <label style="display:block;font-size:12px;font-weight:600;color:#475467;margin-bottom:5px;">Proficiency</label>
+              <select value="{{ draft.level }}" onChange="{{ onDraftLevel }}" style="width:100%;padding:9px 10px;border:1px solid #e3e6ea;border-radius:8px;font-size:13.5px;background:#fff;cursor:pointer;outline:none;">
+                <sc-for list="{{ levelOptions }}" as="l" hint-placeholder-count="4"><option value="{{ l }}">{{ l }}</option></sc-for>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label style="display:block;font-size:12px;font-weight:600;color:#475467;margin-bottom:6px;">Link projects <span style="color:#9aa1ab;font-weight:500;">— project count is derived from these</span></label>
+            <div style="display:flex;flex-direction:column;gap:2px;border:1px solid #eef0f3;border-radius:9px;padding:6px;max-height:170px;overflow-y:auto;">
+              <sc-for list="{{ skillProjOptions }}" as="po" hint-placeholder-count="3">
+                <button onClick="{{ po.onToggle }}" style="{{ po.style }}">
+                  <span style="width:16px;height:16px;border-radius:5px;border:1.6px solid {{ po.boxBorder }};background:{{ po.boxBg }};display:inline-flex;align-items:center;justify-content:center;flex:0 0 16px;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.2" style="opacity:{{ po.checkOpacity }};"><path d="M5 12.5l4 4 10-10"/></svg></span>
+                  {{ po.name }}
+                </button>
+              </sc-for>
+            </div>
+            <div style="font-size:12px;color:#3b5bdb;font-weight:600;margin-top:8px;">Derived project count: {{ skillDerivedCount }}</div>
+          </div>
+          <sc-if value="{{ draft.error }}" hint-placeholder-val="{{ false }}"><div style="font-size:12.5px;color:#be123c;">{{ draft.error }}</div></sc-if>
+        </div>
+        </sc-if>
+
+      </div>
+      <div style="padding:14px 22px 20px;display:flex;justify-content:flex-end;gap:9px;">
+        <button onClick="{{ closeModal }}" style="border:1px solid #e3e6ea;background:#fff;color:#475467;font-size:13.5px;font-weight:600;padding:9px 16px;border-radius:8px;cursor:pointer;" style-hover="background:#f7f8fa;">Cancel</button>
+        <button onClick="{{ onSaveModal }}" style="border:none;background:#3b5bdb;color:#fff;font-size:13.5px;font-weight:600;padding:9px 18px;border-radius:8px;cursor:pointer;" style-hover="background:#3350c4;">{{ saveLabel }}</button>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  constructor(props){
+    super(props);
+    this._init();
+  }
+
+  _init(){
+    this.PAL = ['#3b5bdb','#7c3aed','#0891b2','#15803d','#b45309','#be123c','#0d9488','#6d28d9','#0369a1'];
+    const PAL=this.PAL;
+    const TYPES = {
+      checkin:{label:'Check-in',color:'#3b5bdb',bg:'#eef1fd'},
+      mentoring:{label:'Mentoring',color:'#7c3aed',bg:'#f3eefe'},
+      catchup:{label:'Catch-up',color:'#0891b2',bg:'#e6f6fb'},
+      oneonone:{label:'1:1',color:'#15803d',bg:'#e9f6ee'},
+      review:{label:'Review',color:'#b45309',bg:'#fbf1e3'},
+    };
+    this.TYPES = TYPES;
+    this.typeOptions = Object.keys(TYPES).map(k=>({id:k,label:TYPES[k].label}));
+    this.levelOptions = ['Beginner','Intermediate','Advanced','Expert'];
+
+    const raw = [
+      {id:'e1',name:'Priya Naidoo',role:'Senior Engineer',team:'Platform',email:'priya.naidoo@acme.co',gh:'priyan',archived:false,
+        education:[{degree:'BSc Computer Science',school:'University of Cape Town',year:'2014'}],
+        projects:[{name:'Billing Platform Rewrite',desc:'Re-platformed monthly billing onto an event-driven core.',period:'2024 – present'},{name:'Auth Service',desc:'OAuth2 / OIDC identity service for internal apps.',period:'2023'},{name:'Notifications Service',desc:'Fan-out email & push delivery.',period:'2022'},{name:'Internal Admin Portal',desc:'Angular back-office for ops teams.',period:'2021'}],
+        links:[{label:'github.com/priyan',url:'https://github.com/priyan'}],
+        skills:[{name:'Java',years:4,projects:['Billing Platform Rewrite','Auth Service','Notifications Service']},{name:'Spring Boot',years:4,projects:['Auth Service','Notifications Service','Billing Platform Rewrite']},{name:'PostgreSQL',years:5,projects:['Billing Platform Rewrite','Auth Service']},{name:'Angular',years:2,projects:['Internal Admin Portal','Billing Platform Rewrite']},{name:'AWS',years:3,projects:['Auth Service','Notifications Service']},{name:'TypeScript',years:2,projects:['Internal Admin Portal']}]},
+      {id:'e2',name:'Thabo Molefe',role:'Frontend Engineer',team:'Web',email:'thabo.molefe@acme.co',gh:'thabom',archived:false,
+        education:[{degree:'BSc Information Systems',school:'University of the Witwatersrand',year:'2017'}],
+        projects:[{name:'Design System',desc:'Company-wide Angular component library.',period:'2023 – present'},{name:'Customer Dashboard v2',desc:'Rebuilt analytics dashboard.',period:'2022'},{name:'Marketing Site',desc:'Public site & CMS integration.',period:'2021'},{name:'Onboarding Flow',desc:'Multi-step signup experience.',period:'2022'},{name:'Mobile Web App',desc:'Responsive PWA.',period:'2020'}],
+        links:[{label:'github.com/thabom',url:'https://github.com/thabom'}],
+        skills:[{name:'Angular',years:6,projects:['Design System','Customer Dashboard v2','Marketing Site','Onboarding Flow','Mobile Web App']},{name:'TypeScript',years:6,projects:['Design System','Customer Dashboard v2','Marketing Site','Onboarding Flow','Mobile Web App']},{name:'React',years:5,projects:['Customer Dashboard v2','Design System','Onboarding Flow','Mobile Web App']}]},
+      {id:'e3',name:'Sarah Coetzee',role:'Engineering Lead',team:'Platform',email:'sarah.coetzee@acme.co',gh:'scoetzee',archived:false,
+        education:[{degree:'MSc Computer Science',school:'Stellenbosch University',year:'2011'}],
+        projects:[{name:'Core Banking API',desc:'Central ledger & account API.',period:'2019 – present'},{name:'Ledger Service',desc:'Double-entry accounting engine.',period:'2020'},{name:'Reporting Engine',desc:'Financial reporting & exports.',period:'2021'},{name:'Reconciliation Service',desc:'Automated settlement reconciliation.',period:'2022'},{name:'Identity Platform',desc:'SSO & access management.',period:'2023'},{name:'Event Pipeline',desc:'Kafka-based domain event backbone.',period:'2023'},{name:'Audit Service',desc:'Immutable audit log.',period:'2024'}],
+        links:[{label:'github.com/scoetzee',url:'https://github.com/scoetzee'}],
+        skills:[{name:'Java',years:9,projects:['Core Banking API','Ledger Service','Reporting Engine','Reconciliation Service','Identity Platform','Event Pipeline']},{name:'Spring Boot',years:8,projects:['Core Banking API','Ledger Service','Reconciliation Service','Identity Platform','Event Pipeline','Audit Service']},{name:'PostgreSQL',years:6,projects:['Core Banking API','Ledger Service','Reporting Engine','Reconciliation Service']},{name:'AWS',years:5,projects:['Identity Platform','Event Pipeline','Audit Service']},{name:'Docker',years:5,projects:['Event Pipeline','Identity Platform','Audit Service']},{name:'Kubernetes',years:3,projects:['Event Pipeline','Identity Platform']}]},
+      {id:'e4',name:'James Okonkwo',role:'Full-stack Engineer',team:'Web',email:'james.okonkwo@acme.co',gh:'jokonkwo',archived:false,
+        education:[{degree:'BEng Software Engineering',school:'University of Pretoria',year:'2016'}],
+        projects:[{name:'Merchant Portal',desc:'Self-service merchant onboarding & dashboard.',period:'2022 – present'},{name:'Checkout Revamp',desc:'Hosted checkout redesign.',period:'2023'},{name:'Support Console',desc:'Internal support tooling.',period:'2021'},{name:'Partner API',desc:'Public partner integration API.',period:'2024'}],
+        links:[{label:'github.com/jokonkwo',url:'https://github.com/jokonkwo'}],
+        skills:[{name:'Java',years:5,projects:['Merchant Portal','Checkout Revamp','Support Console','Partner API']},{name:'Angular',years:3,projects:['Merchant Portal','Support Console']},{name:'React',years:4,projects:['Merchant Portal','Checkout Revamp','Support Console']},{name:'TypeScript',years:4,projects:['Merchant Portal','Checkout Revamp','Support Console']},{name:'PostgreSQL',years:3,projects:['Partner API','Merchant Portal']},{name:'Docker',years:3,projects:['Partner API','Checkout Revamp']}]},
+      {id:'e5',name:'Lerato Dlamini',role:'Backend Engineer',team:'Payments',email:'lerato.dlamini@acme.co',gh:'leratod',archived:false,
+        education:[{degree:'BSc Computer Science',school:'University of KwaZulu-Natal',year:'2015'}],
+        projects:[{name:'Payments Gateway',desc:'Card & EFT payment processing.',period:'2021 – present'},{name:'Settlement Engine',desc:'Batch settlement & payouts.',period:'2022'},{name:'Fraud Scoring',desc:'Real-time risk scoring service.',period:'2023'},{name:'Refunds Service',desc:'Refund orchestration.',period:'2022'},{name:'Webhooks Service',desc:'Reliable webhook delivery.',period:'2024'}],
+        links:[{label:'github.com/leratod',url:'https://github.com/leratod'}],
+        skills:[{name:'Java',years:7,projects:['Payments Gateway','Settlement Engine','Fraud Scoring','Refunds Service','Webhooks Service']},{name:'PostgreSQL',years:7,projects:['Payments Gateway','Settlement Engine','Fraud Scoring','Refunds Service','Webhooks Service']},{name:'Spring Boot',years:6,projects:['Payments Gateway','Settlement Engine','Refunds Service','Webhooks Service']},{name:'Docker',years:5,projects:['Payments Gateway','Settlement Engine','Webhooks Service']},{name:'AWS',years:4,projects:['Fraud Scoring','Webhooks Service']},{name:'Python',years:4,projects:['Fraud Scoring','Settlement Engine']},{name:'Kubernetes',years:3,projects:['Payments Gateway','Webhooks Service']}]},
+      {id:'e6',name:'David Botha',role:'Platform Engineer',team:'Platform',email:'david.botha@acme.co',gh:'dbotha',archived:false,
+        education:[{degree:'BSc Computer Engineering',school:'North-West University',year:'2013'}],
+        projects:[{name:'Kubernetes Migration',desc:'Lift core services onto k8s.',period:'2023 – present'},{name:'CI/CD Platform',desc:'Build & deploy pipelines for all teams.',period:'2022'},{name:'Observability Stack',desc:'Metrics, logs & tracing.',period:'2021'},{name:'Infra Provisioning',desc:'Terraform-based infra modules.',period:'2022'},{name:'Secrets Manager',desc:'Centralised secrets & rotation.',period:'2023'}],
+        links:[{label:'github.com/dbotha',url:'https://github.com/dbotha'}],
+        skills:[{name:'Docker',years:6,projects:['Kubernetes Migration','CI/CD Platform','Observability Stack','Infra Provisioning','Secrets Manager']},{name:'AWS',years:6,projects:['Kubernetes Migration','CI/CD Platform','Infra Provisioning','Secrets Manager']},{name:'Kubernetes',years:5,projects:['Kubernetes Migration','CI/CD Platform','Observability Stack','Infra Provisioning']},{name:'PostgreSQL',years:5,projects:['Observability Stack','Infra Provisioning','Secrets Manager']},{name:'Spring Boot',years:4,projects:['CI/CD Platform','Secrets Manager','Infra Provisioning']},{name:'Java',years:3,projects:['CI/CD Platform','Secrets Manager']},{name:'Python',years:3,projects:['Observability Stack','Infra Provisioning']}]},
+      {id:'e7',name:'Aisha Patel',role:'Frontend Engineer',team:'Web',email:'aisha.patel@acme.co',gh:'aishap',archived:false,
+        education:[{degree:'BSc Computer Science',school:'University of Johannesburg',year:'2019'}],
+        projects:[{name:'Account Settings UI',desc:'Self-service account management.',period:'2023 – present'},{name:'Notifications Center',desc:'In-app notification inbox.',period:'2023'},{name:'Search Experience',desc:'Unified search across the app.',period:'2024'},{name:'Data Grid Component',desc:'Virtualised data grid for the design system.',period:'2024'}],
+        links:[{label:'github.com/aishap',url:'https://github.com/aishap'}],
+        skills:[{name:'React',years:5,projects:['Account Settings UI','Notifications Center','Search Experience','Data Grid Component']},{name:'TypeScript',years:5,projects:['Account Settings UI','Notifications Center','Search Experience','Data Grid Component']},{name:'Angular',years:4,projects:['Account Settings UI','Notifications Center','Data Grid Component']}]},
+      {id:'e8',name:'Daniel Smit',role:'Junior Engineer',team:'Payments',email:'daniel.smit@acme.co',gh:'dsmit',archived:false,
+        education:[{degree:'BSc Computer Science',school:'University of Cape Town',year:'2024'}],
+        projects:[{name:'Invoice Viewer',desc:'Customer-facing invoice display.',period:'2025'},{name:'Payment Status Page',desc:'Real-time payment status tracking.',period:'2025'}],
+        links:[{label:'github.com/dsmit',url:'https://github.com/dsmit'}],
+        skills:[{name:'React',years:2,projects:['Payment Status Page']},{name:'TypeScript',years:2,projects:['Invoice Viewer']},{name:'Angular',years:1,projects:['Invoice Viewer']},{name:'Python',years:1,projects:['Payment Status Page']}]},
+      {id:'e9',name:'Megan Roux',role:'Backend Engineer',team:'Payments',email:'megan.roux@acme.co',gh:'meganr',archived:true,
+        education:[{degree:'BSc Computer Science',school:'Rhodes University',year:'2012'}],
+        projects:[{name:'Legacy Payments Core',desc:'Original payments monolith (decommissioned).',period:'2016 – 2021'}],
+        links:[{label:'github.com/meganr',url:'https://github.com/meganr'}],
+        skills:[{name:'Java',years:6,projects:['Legacy Payments Core']},{name:'PostgreSQL',years:6,projects:['Legacy Payments Core']}]},
+    ];
+
+    this.people = raw.map((p,i)=>this._enrich(p,i));
+    this.pById = {};
+    this.people.forEach(p=>this.pById[p.id]=p);
+    this._refreshSkills();
+
+    const interactions = [
+      {id:'i1',subjectId:'e1',authorId:'e3',type:'oneonone',date:'2026-06-18',note:'Quarterly 1:1 — Priya keen to take on more backend ownership on the Billing rewrite. Wants mentoring on event-driven patterns.'},
+      {id:'i2',subjectId:'e1',authorId:'e6',type:'mentoring',date:'2026-06-10',note:'Paired on the Kubernetes migration. Priya is picking up Helm quickly; suggested she lead the staging cutover.'},
+      {id:'i3',subjectId:'e2',authorId:'e1',type:'checkin',date:'2026-06-20',note:'Caught up after the design system launch. Thabo wants to mentor juniors on Angular — flagged Daniel as a good fit.'},
+      {id:'i4',subjectId:'e8',authorId:'e1',type:'checkin',date:'2026-06-21',note:'First-month check-in. Settling in well on Payments. Needs an Angular ramp-up — pair him with Thabo.'},
+      {id:'i5',subjectId:'e4',authorId:'e3',type:'review',date:'2026-06-15',note:'Mid-year review. Strong full-stack delivery on the Merchant Portal. Stretch goal: deepen Spring Boot.'},
+      {id:'i6',subjectId:'e5',authorId:'e3',type:'oneonone',date:'2026-06-12',note:'Lerato interested in platform / SRE work. Strong on Postgres + Docker. Could shadow David.'},
+      {id:'i7',subjectId:'e1',authorId:'e1',type:'checkin',date:'2026-06-22',note:'Self-note: blocked on the staging environment for the Billing rewrite — following up with David.'},
+      {id:'i8',subjectId:'e7',authorId:'e2',type:'catchup',date:'2026-06-19',note:'Aisha shipped the new Data Grid — great React/TS work. Wants to explore design system ownership.'},
+      {id:'i9',subjectId:'e6',authorId:'e1',type:'mentoring',date:'2026-06-08',note:'David walked me through the observability stack. He offered to co-own the k8s staging cutover.'},
+      {id:'i10',subjectId:'e2',authorId:'e3',type:'oneonone',date:'2026-06-05',note:'Thabo is ready for senior. Action: draft the promotion case.'},
+    ];
+    const tasks = [
+      {id:'t1',relatesTo:'e1',createdBy:'e3',assignee:null,fromInteraction:'i1',title:'Set up mentoring on event-driven patterns',status:'open',due:'2026-06-30'},
+      {id:'t2',relatesTo:'e1',createdBy:'e6',assignee:null,fromInteraction:'i2',title:'Lead the staging cutover for the k8s migration',status:'open',due:'2026-07-03'},
+      {id:'t3',relatesTo:'e1',createdBy:'e1',assignee:null,fromInteraction:'i7',title:'Follow up with David on the staging environment',status:'open',due:'2026-06-25'},
+      {id:'t4',relatesTo:'e8',createdBy:'e1',assignee:'e2',fromInteraction:'i4',title:'Pair Daniel with Thabo for an Angular ramp-up',status:'open',due:'2026-06-28'},
+      {id:'t5',relatesTo:'e2',createdBy:'e3',assignee:null,fromInteraction:'i10',title:'Draft the promotion case for Thabo',status:'open',due:'2026-07-10'},
+      {id:'t6',relatesTo:'e1',createdBy:'e3',assignee:null,fromInteraction:null,title:'Share the Billing rewrite ADR with the team',status:'done',due:'2026-06-14'},
+      {id:'t7',relatesTo:'e4',createdBy:'e3',assignee:'e1',fromInteraction:'i5',title:'Plan Spring Boot deep-dive sessions',status:'open',due:'2026-07-05'},
+      {id:'t8',relatesTo:'e5',createdBy:'e3',assignee:'e6',fromInteraction:'i6',title:'Arrange SRE shadowing with David',status:'open',due:'2026-07-01'},
+    ];
+
+    this.nid = 100;
+    this.state = {
+      view:'dashboard', selectedEmpId:null, currentUserId:'e1',
+      search:'', showArchived:false,
+      skillQueryId:'skangular', skillSearch:'', skillSort:'years',
+      intType:'all', intAuthor:'all',
+      modal:null, draft:{},
+      interactions, tasks,
+    };
+  }
+
+  _enrich(p,i){
+    return {...p,
+      initials:p.name.split(' ').filter(Boolean).map(w=>w[0]).join('').slice(0,2).toUpperCase()||'?',
+      firstName:p.name.split(' ')[0]||p.name,
+      bg:this.PAL[i%this.PAL.length]};
+  }
+
+  _refreshSkills(){
+    const seen={};
+    this.people.forEach(p=>p.skills.forEach(s=>{ if(!seen[s.name]) seen[s.name]={name:s.name,id:'sk'+s.name.toLowerCase().replace(/[^a-z0-9]+/g,'')}; }));
+    this.skills=Object.values(seen).sort((a,b)=>a.name.localeCompare(b.name));
+  }
+
+  fmtDate = (iso)=>{ if(!iso) return ''; const M=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']; const [y,m,d]=iso.split('-').map(Number); return d+' '+M[m-1]+' '+y; };
+  today = ()=> new Date().toISOString().slice(0,10);
+  levelFor = (y)=> y>=7?'Expert':(y>=5?'Advanced':(y>=3?'Intermediate':'Beginner'));
+  levelMeta = (lvl)=>({Expert:{c:'#7c3aed',b:'#f3eefe'},Advanced:{c:'#3b5bdb',b:'#eef1fd'},Intermediate:{c:'#0891b2',b:'#e6f6fb'},Beginner:{c:'#6b7280',b:'#f1f3f6'}}[lvl]||{c:'#6b7280',b:'#f1f3f6'});
+
+  // nav
+  goDashboard = ()=> this.setState({view:'dashboard'});
+  goPeople = ()=> this.setState({view:'people'});
+  goSkills = ()=> this.setState({view:'skills'});
+  goTasks  = ()=> this.setState({view:'tasks'});
+  openEmp  = (id)=> this.setState({view:'profile', selectedEmpId:id, intType:'all', intAuthor:'all'});
+  onSelectUser = (e)=> this.setState({currentUserId:e.target.value});
+  onSearch = (e)=> this.setState({search:e.target.value});
+  toggleArchived = ()=> this.setState(s=>({showArchived:!s.showArchived}));
+  onSkillSearch = (e)=> this.setState({skillSearch:e.target.value});
+  setSkill = (id)=> this.setState({skillQueryId:id});
+  onSortYears = ()=> this.setState({skillSort:'years'});
+  onSortProjects = ()=> this.setState({skillSort:'projects'});
+  onIntType = (e)=> this.setState({intType:e.target.value});
+  onIntAuthor = (e)=> this.setState({intAuthor:e.target.value});
+
+  // modals
+  closeModal = ()=> this.setState({modal:null, draft:{}});
+  stop = (e)=> e.stopPropagation();
+  openLog = (subjectId)=> this.setState({modal:'interaction', draft:{type:'checkin', date:this.today(), note:'', subjectId, error:''}});
+  openTask = (subjectId, fromInteraction, contextNote)=> this.setState({modal:'task', draft:{title:'', relatesTo:subjectId, assignee:subjectId, fromInteraction:fromInteraction||null, due:'', contextNote:contextNote||'', error:''}});
+  openAdd = ()=> this.setState({modal:'employee', draft:{empId:null, name:'', role:'', team:'', email:'', gh:'', error:''}});
+  openEdit = (id)=>{ const e=this.pById[id]; this.setState({modal:'employee', draft:{empId:id, name:e.name, role:e.role, team:e.team, email:e.email, gh:e.gh, error:''}}); };
+  openAddSkill = (id)=>{ const e=this.pById[id]; this.setState({modal:'skill', draft:{empId:id, name:'', years:'', level:'Intermediate', projects:[], empProjects:e.projects.map(p=>p.name), error:''}}); };
+  archiveEmp = (id)=>{ this.pById[id].archived=!this.pById[id].archived; this.forceUpdate(); };
+
+  setF = (k,v)=> this.setState(s=>({draft:{...s.draft,[k]:v}}));
+  onDraftType = (e)=> this.setF('type',e.target.value);
+  onDraftDate = (e)=> this.setF('date',e.target.value);
+  onDraftNote = (e)=> this.setF('note',e.target.value);
+  onDraftTitle = (e)=> this.setF('title',e.target.value);
+  onDraftDue = (e)=> this.setF('due',e.target.value);
+  onDraftAssignee = (e)=> this.setF('assignee',e.target.value);
+  onDraftName = (e)=> this.setF('name',e.target.value);
+  onDraftRole = (e)=> this.setF('role',e.target.value);
+  onDraftTeam = (e)=> this.setF('team',e.target.value);
+  onDraftEmail = (e)=> this.setF('email',e.target.value);
+  onDraftYears = (e)=> this.setF('years',e.target.value);
+  onDraftLevel = (e)=> this.setF('level',e.target.value);
+  toggleSkillProject = (name)=> this.setState(s=>{ const cur=s.draft.projects||[]; const next=cur.includes(name)?cur.filter(n=>n!==name):[...cur,name]; return {draft:{...s.draft,projects:next}}; });
+
+  saveModal = ()=>{
+    const S=this.state, d=S.draft;
+    if(S.modal==='interaction'){
+      if(!d.note || !d.note.trim()){ this.setF('error','A note is required.'); return; }
+      const it={id:'i'+(this.nid++),subjectId:d.subjectId,authorId:S.currentUserId,type:d.type,date:d.date||this.today(),note:d.note.trim()};
+      this.setState(s=>({interactions:[it,...s.interactions],modal:null,draft:{}}));
+    } else if(S.modal==='task'){
+      if(!d.title || !d.title.trim()){ this.setF('error','A task title is required.'); return; }
+      const t={id:'t'+(this.nid++),relatesTo:d.relatesTo,createdBy:S.currentUserId,assignee:(d.assignee&&d.assignee!==d.relatesTo)?d.assignee:null,fromInteraction:d.fromInteraction||null,title:d.title.trim(),status:'open',due:d.due||''};
+      this.setState(s=>({tasks:[...s.tasks,t],modal:null,draft:{}}));
+    } else if(S.modal==='employee'){
+      if(!d.name || !d.name.trim()){ this.setF('error','Name is required.'); return; }
+      if(!d.role || !d.role.trim()){ this.setF('error','Role is required.'); return; }
+      if(d.empId){
+        const e=this.pById[d.empId];
+        e.name=d.name.trim(); e.role=d.role.trim(); e.team=d.team.trim(); e.email=d.email.trim(); e.gh=d.gh;
+        e.initials=e.name.split(' ').filter(Boolean).map(w=>w[0]).join('').slice(0,2).toUpperCase()||'?';
+        e.firstName=e.name.split(' ')[0]||e.name;
+      } else {
+        const id='e'+(this.nid++);
+        const np=this._enrich({id,name:d.name.trim(),role:d.role.trim(),team:d.team.trim()||'—',email:d.email.trim(),gh:d.gh||'',archived:false,education:[],projects:[],links:[],skills:[]}, this.people.length);
+        this.people.push(np); this.pById[id]=np;
+      }
+      this.setState({modal:null,draft:{}});
+    } else if(S.modal==='skill'){
+      if(!d.name || !d.name.trim()){ this.setF('error','Skill name is required.'); return; }
+      const yrs=parseInt(d.years,10);
+      if(isNaN(yrs)||yrs<0){ this.setF('error','Enter valid years of experience.'); return; }
+      const e=this.pById[d.empId];
+      const nm=d.name.trim();
+      if(e.skills.some(s=>s.name.toLowerCase()===nm.toLowerCase())){ this.setF('error','This skill is already recorded for this person.'); return; }
+      e.skills.push({name:nm,years:yrs,projects:[...(d.projects||[])]});
+      this._refreshSkills();
+      this.setState({modal:null,draft:{}});
+    }
+  };
+
+  toggleTask = (id)=> this.setState(s=>({tasks:s.tasks.map(t=>t.id===id?{...t,status:t.status==='done'?'open':'done'}:t)}));
+  deleteInteraction = (id)=> this.setState(s=>({interactions:s.interactions.filter(x=>x.id!==id)}));
+
+  renderVals(){
+    const S=this.state;
+    const me=this.pById[S.currentUserId];
+    const view=S.view;
+    const navBase='display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;border:none;text-align:left;width:100%;';
+    const on='background:#eef1fd;color:#3b5bdb;', off='background:transparent;color:#475467;';
+    const myOpen=S.tasks.filter(t=>t.relatesTo===S.currentUserId && t.status==='open');
+    const nameOf=(id)=> this.pById[id]?this.pById[id].name:'—';
+    const firstOf=(id)=> this.pById[id]?this.pById[id].firstName:'—';
+
+    const out={
+      me, currentUserId:S.currentUserId,
+      userOptions:this.people.filter(p=>!p.archived).map(p=>({id:p.id,label:p.name})),
+      nav:{ dashboard:navBase+(view==='dashboard'?on:off), people:navBase+((view==='people'||view==='profile')?on:off), skills:navBase+(view==='skills'?on:off), tasks:navBase+(view==='tasks'?on:off) },
+      myTaskCount:myOpen.length,
+      taskBadge:'margin-left:auto;font-size:11px;font-weight:600;min-width:18px;text-align:center;border-radius:9px;padding:1px 6px;'+(myOpen.length?'background:#3b5bdb;color:#fff;':'background:#eceef1;color:#9aa1ab;'),
+      isDashboard:view==='dashboard', isPeople:view==='people', isProfile:view==='profile', isSkills:view==='skills', isTasks:view==='tasks',
+      goDashboard:this.goDashboard, goPeople:this.goPeople, goSkills:this.goSkills, goTasks:this.goTasks, onSelectUser:this.onSelectUser, openAdd:this.openAdd,
+      // modal wiring
+      modalOpen:!!S.modal, typeOptions:this.typeOptions, levelOptions:this.levelOptions,
+      closeModal:this.closeModal, stop:this.stop, onSaveModal:this.saveModal,
+      onDraftType:this.onDraftType, onDraftDate:this.onDraftDate, onDraftNote:this.onDraftNote, onDraftTitle:this.onDraftTitle, onDraftDue:this.onDraftDue,
+      onDraftAssignee:this.onDraftAssignee, onDraftName:this.onDraftName, onDraftRole:this.onDraftRole, onDraftTeam:this.onDraftTeam, onDraftEmail:this.onDraftEmail,
+      onDraftYears:this.onDraftYears, onDraftLevel:this.onDraftLevel,
+      isInteractionModal:S.modal==='interaction', isTaskModal:S.modal==='task', isEmployeeModal:S.modal==='employee', isSkillModal:S.modal==='skill',
+      assigneeOptions:[{id:'',label:'— Subject owns it —'}].concat(this.people.filter(p=>!p.archived).map(p=>({id:p.id,label:p.name}))),
+    };
+
+    // modal title/labels + draft enrich
+    let mt='', sl='Save';
+    if(S.modal==='interaction'){ mt='Log interaction with '+firstOf(S.draft.subjectId); sl='Save interaction'; }
+    else if(S.modal==='task'){ mt=S.draft.fromInteraction?'Follow-up task':'New task'; sl='Create task'; }
+    else if(S.modal==='employee'){ mt=S.draft.empId?'Edit employee':'Add employee'; sl=S.draft.empId?'Save changes':'Add employee'; }
+    else if(S.modal==='skill'){ mt='Record a skill'; sl='Record skill'; }
+    out.modalTitle=mt; out.saveLabel=sl;
+    out.draft={...S.draft, relatesToName: S.draft.relatesTo?nameOf(S.draft.relatesTo):''};
+    if(S.modal==='skill'){
+      const sel=S.draft.projects||[];
+      out.skillProjOptions=(S.draft.empProjects||[]).map(n=>{ const ck=sel.includes(n); return {name:n, checked:ck, checkOpacity:ck?'1':'0', boxBorder:ck?'#3b5bdb':'#c7cdd6', boxBg:ck?'#3b5bdb':'#fff', onToggle:()=>this.toggleSkillProject(n), style:'display:flex;align-items:center;gap:9px;width:100%;text-align:left;border:none;background:transparent;cursor:pointer;font-size:13px;color:#344054;padding:7px 8px;border-radius:7px;'+(ck?'background:#f5f7fe;':'')}; });
+      out.skillDerivedCount=sel.length;
+    } else { out.skillProjOptions=[]; out.skillDerivedCount=0; }
+
+    // PEOPLE
+    const q=(S.search||'').toLowerCase().trim();
+    const base=this.people.filter(p=> S.showArchived || !p.archived);
+    const filtered=base.filter(p=> !q || p.name.toLowerCase().includes(q) || p.role.toLowerCase().includes(q) || p.team.toLowerCase().includes(q));
+    out.searchVal=S.search;
+    out.peopleCount=this.people.filter(p=>!p.archived).length;
+    out.peopleEmpty=filtered.length===0;
+    out.archivedCheck=S.showArchived?'✓':'';
+    out.archivedToggleStyle='display:inline-flex;align-items:center;gap:7px;border:1px solid #e3e6ea;border-radius:8px;padding:8px 12px;font-size:12.5px;font-weight:600;cursor:pointer;'+(S.showArchived?'background:#eef1fd;color:#3b5bdb;border-color:#c7d0e8;':'background:#fff;color:#6b7280;');
+    out.peopleList=filtered.map(p=>{
+      const top=[...p.skills].sort((a,b)=>b.years-a.years).slice(0,3).map(s=>({label:s.name+' · '+s.years+'y'}));
+      const isMe=p.id===S.currentUserId;
+      const visInts=S.interactions.filter(x=>x.subjectId===p.id && (isMe || x.authorId===S.currentUserId)).length;
+      return {id:p.id,name:p.name,role:p.role,team:p.team,initials:p.initials,bg:p.bg,archived:p.archived,
+        avatarOpacity:p.archived?'.5':'1',
+        cardStyle:'display:flex;align-items:center;gap:16px;background:'+(p.archived?'#fbfbfc':'#fff')+';border:1px solid #e9ebef;border-radius:12px;padding:15px 18px;cursor:pointer;transition:box-shadow .15s,border-color .15s;box-shadow:0 1px 2px rgba(16,24,40,.04);opacity:'+(p.archived?'.78':'1')+';',
+        topSkills:top, skillCount:p.skills.length,
+        interactionCount:visInts, interactionWord:isMe?'about you':'with you',
+        onOpen:()=>this.openEmp(p.id)};
+    });
+
+    // PROFILE
+    if(view==='profile' && S.selectedEmpId && this.pById[S.selectedEmpId]){
+      const e=this.pById[S.selectedEmpId];
+      const meId=S.currentUserId; const isOwn=e.id===meId;
+      const allInts=S.interactions.filter(x=>x.subjectId===e.id && (isOwn || x.authorId===meId)).sort((a,b)=> b.date<a.date?-1:(b.date>a.date?1:0));
+      const authorIds=[...new Set(allInts.map(x=>x.authorId))];
+      const ints=allInts.filter(x=> (S.intType==='all'||x.type===S.intType) && (S.intAuthor==='all'||x.authorId===S.intAuthor));
+      const tks=S.tasks.filter(t=>t.relatesTo===e.id && (isOwn || t.createdBy===meId || t.assignee===meId));
+      const maxY=Math.max(1,...e.skills.map(s=>s.years));
+      out.intType=S.intType; out.intAuthor=S.intAuthor; out.onIntType=this.onIntType; out.onIntAuthor=this.onIntAuthor;
+      out.intTypeOptions=[{id:'all',label:'All types'}].concat(this.typeOptions);
+      out.intAuthorOptions=[{id:'all',label:'All authors'}].concat(authorIds.map(id=>({id,label:nameOf(id)})));
+      out.profile={
+        emp:{name:e.name,role:e.role,team:e.team,email:e.email,initials:e.initials,bg:e.bg,firstName:e.firstName,archived:e.archived,githubUrl:'https://github.com/'+e.gh,githubLabel:e.gh?('github.com/'+e.gh):'no link'},
+        onLog:()=>this.openLog(e.id), onNewTask:()=>this.openTask(e.id,null,''), onEdit:()=>this.openEdit(e.id), onArchive:()=>this.archiveEmp(e.id), onAddSkill:()=>this.openAddSkill(e.id),
+        archiveLabel:e.archived?'Restore':'Archive',
+        intNote:isOwn?'newest first · everyone who logged about you':'newest first · only yours',
+        taskNote:isOwn?'any creator':'between you two',
+        showFilters:allInts.length>0, showAuthorFilter:isOwn,
+        hasInteractions:ints.length>0, filterEmpty:allInts.length>0&&ints.length===0, noInteractions:allInts.length===0,
+        interactions:ints.map(x=>{ const a=this.pById[x.authorId], tm=this.TYPES[x.type];
+          return {note:x.note,authorName:a.name,authorInitials:a.initials,authorBg:a.bg,typeLabel:tm.label,typeColor:tm.color,typeBg:tm.bg,dateLabel:this.fmtDate(x.date),isMine:x.authorId===S.currentUserId,onSpawnTask:()=>this.openTask(e.id,x.id,x.note),onDelete:()=>this.deleteInteraction(x.id)}; }),
+        hasTasks:tks.length>0, noTasks:tks.length===0,
+        tasks:tks.map(t=>{ const done=t.status==='done'; const canDo=(t.relatesTo===S.currentUserId||t.createdBy===S.currentUserId);
+          return {title:t.title,creatorName:nameOf(t.createdBy),hasAssignee:!!t.assignee,assigneeName:t.assignee?firstOf(t.assignee):'',fromInteraction:!!t.fromInteraction,hasDue:!!t.due,dueLabel:this.fmtDate(t.due),rowBg:done?'#fbfcfd':'#fff',titleColor:done?'#9aa1ab':'#1a1d21',titleDeco:done?'line-through':'none',checkBorder:done?'#15803d':(canDo?'#c7cdd6':'#e3e6ea'),checkBg:done?'#15803d':'#fff',checkOpacity:done?'1':'0',onComplete:canDo?(()=>this.toggleTask(t.id)):(()=>{})}; }),
+        hasSkills:e.skills.length>0, noSkills:e.skills.length===0,
+        skills:[...e.skills].sort((a,b)=>b.years-a.years).map(s=>{ const pc=s.projects.length; const lvl=this.levelFor(s.years); const lm=this.levelMeta(lvl);
+          return {name:s.name,years:s.years,projectCount:pc,barW:Math.round(s.years/maxY*100)+'%',level:lvl,levelColor:lm.c,levelBg:lm.b,endorsements:Math.min(15,pc*2+(s.years%4)),lastUsed:2026-((pc+s.years)%3)}; }),
+        hasProjects:e.projects.length>0, noProjects:e.projects.length===0,
+        projects:e.projects, education:e.education, links:e.links,
+      };
+    }
+
+    // SKILLS REGISTER
+    const sq=(S.skillSearch||'').toLowerCase().trim();
+    const activePeople=this.people.filter(p=>!p.archived);
+    const counts={};
+    this.skills.forEach(sk=>{ counts[sk.id]=activePeople.filter(p=>p.skills.some(s=>s.name===sk.name)).length; });
+    out.skillSearchVal=S.skillSearch;
+    out.skillList=this.skills.filter(sk=> (!sq||sk.name.toLowerCase().includes(sq)) && counts[sk.id]>0).map(sk=>{ const active=sk.id===S.skillQueryId;
+      return {name:sk.name,peopleCount:counts[sk.id],style:'display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;text-align:left;border:none;cursor:pointer;font-size:13.5px;font-weight:'+(active?'650':'500')+';padding:9px 11px;border-radius:8px;'+(active?'background:#eef1fd;color:#3b5bdb;':'background:transparent;color:#344054;'),countColor:active?'#3b5bdb':'#6b7280',countBg:active?'#dfe6fb':'#f1f3f6',onClick:()=>this.setSkill(sk.id)}; });
+    const cur=this.skills.find(sk=>sk.id===S.skillQueryId)||this.skills[0];
+    let rows=[];
+    if(cur){ rows=activePeople.filter(p=>p.skills.some(s=>s.name===cur.name)).map(p=>{ const s=p.skills.find(x=>x.name===cur.name); return {id:p.id,name:p.name,role:p.role,initials:p.initials,bg:p.bg,years:s.years,projectCount:s.projects.length}; }); }
+    if(S.skillSort==='projects') rows.sort((a,b)=> b.projectCount-a.projectCount || b.years-a.years);
+    else rows.sort((a,b)=> b.years-a.years || b.projectCount-a.projectCount);
+    const maxP=Math.max(1,...rows.map(r=>r.projectCount));
+    const segOn='border:none;cursor:pointer;font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;background:#fff;color:#3b5bdb;box-shadow:0 1px 2px rgba(16,24,40,.08);';
+    const segOff='border:none;cursor:pointer;font-size:12px;font-weight:600;padding:5px 12px;border-radius:6px;background:transparent;color:#6b7280;';
+    out.onSortYears=this.onSortYears; out.onSortProjects=this.onSortProjects;
+    out.skillQuery={ name:cur?cur.name:'', hasRows:rows.length>0, empty:rows.length===0,
+      sortNote: S.skillSort==='projects'?'Ranked by project count, then years':'Ranked by years, then project count',
+      sortYearsStyle:S.skillSort==='years'?segOn:segOff, sortProjStyle:S.skillSort==='projects'?segOn:segOff,
+      rows:rows.map((r,i)=>({...r,rank:i+1,rankColor:i===0?'#3b5bdb':'#9aa1ab',barW:Math.round(r.projectCount/maxP*100)+'%',onOpen:()=>this.openEmp(r.id)})) };
+
+    // MY TASKS
+    const mkTask=(t)=>({title:t.title,creatorName:nameOf(t.createdBy),relatesToName:nameOf(t.relatesTo),hasAssignee:!!t.assignee,assigneeName:t.assignee?firstOf(t.assignee):'',fromInteraction:!!t.fromInteraction,hasDue:!!t.due,dueLabel:this.fmtDate(t.due),onComplete:()=>this.toggleTask(t.id)});
+    const relMine=S.tasks.filter(t=>t.relatesTo===S.currentUserId);
+    const open=relMine.filter(t=>t.status==='open'), done=relMine.filter(t=>t.status==='done');
+    const assigned=S.tasks.filter(t=>t.assignee===S.currentUserId && t.relatesTo!==S.currentUserId && t.status==='open');
+    out.myOpenTasks=open.map(mkTask); out.myDoneTasks=done.map(mkTask); out.assignedTasks=assigned.map(mkTask);
+    out.myOpenCount=open.length; out.myDoneCount=done.length; out.assignedCount=assigned.length;
+    out.myTasksAnyOpen=open.length>0; out.myTasksNoOpen=open.length===0; out.myTasksAnyDone=done.length>0; out.assignedAny=assigned.length>0;
+
+    // DASHBOARD (personal to current user)
+    const hr=new Date().getHours();
+    const greeting=hr<12?'Good morning':(hr<18?'Good afternoon':'Good evening');
+    const myInts=S.interactions.filter(x=>x.subjectId===S.currentUserId).sort((a,b)=> b.date<a.date?-1:(b.date>a.date?1:0));
+    const maxMy=Math.max(1,...me.skills.map(s=>s.years));
+    out.dash={
+      greeting, openCount:open.length, assignedCount:assigned.length, intCount:myInts.length, skillCount:me.skills.length,
+      hasOpen:open.length>0, noOpen:open.length===0, openTasks:open.slice(0,5).map(mkTask),
+      hasAssigned:assigned.length>0, assignedTasks:assigned.map(mkTask),
+      hasRecent:myInts.length>0, noRecent:myInts.length===0,
+      recent:myInts.slice(0,4).map(x=>{ const a=this.pById[x.authorId], tm=this.TYPES[x.type];
+        return {note:x.note,authorName:a.name,authorInitials:a.initials,authorBg:a.bg,typeLabel:tm.label,typeColor:tm.color,typeBg:tm.bg,dateLabel:this.fmtDate(x.date)}; }),
+      hasSkills:me.skills.length>0, noSkills:me.skills.length===0,
+      skills:[...me.skills].sort((a,b)=>b.years-a.years).slice(0,5).map(s=>({name:s.name,years:s.years,projectCount:s.projects.length,barW:Math.round(s.years/maxMy*100)+'%'})),
+      onOpenMe:()=>this.openEmp(S.currentUserId),
+    };
+
+    return out;
+  }
+}
+</script>
+</body>
+</html>
