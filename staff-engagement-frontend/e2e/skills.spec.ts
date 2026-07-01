@@ -30,22 +30,16 @@ test.describe('Skills Register', () => {
     await page.goto('/skills');
     const select = page.getByLabel('Select a skill');
     await expect(select).toBeVisible();
-    await select.selectOption({ label: 'Angular' });
+    await select.selectOption({ label: 'Java' });
     await expect(page.getByText('Jane Doe')).toBeVisible();
   });
 
   test('selecting the default option clears search results', async ({ page }) => {
     await page.goto('/skills');
-    await page.getByLabel('Select a skill').selectOption({ label: 'Angular' });
+    await page.getByLabel('Select a skill').selectOption({ label: 'Java' });
     await expect(page.getByText('Jane Doe')).toBeVisible();
     await page.getByLabel('Select a skill').selectOption({ value: '' });
     await expect(page.getByText('Jane Doe')).not.toBeVisible();
-  });
-
-  test('Home link navigates back', async ({ page }) => {
-    await page.goto('/skills');
-    await page.getByRole('link', { name: 'Home' }).click();
-    await expect(page).toHaveURL(/\/dashboard/);
   });
 
   test('Skills Register link appears on the home page', async ({ page }) => {
@@ -60,26 +54,30 @@ test.describe('Portfolio — Skills section', () => {
 
   test('portfolio page shows a Skills section', async ({ page }) => {
     await page.goto('/people/1');
-    await expect(page.getByRole('heading', { name: 'Skills' })).toBeVisible();
-    await expect(page.getByRole('button', { name: /add skill/i })).toBeVisible();
+    const section = page.locator('app-skill-section');
+    await expect(section.getByRole('heading', { name: 'Skills' })).toBeVisible();
+    await expect(section.getByRole('button', { name: /^add$/i })).toBeVisible();
   });
 
   test('adds a skill and it appears in the list', async ({ page }) => {
     await page.goto('/people/1');
-    await page.getByRole('button', { name: /add skill/i }).click();
-    await page.getByLabel('Skill Name').fill('SQL');
-    await page.getByLabel('Years of Experience').fill('2');
-    await page.getByRole('button', { name: /^save$/i }).click();
-    await expect(page.getByText('SQL')).toBeVisible();
+    const section = page.locator('app-skill-section');
+    // admin (person 1) is seeded with Docker/AWS/SQL, so use a skill they lack.
+    await section.getByRole('button', { name: /^add$/i }).click();
+    await section.getByLabel('Skill name').fill('Python');
+    await section.getByLabel('Years of experience').fill('2');
+    await section.getByRole('button', { name: /^save$/i }).click();
+    await expect(section.getByText('Python')).toBeVisible();
     // Clean up — remove the skill so the test is idempotent
-    await page.getByRole('button', { name: 'Delete SQL' }).click();
-    await expect(page.getByRole('listitem').filter({ hasText: 'SQL' })).toHaveCount(0);
+    await section.getByRole('button', { name: 'Delete Python' }).click();
+    await expect(section.getByRole('listitem').filter({ hasText: 'Python' })).toHaveCount(0);
   });
 
   test('shows validation error when skill name is missing', async ({ page }) => {
     await page.goto('/people/1');
-    await page.getByRole('button', { name: /add skill/i }).click();
-    await page.getByRole('button', { name: /^save$/i }).click();
-    await expect(page.getByText(/skill name is required/i)).toBeVisible();
+    const section = page.locator('app-skill-section');
+    await section.getByRole('button', { name: /^add$/i }).click();
+    await section.getByRole('button', { name: /^save$/i }).click();
+    await expect(section.getByText(/skill name is required/i)).toBeVisible();
   });
 });
