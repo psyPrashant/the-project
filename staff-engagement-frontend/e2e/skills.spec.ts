@@ -8,7 +8,7 @@ async function login(page: import('@playwright/test').Page): Promise<void> {
   await page.locator('#email').fill(SEED_EMAIL);
   await page.locator('#password').fill(SEED_PASSWORD);
   await page.getByRole('button', { name: /sign in/i }).click();
-  await expect(page).toHaveURL(/\/home/);
+  await expect(page).toHaveURL(/\/people/);
 }
 
 test.describe('Skills Register', () => {
@@ -44,7 +44,7 @@ test.describe('Skills Register', () => {
   test('Home link navigates back', async ({ page }) => {
     await page.goto('/skills');
     await page.getByRole('link', { name: 'Home' }).click();
-    await expect(page).toHaveURL(/\/home/);
+    await expect(page).toHaveURL(/\/dashboard/);
   });
 
   test('Skills Register link appears on the home page', async ({ page }) => {
@@ -58,13 +58,13 @@ test.describe('Portfolio — Skills section', () => {
   });
 
   test('portfolio page shows a Skills section', async ({ page }) => {
-    await page.goto('/employees/1/portfolio');
+    await page.goto('/people/1');
     await expect(page.getByRole('heading', { name: 'Skills' })).toBeVisible();
     await expect(page.getByRole('button', { name: /add skill/i })).toBeVisible();
   });
 
   test('adds a skill and it appears in the list', async ({ page }) => {
-    await page.goto('/employees/1/portfolio');
+    await page.goto('/people/1');
     await page.getByRole('button', { name: /add skill/i }).click();
     await page.getByLabel('Skill Name').fill('SQL');
     await page.getByLabel('Years of Experience').fill('2');
@@ -76,7 +76,7 @@ test.describe('Portfolio — Skills section', () => {
   });
 
   test('shows validation error when skill name is missing', async ({ page }) => {
-    await page.goto('/employees/1/portfolio');
+    await page.goto('/people/1');
     await page.getByRole('button', { name: /add skill/i }).click();
     await page.getByRole('button', { name: /^save$/i }).click();
     await expect(page.getByText(/skill name is required/i)).toBeVisible();
