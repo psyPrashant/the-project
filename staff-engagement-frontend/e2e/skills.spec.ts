@@ -20,9 +20,10 @@ test.describe('Skills Register', () => {
     await page.goto('/skills');
     await expect(page.getByRole('heading', { name: 'Skills Register' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'All Skills' })).toBeVisible();
-    await expect(page.getByText('Angular')).toBeVisible();
-    await expect(page.getByText('Java')).toBeVisible();
-    await expect(page.getByText('Spring Boot')).toBeVisible();
+    const skillsList = page.getByRole('list', { name: 'All skills' });
+    await expect(skillsList.getByText('Angular')).toBeVisible();
+    await expect(skillsList.getByText('Java')).toBeVisible();
+    await expect(skillsList.getByText('Spring Boot')).toBeVisible();
   });
 
   test('searching by skill shows ranked employee results', async ({ page }) => {
@@ -71,8 +72,8 @@ test.describe('Portfolio — Skills section', () => {
     await page.getByRole('button', { name: /^save$/i }).click();
     await expect(page.getByText('SQL')).toBeVisible();
     // Clean up — remove the skill so the test is idempotent
-    await page.locator('li', { hasText: 'SQL' }).getByRole('button', { name: /remove/i }).click();
-    await expect(page.locator('li', { hasText: 'SQL' })).toHaveCount(0);
+    await page.getByRole('button', { name: 'Delete SQL' }).click();
+    await expect(page.getByRole('listitem').filter({ hasText: 'SQL' })).toHaveCount(0);
   });
 
   test('shows validation error when skill name is missing', async ({ page }) => {
