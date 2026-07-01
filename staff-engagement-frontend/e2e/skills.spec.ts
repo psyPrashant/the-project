@@ -34,16 +34,18 @@ test.describe('Skills Register', () => {
     await expect(page.getByText('Jane Doe')).toBeVisible();
   });
 
-  test('clicking All Skills clears search results', async ({ page }) => {
+  test('clicking All Skills resets to the unfiltered employee-skills view', async ({ page }) => {
     await page.goto('/skills');
     const allSkillsButton = page.getByRole('button', { name: 'All Skills', exact: true });
     await expect(allSkillsButton).toBeVisible();
 
     const skillsList = page.getByRole('list', { name: 'All skills' });
     await skillsList.getByText('Java').click();
-    await expect(page.getByText('Jane Doe')).toBeVisible();
+    await expect(page.getByText("Who's strong on Java?")).toBeVisible();
+
     await allSkillsButton.click();
-    await expect(page.getByText('Jane Doe')).not.toBeVisible();
+    await expect(page.getByText("Who's strong on Java?")).not.toBeVisible();
+    await expect(page.getByText('All people and their skills')).toBeVisible();
   });
 
   test('Skills Register link appears on the home page', async ({ page }) => {

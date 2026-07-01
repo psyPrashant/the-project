@@ -24,3 +24,9 @@ export interface AddEmployeeSkillRequest {
   skillName: string;
   years: number;
 }
+
+export interface EmployeeWithSkillsResponse {
+  employeeId: number;
+  employeeName: string;
+  skills: EmployeeSkillResponse[];
+}

@@ -2,6 +2,7 @@ package com.psybergate.staff_engagement.skills;
 
 import com.psybergate.staff_engagement.skills.dto.AddEmployeeSkillRequest;
 import com.psybergate.staff_engagement.skills.dto.EmployeeSkillResponse;
+import com.psybergate.staff_engagement.skills.dto.EmployeeWithSkillsResponse;
 import com.psybergate.staff_engagement.skills.dto.SkillSearchResultResponse;
 import com.psybergate.staff_engagement.skills.dto.SkillSummaryResponse;
 import com.psybergate.staff_engagement.skills.dto.UpdateEmployeeSkillRequest;
@@ -24,4 +25,6 @@ public interface SkillService {
     List<SkillSummaryResponse> browseRegister();
 
     List<SkillSearchResultResponse> searchBySkill(String skillName);
+
+    List<EmployeeWithSkillsResponse> getAllEmployeeSkills();
 }
