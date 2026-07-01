@@ -26,26 +26,28 @@
           <p class="text-[13px] text-muted">No skills recorded yet.</p>
         } @else {
           <h2 class="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted">All skills</h2>
-          <ul class="flex list-none flex-col gap-0.5 p-0" aria-label="All skills">
-            @for (skill of register(); track skill.id) {
-              <li>
-                <button
-                  type="button"
-                  (click)="selectSkill(skill.name)"
-                  [attr.aria-pressed]="searchControl.value === skill.name"
-                  class="flex w-full items-center justify-between rounded-[8px] px-2.5 py-2 text-left text-[13px] font-medium hover:bg-page"
-                  [class.bg-brand-tint]="searchControl.value === skill.name"
-                  [class.text-brand]="searchControl.value === skill.name"
-                  [class.text-ink-body]="searchControl.value !== skill.name"
-                >
-                  <span>{{ skill.name }}</span>
-                  <span class="rounded-full bg-hairline-soft px-2 py-0.5 text-[11px] font-semibold text-ink-soft">
-                    {{ skill.employeeCount }}
-                  </span>
-                </button>
-              </li>
-            }
-          </ul>
+          <div class="max-h-[340px] overflow-y-auto rounded-[10px] border border-hairline bg-card p-1.5 shadow-card">
+            <ul class="flex list-none flex-col gap-0.5 p-0" aria-label="All skills">
+              @for (skill of register(); track skill.id) {
+                <li>
+                  <button
+                    type="button"
+                    (click)="selectSkill(skill.name)"
+                    [attr.aria-pressed]="searchControl.value === skill.name"
+                    class="flex w-full items-center justify-between rounded-[8px] px-2.5 py-2 text-left text-[13px] font-medium hover:bg-page"
+                    [class.bg-brand-tint]="searchControl.value === skill.name"
+                    [class.text-brand]="searchControl.value === skill.name"
+                    [class.text-ink-body]="searchControl.value !== skill.name"
+                  >
+                    <span>{{ skill.name }}</span>
+                    <span class="rounded-full bg-hairline-soft px-2 py-0.5 text-[11px] font-semibold text-ink-soft">
+                      {{ skill.employeeCount }}
+                    </span>
+                  </button>
+                </li>
+              }
+            </ul>
+          </div>
         }
       }
     </div>
