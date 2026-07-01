@@ -88,7 +88,7 @@ describe('SkillsRegisterComponent', () => {
     expect(comp.searchResults()).toBeNull();
   });
 
-  it('shows "No employees found" when search returns empty list', () => {
+  it('shows a placeholder message when search returns empty list', () => {
     (serviceSpy.searchBySkill as ReturnType<typeof vi.fn>).mockReturnValue(of([]));
     const fixture = TestBed.createComponent(SkillsRegisterComponent);
     fixture.detectChanges();
@@ -98,7 +98,7 @@ describe('SkillsRegisterComponent', () => {
     fixture.detectChanges();
 
     const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
-    expect(text).toContain('No employees found');
+    expect(text).toContain('Nobody is recorded with this skill yet.');
   });
 
   it('shows loading state initially and clears it after register loads', () => {
