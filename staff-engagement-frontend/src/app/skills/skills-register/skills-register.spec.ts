@@ -43,14 +43,13 @@ describe('SkillsRegisterComponent', () => {
     });
   });
 
-  it('renders a dropdown with all canonical skills', () => {
+  it('renders an All Skills button', () => {
     const fixture = TestBed.createComponent(SkillsRegisterComponent);
     fixture.detectChanges();
-    const select = (fixture.nativeElement as HTMLElement).querySelector('select') as HTMLSelectElement;
-    expect(select).toBeTruthy();
-    const options = Array.from(select.options).map(o => o.text);
-    expect(options.some(t => t.includes('Angular'))).toBe(true);
-    expect(options.some(t => t.includes('Java'))).toBe(true);
+    const button = (fixture.nativeElement as HTMLElement).querySelector('button') as HTMLButtonElement;
+    expect(button).toBeTruthy();
+    expect(button.textContent?.trim()).toBe('All Skills');
+    expect(button.getAttribute('aria-pressed')).toBe('true');
   });
 
   it('renders the full skill list in the browse section', () => {
@@ -61,12 +60,13 @@ describe('SkillsRegisterComponent', () => {
     expect(text).toContain('Java');
   });
 
-  it('calls searchBySkill when a skill is selected from the dropdown', () => {
+  it('calls searchBySkill when a skill is selected from the skill list', () => {
     const fixture = TestBed.createComponent(SkillsRegisterComponent);
     fixture.detectChanges();
 
-    const comp = fixture.componentInstance as unknown as ComponentInternals;
-    comp.searchControl.setValue('Angular');
+    const skillButton = (fixture.nativeElement as HTMLElement).querySelector('[aria-label="All skills"] button') as HTMLButtonElement;
+    expect(skillButton).toBeTruthy();
+    skillButton.click();
     fixture.detectChanges();
 
     expect(serviceSpy.searchBySkill).toHaveBeenCalledWith('Angular');
@@ -74,7 +74,7 @@ describe('SkillsRegisterComponent', () => {
     expect(text).toContain('Jane Doe');
   });
 
-  it('clears results when the default option is selected', () => {
+  it('clears results when the All Skills button is clicked', () => {
     const fixture = TestBed.createComponent(SkillsRegisterComponent);
     fixture.detectChanges();
 
@@ -82,10 +82,12 @@ describe('SkillsRegisterComponent', () => {
     comp.searchControl.setValue('Angular');
     fixture.detectChanges();
 
-    comp.searchControl.setValue('');
+    const allSkillsButton = (fixture.nativeElement as HTMLElement).querySelector('button') as HTMLButtonElement;
+    allSkillsButton.click();
     fixture.detectChanges();
 
     expect(comp.searchResults()).toBeNull();
+    expect(comp.searchControl.value).toBe('');
   });
 
   it('shows a placeholder message when search returns empty list', () => {
@@ -93,8 +95,9 @@ describe('SkillsRegisterComponent', () => {
     const fixture = TestBed.createComponent(SkillsRegisterComponent);
     fixture.detectChanges();
 
-    const comp = fixture.componentInstance as unknown as ComponentInternals;
-    comp.searchControl.setValue('COBOL');
+    const skillButton = (fixture.nativeElement as HTMLElement).querySelector('[aria-label="All skills"] button') as HTMLButtonElement;
+    expect(skillButton).toBeTruthy();
+    skillButton.click();
     fixture.detectChanges();
 
     const text = (fixture.nativeElement as HTMLElement).textContent ?? '';

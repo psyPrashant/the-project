@@ -7,20 +7,24 @@
   <div class="mt-6 grid grid-cols-1 items-start gap-[22px] lg:grid-cols-[300px_1fr]">
     <!-- skill list -->
     <div>
-      <label for="skillSearch" class="mb-1.5 block text-xs font-semibold text-ink-body">Select a skill</label>
       @if (loading()) {
         <p class="text-[13px] italic text-muted" aria-live="polite" aria-busy="true">Loading skills…</p>
       } @else {
-        <select
-          id="skillSearch"
-          [formControl]="searchControl"
-          class="mb-3 w-full rounded-[9px] border border-hairline bg-card px-2.5 py-2.5 text-[13.5px] text-ink outline-none focus:border-brand focus:ring-2 focus:ring-brand-tint"
-          aria-controls="search-results">
-          <option value="">— Select a skill —</option>
-          @for (skill of register(); track skill.id) {
-            <option [value]="skill.name">{{ skill.name }}</option>
-          }
-        </select>
+        <button
+          type="button"
+          (click)="clearSelection()"
+          [attr.aria-pressed]="!searchControl.value"
+          class="mb-3 w-full rounded-[9px] px-2.5 py-2.5 text-[13.5px] font-semibold outline-none focus:ring-2 focus:ring-brand-tint"
+          [class.bg-brand-tint]="!searchControl.value"
+          [class.text-brand]="!searchControl.value"
+          [class.border]="!searchControl.value"
+          [class.border-brand]="!searchControl.value"
+          [class.bg-card]="searchControl.value"
+          [class.text-ink]="searchControl.value"
+          [class.border-hairline]="searchControl.value"
+        >
+          All Skills
+        </button>
 
         @if (register().length === 0) {
           <p class="text-[13px] text-muted">No skills recorded yet.</p>

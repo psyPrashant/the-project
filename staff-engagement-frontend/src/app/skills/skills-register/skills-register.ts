@@ -92,6 +92,10 @@ export class SkillsRegisterComponent {
     this.searchControl.setValue(name);
   }
 
+  protected clearSelection(): void {
+    this.searchControl.setValue('');
+  }
+
   protected projectBarWidth(count: number): number {
     return (count / this.maxProjectCount()) * 100;
   }
