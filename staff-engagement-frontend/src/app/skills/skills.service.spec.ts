@@ -56,7 +56,7 @@ describe('SkillsService', () => {
   });
 
   it('searchBySkill() calls the search endpoint with the skill param', () => {
-    const searchResult: SkillSearchResultResponse = { employeeId: 2, employeeName: 'Jane Doe', years: 6, projectCount: 1 };
+    const searchResult: SkillSearchResultResponse = { employeeId: 2, employeeName: 'Jane Doe', skillName: 'Angular', years: 6, projectCount: 1 };
     let result: SkillSearchResultResponse[] | undefined;
     service.searchBySkill('Angular').subscribe(r => (result = r));
     const req = httpTesting.expectOne(r => r.url === `${apiBase}/skills/search`);

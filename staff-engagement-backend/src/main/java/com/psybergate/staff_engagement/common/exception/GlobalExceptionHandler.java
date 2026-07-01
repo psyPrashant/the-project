@@ -42,7 +42,7 @@ public class GlobalExceptionHandler {
 
 	@ExceptionHandler(MissingServletRequestParameterException.class)
 	public ResponseEntity<ErrorResponse> missingParam(MissingServletRequestParameterException ex) {
-		return response(HttpStatus.BAD_REQUEST, "Missing required parameter: " + ex.getParameterName());
+		return response(HttpStatus.BAD_REQUEST, ex.getParameterName() + " parameter is required");
 	}
 
 	@ExceptionHandler(EntityNotFoundException.class)
@@ -53,11 +53,6 @@ public class GlobalExceptionHandler {
 	@ExceptionHandler(DuplicateResourceException.class)
 	public ResponseEntity<ErrorResponse> conflict(DuplicateResourceException ex) {
 		return response(HttpStatus.CONFLICT, ex.getMessage());
-	}
-
-	@ExceptionHandler(MissingServletRequestParameterException.class)
-	public ResponseEntity<ErrorResponse> missingParam(MissingServletRequestParameterException ex) {
-		return response(HttpStatus.BAD_REQUEST, ex.getParameterName() + " parameter is required");
 	}
 
 	@ExceptionHandler(ForbiddenOperationException.class)

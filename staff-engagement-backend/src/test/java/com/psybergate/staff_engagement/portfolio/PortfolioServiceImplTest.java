@@ -18,8 +18,6 @@ import com.psybergate.staff_engagement.portfolio.dto.ShowcaseLinkResponse;
 import com.psybergate.staff_engagement.portfolio.dto.UpdateEducationRequest;
 import com.psybergate.staff_engagement.portfolio.dto.UpdateProjectRequest;
 import com.psybergate.staff_engagement.portfolio.dto.UpdateShowcaseLinkRequest;
-import com.psybergate.staff_engagement.skills.SkillService;
-import com.psybergate.staff_engagement.skills.dto.EmployeeSkillResponse;
 import jakarta.persistence.EntityNotFoundException;
 import java.time.LocalDate;
 import java.util.List;
@@ -45,9 +43,6 @@ class PortfolioServiceImplTest {
     @Mock
     private ShowcaseLinkRepository showcaseLinkRepository;
 
-    @Mock
-    private SkillService skillService;
-
     @InjectMocks
     private PortfolioServiceImpl portfolioService;
 
@@ -65,8 +60,6 @@ class PortfolioServiceImplTest {
                 Project.builder().id(2L).employeeId(EMPLOYEE_ID).name("Project").build()));
         when(showcaseLinkRepository.findByEmployeeIdOrdered(EMPLOYEE_ID)).thenReturn(List.of(
                 ShowcaseLink.builder().id(3L).employeeId(EMPLOYEE_ID).label("GitHub").url("https://github.com").build()));
-        when(skillService.getSkillsForEmployee(EMPLOYEE_ID)).thenReturn(List.of());
-
         PortfolioResponse response = portfolioService.getPortfolio(EMPLOYEE_ID);
 
         assertThat(response.employeeId()).isEqualTo(EMPLOYEE_ID);
