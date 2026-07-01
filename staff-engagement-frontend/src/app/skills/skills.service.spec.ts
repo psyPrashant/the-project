@@ -11,7 +11,7 @@ describe('SkillsService', () => {
 
   const employeeId = 1;
   const apiBase = 'http://localhost:8080/api';
-  const mockSkill: EmployeeSkillResponse = { id: 10, skillId: 1, skillName: 'Angular', years: 4, projectCount: 2 };
+  const mockSkill: EmployeeSkillResponse = { id: 10, employeeId, skillId: 1, skillName: 'Angular', years: 4, projectCount: 2 };
 
   beforeEach(() => {
     TestBed.configureTestingModule({

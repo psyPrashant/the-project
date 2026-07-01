@@ -1,5 +1,6 @@
 export interface EmployeeSkillResponse {
   id: number;
+  employeeId: number;
   skillId: number;
   skillName: string;
   years: number;

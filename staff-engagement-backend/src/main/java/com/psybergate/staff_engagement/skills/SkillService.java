@@ -27,4 +27,11 @@ public interface SkillService {
     List<SkillSearchResultResponse> searchBySkill(String skillName);
 
     List<EmployeeWithSkillsResponse> getAllEmployeeSkills();
+
+    /**
+     * Returns every persisted employee-skill assignment in a flat form, primarily for
+     * cross-module aggregation (e.g. dashboard counts). Prefer {@link #getAllEmployeeSkills()}
+     * for a grouped, API-friendly view.
+     */
+    List<EmployeeSkillResponse> getAllEmployeeSkillAssignments();
 }

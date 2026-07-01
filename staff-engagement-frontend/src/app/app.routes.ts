@@ -19,7 +19,7 @@ export const routes: Routes = [
       { path: '', redirectTo: 'people', pathMatch: 'full' },
       {
         path: 'dashboard',
-        loadComponent: () => import('./shell/coming-soon/coming-soon').then(m => m.ComingSoonComponent),
+        loadComponent: () => import('./dashboard/dashboard').then(m => m.DashboardComponent),
         data: { screen: 'My Dashboard' }
       },
       {

@@ -61,7 +61,7 @@ class SkillControllerTest {
 
     @Test
     void getSkillsForEmployee_returnsOkWithList() throws Exception {
-        EmployeeSkillResponse skill = new EmployeeSkillResponse(SKILL_ID, 1L, "Angular", 4, 2);
+        EmployeeSkillResponse skill = new EmployeeSkillResponse(SKILL_ID, EMPLOYEE_ID, 1L, "Angular", 4, 2);
         when(skillService.getSkillsForEmployee(EMPLOYEE_ID)).thenReturn(List.of(skill));
 
         mockMvc.perform(get("/api/employees/{id}/skills", EMPLOYEE_ID))
@@ -75,7 +75,7 @@ class SkillControllerTest {
     @Test
     void addSkill_validRequest_returns201WithLocation() throws Exception {
         AddEmployeeSkillRequest request = new AddEmployeeSkillRequest("Go", 3);
-        EmployeeSkillResponse response = new EmployeeSkillResponse(SKILL_ID, 2L, "Go", 3, 0);
+        EmployeeSkillResponse response = new EmployeeSkillResponse(SKILL_ID, EMPLOYEE_ID, 2L, "Go", 3, 0);
         when(skillService.addSkillToEmployee(eq(EMPLOYEE_ID), any(AddEmployeeSkillRequest.class)))
                 .thenReturn(response);
 
@@ -104,7 +104,7 @@ class SkillControllerTest {
     @Test
     void updateSkill_validRequest_returnsOk() throws Exception {
         UpdateEmployeeSkillRequest request = new UpdateEmployeeSkillRequest(7);
-        EmployeeSkillResponse response = new EmployeeSkillResponse(SKILL_ID, 1L, "Angular", 7, 1);
+        EmployeeSkillResponse response = new EmployeeSkillResponse(SKILL_ID, EMPLOYEE_ID, 1L, "Angular", 7, 1);
         when(skillService.updateEmployeeSkill(eq(EMPLOYEE_ID), eq(SKILL_ID), any(UpdateEmployeeSkillRequest.class)))
                 .thenReturn(response);
 
@@ -140,7 +140,7 @@ class SkillControllerTest {
 
     @Test
     void linkProject_returnsOkWithUpdatedProjectCount() throws Exception {
-        EmployeeSkillResponse response = new EmployeeSkillResponse(SKILL_ID, 1L, "Angular", 4, 1);
+        EmployeeSkillResponse response = new EmployeeSkillResponse(SKILL_ID, EMPLOYEE_ID, 1L, "Angular", 4, 1);
         when(skillService.linkProject(EMPLOYEE_ID, SKILL_ID, PROJECT_ID)).thenReturn(response);
 
         mockMvc.perform(post("/api/employees/{id}/skills/{skillId}/projects/{projectId}",

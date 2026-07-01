@@ -99,11 +99,19 @@ public class SkillServiceImpl implements SkillService {
                         r -> new EmployeeWithSkillsResponse(r.employeeId(), r.employeeName(), new java.util.ArrayList<>()),
                         java.util.LinkedHashMap::new,
                         java.util.stream.Collectors.mapping(
-                                r -> new EmployeeSkillResponse(r.employeeSkillId(), r.skillId(), r.skillName(), r.years(), r.projectCount()),
+                                r -> new EmployeeSkillResponse(r.employeeSkillId(), r.employeeId(), r.skillId(), r.skillName(), r.years(), r.projectCount()),
                                 java.util.stream.Collectors.toList())))
                 .entrySet().stream()
                 .map(e -> new EmployeeWithSkillsResponse(e.getKey().employeeId(), e.getKey().employeeName(), e.getValue()))
                 .sorted(java.util.Comparator.comparing(EmployeeWithSkillsResponse::employeeName))
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<EmployeeSkillResponse> getAllEmployeeSkillAssignments() {
+        return employeeSkillRepository.findAll().stream()
+                .map(this::toResponse)
                 .toList();
     }
 
@@ -122,6 +130,7 @@ public class SkillServiceImpl implements SkillService {
         long projectCount = employeeSkillRepository.countProjectsByEmployeeSkillId(es.getId());
         return new EmployeeSkillResponse(
                 es.getId(),
+                es.getEmployeeId(),
                 es.getSkill().getId(),
                 es.getSkill().getName(),
                 es.getYears(),
