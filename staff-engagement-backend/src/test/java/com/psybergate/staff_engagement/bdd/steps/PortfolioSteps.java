@@ -68,8 +68,18 @@ public class PortfolioSteps {
 
     @And("the response body should contain an empty {string}")
     public void responseBodyShouldContainAnEmptyArray(String field) throws Exception {
-        JsonNode array = arrayField(field);
-        assertThat(array).isEmpty();
+        String body = common.getResponse().getBody();
+        JsonNode node = common.getObjectMapper().readTree(body);
+        if (node.isArray()) {
+            // Response is a bare JSON array (e.g. GET /api/employees/{id}/skills returns [])
+            assertThat(node.size()).as("Expected bare array in response to be empty").isEqualTo(0);
+        } else {
+            // Response is a JSON object; check the named field is an empty array
+            JsonNode array = node.get(field);
+            assertThat(array).as("Expected field '" + field + "' to be present in response").isNotNull();
+            assertThat(array.isArray()).as("Expected '" + field + "' to be an array").isTrue();
+            assertThat(array.size()).as("Expected '" + field + "' to be empty").isEqualTo(0);
+        }
     }
 
     private void createPortfolioItem(String segment, String body, String idKey) throws Exception {

@@ -60,13 +60,13 @@ class PortfolioServiceImplTest {
                 Project.builder().id(2L).employeeId(EMPLOYEE_ID).name("Project").build()));
         when(showcaseLinkRepository.findByEmployeeIdOrdered(EMPLOYEE_ID)).thenReturn(List.of(
                 ShowcaseLink.builder().id(3L).employeeId(EMPLOYEE_ID).label("GitHub").url("https://github.com").build()));
-
         PortfolioResponse response = portfolioService.getPortfolio(EMPLOYEE_ID);
 
         assertThat(response.employeeId()).isEqualTo(EMPLOYEE_ID);
         assertThat(response.education()).hasSize(1);
         assertThat(response.projects()).hasSize(1);
         assertThat(response.links()).hasSize(1);
+        assertThat(response.skills()).isEmpty();
     }
 
     @Test

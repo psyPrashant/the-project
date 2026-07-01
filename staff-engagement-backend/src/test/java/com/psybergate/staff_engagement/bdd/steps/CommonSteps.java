@@ -114,6 +114,7 @@ public class CommonSteps {
         assertThat(node.has(field)).isTrue();
     }
 
+
     @And("the response body should contain {string}")
     public void responseBodyShouldContainText(String text) {
         assertThat(response.getBody()).contains(replacePlaceholders(text));

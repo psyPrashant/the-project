@@ -3,9 +3,8 @@ import { Routes } from '@angular/router';
 import { authGuard } from './auth/auth.guard';
 
 /**
- * "Engage" routing (TSP-44). Authenticated screens are children of the app shell. Dashboard and
- * Skills Register resolve to the coming-soon placeholder (no backend yet). Legacy paths redirect
- * into the consolidated routes so old links keep working.
+ * "Engage" routing (TSP-44). Authenticated screens are children of the app shell. Dashboard
+ * resolves to the coming-soon placeholder. Legacy paths redirect into the consolidated routes.
  */
 export const routes: Routes = [
   {
@@ -35,8 +34,8 @@ export const routes: Routes = [
       },
       {
         path: 'skills',
-        loadComponent: () => import('./shell/coming-soon/coming-soon').then(m => m.ComingSoonComponent),
-        data: { screen: 'Skills Register' }
+        loadComponent: () =>
+          import('./skills/skills-register/skills-register').then(m => m.SkillsRegisterComponent)
       },
       {
         path: 'tasks',

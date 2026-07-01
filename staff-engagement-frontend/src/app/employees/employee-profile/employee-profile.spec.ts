@@ -10,13 +10,14 @@ import { EmployeeProfileResponse } from '../employee.models';
 import { PortfolioService } from '../../portfolios/portfolio.service';
 import { InteractionService } from '../../interactions/interaction.service';
 import { AuthService } from '../../auth/auth.service';
+import { SkillsService } from '../../skills/skills.service';
 
 const mockEmployee: EmployeeProfileResponse = {
   id: 1, firstName: 'Alice', lastName: 'Smith', email: 'alice@example.com',
   jobTitle: 'Engineer', department: 'Tech', phone: null, archived: false
 };
 
-const emptyPortfolio = { employeeId: 1, education: [], projects: [], links: [] };
+const emptyPortfolio = { employeeId: 1, education: [], projects: [], links: [], skills: [] };
 
 type ProfileInstance = {
   employee(): EmployeeProfileResponse | null;
@@ -41,6 +42,7 @@ describe('EmployeeProfileComponent', () => {
         provideRouter([]),
         { provide: EmployeeService, useValue: serviceSpy },
         { provide: PortfolioService, useValue: { getPortfolio: vi.fn().mockReturnValue(of(emptyPortfolio)) } },
+        { provide: SkillsService, useValue: { deleteEmployeeSkill: vi.fn().mockReturnValue(of(void 0)) } },
         { provide: InteractionService, useValue: { findBySubject: vi.fn().mockReturnValue(of([])) } },
         { provide: AuthService, useValue: { currentUser: signal(null), loadCurrentUser: () => of(mockEmployee) } },
         { provide: ActivatedRoute, useValue: { snapshot: { paramMap: { get: () => '1' } } } }

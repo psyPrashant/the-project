@@ -216,10 +216,10 @@
 				</dependencies>
 				<configuration>
 					<targetClasses>
-						<param>com.psybergate.staff_engagement.portfolio.*</param>
+						<param>com.psybergate.staff_engagement.skills.*</param>
 					</targetClasses>
 					<targetTests>
-						<param>com.psybergate.staff_engagement.portfolio.*Test</param>
+						<param>com.psybergate.staff_engagement.skills.*Test</param>
 					</targetTests>
 					<mutators>
 						<mutator>DEFAULTS</mutator>
@@ -229,8 +229,8 @@
 						<outputFormat>XML</outputFormat>
 					</outputFormats>
 					<timestampedReports>false</timestampedReports>
-					<historyInputFile>${project.build.directory}/pit-reports/portfolio-history.txt</historyInputFile>
-					<historyOutputFile>${project.build.directory}/pit-reports/portfolio-history.txt</historyOutputFile>
+					<historyInputFile>${project.build.directory}/pit-reports/skills-history.txt</historyInputFile>
+					<historyOutputFile>${project.build.directory}/pit-reports/skills-history.txt</historyOutputFile>
 				</configuration>
 			</plugin>
 		</plugins>

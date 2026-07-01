@@ -10,8 +10,8 @@ import { PortfolioResponse } from '../../portfolios/portfolio.models';
 import { EducationSectionComponent } from '../../portfolios/education-section/education-section';
 import { ProjectSectionComponent } from '../../portfolios/project-section/project-section';
 import { LinkSectionComponent } from '../../portfolios/link-section/link-section';
+import { SkillSectionComponent } from '../../portfolios/skill-section/skill-section';
 import { InteractionsSectionComponent } from '../../interactions/interactions-section/interactions-section';
-import { ComingSoonComponent } from '../../shell/coming-soon/coming-soon';
 import { TasksSectionComponent } from '../../tasks/tasks-section/tasks-section';
 import { avatarColor, initials } from '../../shared/avatar';
 
@@ -27,10 +27,10 @@ import { avatarColor, initials } from '../../shared/avatar';
     EmployeeFormModalComponent,
     InteractionsSectionComponent,
     TasksSectionComponent,
+    SkillSectionComponent,
     EducationSectionComponent,
     ProjectSectionComponent,
-    LinkSectionComponent,
-    ComingSoonComponent
+    LinkSectionComponent
   ],
   templateUrl: './employee-profile.html',
   changeDetection: ChangeDetectionStrategy.OnPush

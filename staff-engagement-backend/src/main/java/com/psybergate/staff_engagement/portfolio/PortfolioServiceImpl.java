@@ -35,7 +35,8 @@ public class PortfolioServiceImpl implements PortfolioService {
                 employeeId,
                 educationRepository.findByEmployeeIdOrdered(employeeId).stream().map(this::toEducationResponse).toList(),
                 projectRepository.findByEmployeeIdOrdered(employeeId).stream().map(this::toProjectResponse).toList(),
-                showcaseLinkRepository.findByEmployeeIdOrdered(employeeId).stream().map(this::toShowcaseLinkResponse).toList());
+                showcaseLinkRepository.findByEmployeeIdOrdered(employeeId).stream().map(this::toShowcaseLinkResponse).toList(),
+                List.of());
     }
 
     @Override
@@ -145,6 +146,12 @@ public class PortfolioServiceImpl implements PortfolioService {
                 .filter(l -> l.getEmployeeId().equals(employeeId))
                 .orElseThrow(() -> new EntityNotFoundException("Showcase link not found: " + linkId));
         showcaseLinkRepository.delete(link);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean projectExists(Long projectId) {
+        return projectRepository.existsById(projectId);
     }
 
     private void validateEmployeeExists(Long employeeId) {

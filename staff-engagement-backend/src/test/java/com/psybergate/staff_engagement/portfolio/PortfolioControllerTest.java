@@ -16,6 +16,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.psybergate.staff_engagement.common.exception.GlobalExceptionHandler;
 import com.psybergate.staff_engagement.portfolio.dto.CreateEducationRequest;
+import com.psybergate.staff_engagement.skills.SkillService;
 import com.psybergate.staff_engagement.portfolio.dto.CreateProjectRequest;
 import com.psybergate.staff_engagement.portfolio.dto.CreateShowcaseLinkRequest;
 import com.psybergate.staff_engagement.portfolio.dto.EducationResponse;
@@ -44,6 +45,9 @@ class PortfolioControllerTest {
 
     @Mock
     private PortfolioService portfolioService;
+
+    @Mock
+    private SkillService skillService;
 
     @InjectMocks
     private PortfolioController portfolioController;
@@ -74,9 +78,10 @@ class PortfolioControllerTest {
         ShowcaseLinkResponse link = new ShowcaseLinkResponse(LINK_ID, EMPLOYEE_ID, "GitHub",
                 "https://github.com/example", 1);
         PortfolioResponse portfolio = new PortfolioResponse(EMPLOYEE_ID,
-                List.of(education), List.of(project), List.of(link));
+                List.of(education), List.of(project), List.of(link), List.of());
 
         when(portfolioService.getPortfolio(EMPLOYEE_ID)).thenReturn(portfolio);
+        when(skillService.getSkillsForEmployee(EMPLOYEE_ID)).thenReturn(List.of());
 
         mockMvc.perform(get("/api/employees/{employeeId}/portfolio", EMPLOYEE_ID))
                 .andExpect(status().isOk())

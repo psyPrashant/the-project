@@ -80,8 +80,8 @@
 
       <!-- Right column -->
       <div class="flex min-w-0 flex-col gap-[18px]">
-        <app-coming-soon screen="Skills" [bare]="true" />
         @if (portfolio(); as p) {
+          <app-skill-section [employeeId]="emp.id" [skills]="p.skills" (changed)="reloadPortfolio()" />
           <app-project-section [employeeId]="emp.id" [projects]="p.projects" (changed)="reloadPortfolio()" />
           <app-education-section [employeeId]="emp.id" [education]="p.education" (changed)="reloadPortfolio()" />
           <app-link-section [employeeId]="emp.id" [links]="p.links" (changed)="reloadPortfolio()" />

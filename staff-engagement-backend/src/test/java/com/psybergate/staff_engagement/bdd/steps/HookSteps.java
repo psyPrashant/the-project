@@ -14,6 +14,11 @@ public class HookSteps {
     @Before
     public void cleanTestData() {
         JdbcTemplate jdbc = new JdbcTemplate(dataSource);
+        // Skills tables: Hibernate-generated FK from employee_skill_project → employee_skill
+        // does NOT carry ON DELETE CASCADE, so the junction table must be cleared first.
+        // Canonical skill rows are kept; only employee-skill links are reset.
+        jdbc.update("DELETE FROM employee_skill_project");
+        jdbc.update("DELETE FROM employee_skill");
         jdbc.update("DELETE FROM tasks");
         jdbc.update("DELETE FROM interactions");
         jdbc.update("DELETE FROM portfolio_education");
