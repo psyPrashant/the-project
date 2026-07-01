@@ -1,82 +1,139 @@
-<div class="min-h-screen bg-gray-50 py-8 px-4">
-  <div class="max-w-4xl mx-auto space-y-6">
+<div class="mx-auto max-w-[1080px] px-10 py-8 pb-16">
+  <h1 class="m-0 text-2xl font-bold tracking-tight text-ink">Skills Register</h1>
+  <p class="mt-1 text-[13.5px] text-ink-soft">
+    Quantified experience per skill — pick one to answer "Who's strong on it?". Project counts are derived from linked projects.
+  </p>
 
-    <div class="flex items-center gap-4">
-      <a routerLink="/home"
-         aria-label="Home"
-         class="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-700 border border-gray-300 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 inline-block">
-        <span aria-hidden="true">←</span> Home
-      </a>
-      <h1 class="text-2xl font-semibold text-gray-900">Skills Register</h1>
+  <div class="mt-6 grid grid-cols-1 items-start gap-[22px] lg:grid-cols-[300px_1fr]">
+    <!-- skill list -->
+    <div>
+      <label for="skillSearch" class="mb-1.5 block text-xs font-semibold text-ink-body">Select a skill</label>
+      @if (loading()) {
+        <p class="text-[13px] italic text-muted" aria-live="polite" aria-busy="true">Loading skills…</p>
+      } @else {
+        <select
+          id="skillSearch"
+          [formControl]="searchControl"
+          class="mb-3 w-full rounded-[9px] border border-hairline bg-card px-2.5 py-2.5 text-[13.5px] text-ink outline-none focus:border-brand focus:ring-2 focus:ring-brand-tint"
+          aria-controls="search-results">
+          <option value="">— Select a skill —</option>
+          @for (skill of register(); track skill.id) {
+            <option [value]="skill.name">{{ skill.name }}</option>
+          }
+        </select>
+
+        @if (register().length === 0) {
+          <p class="text-[13px] text-muted">No skills recorded yet.</p>
+        } @else {
+          <h2 class="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted">All skills</h2>
+          <ul class="flex list-none flex-col gap-0.5 p-0" aria-label="All skills">
+            @for (skill of register(); track skill.id) {
+              <li>
+                <button
+                  type="button"
+                  (click)="selectSkill(skill.name)"
+                  [attr.aria-pressed]="searchControl.value === skill.name"
+                  class="flex w-full items-center justify-between rounded-[8px] px-2.5 py-2 text-left text-[13px] font-medium hover:bg-page"
+                  [class.bg-brand-tint]="searchControl.value === skill.name"
+                  [class.text-brand]="searchControl.value === skill.name"
+                  [class.text-ink-body]="searchControl.value !== skill.name"
+                >
+                  <span>{{ skill.name }}</span>
+                  <span class="rounded-full bg-hairline-soft px-2 py-0.5 text-[11px] font-semibold text-ink-soft">
+                    {{ skill.employeeCount }}
+                  </span>
+                </button>
+              </li>
+            }
+          </ul>
+        }
+      }
     </div>
 
-    <!-- Search by skill dropdown -->
-    <section aria-labelledby="search-heading" class="bg-white rounded-lg shadow p-6">
-      <h2 id="search-heading" class="text-lg font-semibold text-gray-900 mb-4">Who's strong on…?</h2>
-
-      <div>
-        <label for="skillSearch" class="block text-sm font-medium text-gray-700 mb-1">Select a skill</label>
-        @if (loading()) {
-          <p class="text-sm text-gray-400 italic">Loading skills…</p>
-        } @else {
-          <select
-            id="skillSearch"
-            [formControl]="searchControl"
-            class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-            aria-controls="search-results">
-            <option value="">— Select a skill —</option>
-            @for (skill of register(); track skill.id) {
-              <option [value]="skill.name">{{ skill.name }}</option>
-            }
-          </select>
-        }
-      </div>
-
-      @if (searching()) {
-        <p class="mt-3 text-sm text-gray-500" aria-live="polite" aria-busy="true">Searching…</p>
-      } @else if (searchResults() !== null) {
-        <div id="search-results" aria-live="polite" class="mt-4">
-          @if (searchResults()!.length === 0) {
-            <p class="text-sm text-gray-500">No employees found with that skill.</p>
-          } @else {
-            <h3 class="text-sm font-medium text-gray-700 mb-2">Ranked results</h3>
-            <ul class="divide-y divide-gray-100" aria-label="Search results">
-              @for (result of searchResults()!; track result.employeeId) {
-                <li class="py-3 flex items-center justify-between">
-                  <span class="font-medium text-gray-900">{{ result.employeeName }}</span>
-                  <span class="text-sm text-gray-500">
-                    {{ result.years }} yr{{ result.years !== 1 ? 's' : '' }} ·
-                    {{ result.projectCount }} project{{ result.projectCount !== 1 ? 's' : '' }}
-                  </span>
-                </li>
-              }
-            </ul>
+    <!-- ranked answer -->
+    <div id="search-results" class="rounded-card border border-hairline bg-card p-[22px_24px] shadow-card" aria-live="polite">
+      @if (!searchControl.value) {
+        <p class="py-9 text-center text-[13.5px] text-muted">Select a skill to see who's strong on it.</p>
+      } @else {
+        <div class="mb-4 flex items-start justify-between gap-3.5">
+          <div>
+            <h2 class="m-0 text-[18px] font-bold tracking-tight text-ink">Who's strong on {{ searchControl.value }}?</h2>
+            <p class="mb-0 mt-0.5 text-[12.5px] text-muted">Ranked by years of experience, then linked projects.</p>
+          </div>
+          @if (searchResults() && searchResults()!.length > 0) {
+            <div class="flex flex-none rounded-[8px] bg-page p-[3px]" role="group" aria-label="Sort ranked results">
+              <button
+                type="button"
+                (click)="sortMode.set('years')"
+                [attr.aria-pressed]="sortMode() === 'years'"
+                class="rounded-[6px] px-2.5 py-1 text-[12px] font-semibold"
+                [class.bg-card]="sortMode() === 'years'"
+                [class.shadow-card]="sortMode() === 'years'"
+                [class.text-ink]="sortMode() === 'years'"
+                [class.text-ink-soft]="sortMode() !== 'years'"
+              >Years</button>
+              <button
+                type="button"
+                (click)="sortMode.set('projects')"
+                [attr.aria-pressed]="sortMode() === 'projects'"
+                class="rounded-[6px] px-2.5 py-1 text-[12px] font-semibold"
+                [class.bg-card]="sortMode() === 'projects'"
+                [class.shadow-card]="sortMode() === 'projects'"
+                [class.text-ink]="sortMode() === 'projects'"
+                [class.text-ink-soft]="sortMode() !== 'projects'"
+              >Projects</button>
+            </div>
           }
         </div>
-      }
-    </section>
 
-    <!-- Browse all skills -->
-    <section aria-labelledby="browse-heading" class="bg-white rounded-lg shadow p-6">
-      <h2 id="browse-heading" class="text-lg font-semibold text-gray-900 mb-4">All Skills</h2>
-
-      @if (loading()) {
-        <p class="text-sm text-gray-500" aria-live="polite" aria-busy="true">Loading…</p>
-      } @else if (register().length === 0) {
-        <p class="text-sm text-gray-500">No skills recorded yet.</p>
-      } @else {
-        <ul class="divide-y divide-gray-100" aria-label="All skills">
-          @for (skill of register(); track skill.id) {
-            <li class="py-3 flex items-center justify-between">
-              <span class="font-medium text-gray-900">{{ skill.name }}</span>
-              <span class="text-sm text-gray-500">
-                {{ skill.employeeCount }} employee{{ skill.employeeCount !== 1 ? 's' : '' }}
-              </span>
-            </li>
+        @if (searching()) {
+          <p class="py-9 text-center text-[13.5px] text-muted" aria-live="polite" aria-busy="true">Searching…</p>
+        } @else if (searchResults(); as results) {
+          @if (results.length === 0) {
+            <p class="py-9 text-center text-[13.5px] text-muted">Nobody is recorded with this skill yet.</p>
+          } @else {
+            <table class="w-full border-collapse">
+              <caption class="sr-only">Employees ranked by {{ searchControl.value }} experience</caption>
+              <thead>
+                <tr class="text-[11px] uppercase tracking-wide text-muted">
+                  <th scope="col" class="w-9 pb-2 text-left font-semibold">#</th>
+                  <th scope="col" class="pb-2 text-left font-semibold">Person</th>
+                  <th scope="col" class="pb-2 text-right font-semibold">Years</th>
+                  <th scope="col" class="pb-2 text-right font-semibold">Projects</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (result of sortedResults(); track result.employeeId; let i = $index) {
+                  <tr class="border-t border-hairline-soft">
+                    <td class="py-2.5 text-[13px] font-bold text-ink-soft">{{ i + 1 }}</td>
+                    <td class="py-2.5">
+                      <div class="flex items-center gap-2.5">
+                        <div
+                          class="flex h-8 w-8 flex-none items-center justify-center rounded-full text-[12px] font-semibold text-white"
+                          [style.background]="avatarColor(result.employeeId)"
+                          aria-hidden="true"
+                        >{{ initials(result.employeeName) }}</div>
+                        <a [routerLink]="['/people', result.employeeId]" class="text-[13.5px] font-semibold text-ink hover:text-brand">
+                          {{ result.employeeName }}
+                        </a>
+                      </div>
+                    </td>
+                    <td class="py-2.5 text-right text-[14px] font-semibold text-ink">
+                      {{ result.years }}<span class="text-[11px] font-medium text-muted">y</span>
+                    </td>
+                    <td class="py-2.5 text-right">
+                      <span class="text-[13px] font-semibold text-ink">{{ result.projectCount }}</span>
+                      <div class="ml-auto mt-1 h-[5px] w-16 overflow-hidden rounded-full bg-hairline-soft">
+                        <div class="h-full rounded-full bg-accent-purple" [style.width.%]="projectBarWidth(result.projectCount)"></div>
+                      </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
           }
-        </ul>
+        }
       }
-    </section>
-
+    </div>
   </div>
 </div>
