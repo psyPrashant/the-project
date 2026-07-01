@@ -62,7 +62,7 @@ test('the shell navigates and shows coming-soon placeholders', async ({ page }) 
   await expect(page.getByRole('heading', { name: 'My Dashboard' })).toBeVisible();
   await expect(page.getByText('Total employees')).toBeVisible();
 
-  await page.getByRole('link', { name: 'Skills Register' }).click();
+  await page.getByLabel('Primary').getByRole('link', { name: 'Skills Register' }).click();
   await expect(page).toHaveURL(/\/skills/);
   await expect(page.getByRole('heading', { name: 'Skills Register' })).toBeVisible();
 
