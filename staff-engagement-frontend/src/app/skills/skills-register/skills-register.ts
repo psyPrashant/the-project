@@ -9,10 +9,10 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { distinctUntilChanged, switchMap, of } from 'rxjs';
+import { distinctUntilChanged, switchMap, of, startWith } from 'rxjs';
 
 import { SkillsService } from '../skills.service';
-import { SkillSearchResultResponse, SkillSummaryResponse } from '../skills.models';
+import { EmployeeWithSkillsResponse, SkillSearchResultResponse, SkillSummaryResponse } from '../skills.models';
 import { avatarColor, initials } from '../../shared/avatar';
 
 type SortMode = 'years' | 'projects';
@@ -32,6 +32,7 @@ export class SkillsRegisterComponent {
 
   protected readonly register = signal<SkillSummaryResponse[]>([]);
   protected readonly searchResults = signal<SkillSearchResultResponse[] | null>(null);
+  protected readonly allEmployeeSkills = signal<EmployeeWithSkillsResponse[] | null>(null);
   protected readonly loading = signal(true);
   protected readonly searching = signal(false);
   protected readonly sortMode = signal<SortMode>('years');
@@ -67,20 +68,24 @@ export class SkillsRegisterComponent {
       });
 
     this.searchControl.valueChanges.pipe(
+      startWith(this.searchControl.value),
       distinctUntilChanged(),
       switchMap(selected => {
+        this.searching.set(true);
         if (!selected) {
           this.searchResults.set(null);
-          return of(null);
+          return this.skillsService.getAllEmployeeSkills();
         }
-        this.searching.set(true);
+        this.allEmployeeSkills.set(null);
         return this.skillsService.searchBySkill(selected);
       }),
       takeUntilDestroyed(this.destroyRef)
     ).subscribe({
       next: results => {
-        if (results !== null) {
-          this.searchResults.set(results);
+        if (this.searchControl.value) {
+          this.searchResults.set(results as SkillSearchResultResponse[]);
+        } else {
+          this.allEmployeeSkills.set(results as EmployeeWithSkillsResponse[]);
         }
         this.searching.set(false);
       },
@@ -90,6 +95,10 @@ export class SkillsRegisterComponent {
 
   protected selectSkill(name: string): void {
     this.searchControl.setValue(name);
+  }
+
+  protected clearSelection(): void {
+    this.searchControl.setValue('');
   }
 
   protected projectBarWidth(count: number): number {

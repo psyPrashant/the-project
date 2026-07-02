@@ -27,6 +27,16 @@ interface EmployeeSkillRepository extends JpaRepository<EmployeeSkill, Long> {
            "ORDER BY es.years DESC, COUNT(p) DESC")
     List<SkillSearchResultResponse> searchBySkillName(@Param("skillName") String skillName);
 
+    @Query("SELECT new com.psybergate.staff_engagement.skills.EmployeeSkillRow(" +
+           "e.id, CONCAT(e.firstName, ' ', e.lastName), es.id, s.id, s.name, es.years, COUNT(p)) " +
+           "FROM EmployeeSkill es " +
+           "JOIN es.skill s " +
+           "JOIN Employee e ON e.id = es.employeeId " +
+           "LEFT JOIN es.projects p " +
+           "GROUP BY e.id, e.firstName, e.lastName, es.id, s.id, s.name, es.years " +
+           "ORDER BY e.lastName, e.firstName, s.name")
+    List<EmployeeSkillRow> findAllEmployeeSkills();
+
     @Query("SELECT COUNT(p) FROM EmployeeSkill es JOIN es.projects p WHERE es.id = :employeeSkillId")
     long countProjectsByEmployeeSkillId(@Param("employeeSkillId") Long employeeSkillId);
 

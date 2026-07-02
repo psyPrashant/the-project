@@ -5,6 +5,7 @@ import com.psybergate.staff_engagement.employee.EmployeeService;
 import com.psybergate.staff_engagement.portfolio.PortfolioService;
 import com.psybergate.staff_engagement.skills.dto.AddEmployeeSkillRequest;
 import com.psybergate.staff_engagement.skills.dto.EmployeeSkillResponse;
+import com.psybergate.staff_engagement.skills.dto.EmployeeWithSkillsResponse;
 import com.psybergate.staff_engagement.skills.dto.SkillSearchResultResponse;
 import com.psybergate.staff_engagement.skills.dto.SkillSummaryResponse;
 import com.psybergate.staff_engagement.skills.dto.UpdateEmployeeSkillRequest;
@@ -87,6 +88,23 @@ public class SkillServiceImpl implements SkillService {
     @Transactional(readOnly = true)
     public List<SkillSearchResultResponse> searchBySkill(String skillName) {
         return employeeSkillRepository.searchBySkillName(skillName);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<EmployeeWithSkillsResponse> getAllEmployeeSkills() {
+        List<EmployeeSkillRow> rows = employeeSkillRepository.findAllEmployeeSkills();
+        return rows.stream()
+                .collect(java.util.stream.Collectors.groupingBy(
+                        r -> new EmployeeWithSkillsResponse(r.employeeId(), r.employeeName(), new java.util.ArrayList<>()),
+                        java.util.LinkedHashMap::new,
+                        java.util.stream.Collectors.mapping(
+                                r -> new EmployeeSkillResponse(r.employeeSkillId(), r.skillId(), r.skillName(), r.years(), r.projectCount()),
+                                java.util.stream.Collectors.toList())))
+                .entrySet().stream()
+                .map(e -> new EmployeeWithSkillsResponse(e.getKey().employeeId(), e.getKey().employeeName(), e.getValue()))
+                .sorted(java.util.Comparator.comparing(EmployeeWithSkillsResponse::employeeName))
+                .toList();
     }
 
     private Skill findOrCreate(String name) {

@@ -28,18 +28,24 @@ test.describe('Skills Register', () => {
 
   test('searching by skill shows ranked employee results', async ({ page }) => {
     await page.goto('/skills');
-    const select = page.getByLabel('Select a skill');
-    await expect(select).toBeVisible();
-    await select.selectOption({ label: 'Java' });
+    const skillsList = page.getByRole('list', { name: 'All skills' });
+    await expect(skillsList.getByText('Java')).toBeVisible();
+    await skillsList.getByText('Java').click();
     await expect(page.getByText('Jane Doe')).toBeVisible();
   });
 
-  test('selecting the default option clears search results', async ({ page }) => {
+  test('clicking All Skills resets to the unfiltered employee-skills view', async ({ page }) => {
     await page.goto('/skills');
-    await page.getByLabel('Select a skill').selectOption({ label: 'Java' });
-    await expect(page.getByText('Jane Doe')).toBeVisible();
-    await page.getByLabel('Select a skill').selectOption({ value: '' });
-    await expect(page.getByText('Jane Doe')).not.toBeVisible();
+    const allSkillsButton = page.getByRole('button', { name: 'All Skills', exact: true });
+    await expect(allSkillsButton).toBeVisible();
+
+    const skillsList = page.getByRole('list', { name: 'All skills' });
+    await skillsList.getByText('Java').click();
+    await expect(page.getByText("Who's strong on Java?")).toBeVisible();
+
+    await allSkillsButton.click();
+    await expect(page.getByText("Who's strong on Java?")).not.toBeVisible();
+    await expect(page.getByText('All people and their skills')).toBeVisible();
   });
 
   test('Skills Register link appears on the home page', async ({ page }) => {

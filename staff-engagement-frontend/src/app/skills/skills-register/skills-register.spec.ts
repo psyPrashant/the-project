@@ -6,11 +6,12 @@ import { vi } from 'vitest';
 
 import { SkillsRegisterComponent } from './skills-register';
 import { SkillsService } from '../skills.service';
-import { SkillSearchResultResponse, SkillSummaryResponse } from '../skills.models';
+import { EmployeeWithSkillsResponse, SkillSearchResultResponse, SkillSummaryResponse } from '../skills.models';
 
 type ComponentInternals = {
   searchControl: FormControl<string>;
   searchResults: () => SkillSearchResultResponse[] | null;
+  allEmployeeSkills: () => EmployeeWithSkillsResponse[] | null;
   loading: () => boolean;
   searching: () => boolean;
   register: () => SkillSummaryResponse[];
@@ -25,13 +26,25 @@ const mockSearchResults: SkillSearchResultResponse[] = [
   { employeeId: 1, employeeName: 'Jane Doe', skillName: 'Angular', years: 6, projectCount: 1 }
 ];
 
+const mockAllEmployeeSkills: EmployeeWithSkillsResponse[] = [
+  {
+    employeeId: 1,
+    employeeName: 'Jane Doe',
+    skills: [
+      { id: 1, skillId: 1, skillName: 'Angular', years: 6, projectCount: 1 },
+      { id: 2, skillId: 2, skillName: 'Java', years: 4, projectCount: 0 }
+    ]
+  }
+];
+
 describe('SkillsRegisterComponent', () => {
   let serviceSpy: Partial<SkillsService>;
 
   beforeEach(() => {
     serviceSpy = {
       browseRegister: vi.fn().mockReturnValue(of(mockRegister)),
-      searchBySkill: vi.fn().mockReturnValue(of(mockSearchResults))
+      searchBySkill: vi.fn().mockReturnValue(of(mockSearchResults)),
+      getAllEmployeeSkills: vi.fn().mockReturnValue(of(mockAllEmployeeSkills))
     };
 
     TestBed.configureTestingModule({
@@ -43,14 +56,13 @@ describe('SkillsRegisterComponent', () => {
     });
   });
 
-  it('renders a dropdown with all canonical skills', () => {
+  it('renders an All Skills button', () => {
     const fixture = TestBed.createComponent(SkillsRegisterComponent);
     fixture.detectChanges();
-    const select = (fixture.nativeElement as HTMLElement).querySelector('select') as HTMLSelectElement;
-    expect(select).toBeTruthy();
-    const options = Array.from(select.options).map(o => o.text);
-    expect(options.some(t => t.includes('Angular'))).toBe(true);
-    expect(options.some(t => t.includes('Java'))).toBe(true);
+    const button = (fixture.nativeElement as HTMLElement).querySelector('button') as HTMLButtonElement;
+    expect(button).toBeTruthy();
+    expect(button.textContent?.trim()).toBe('All Skills');
+    expect(button.getAttribute('aria-pressed')).toBe('true');
   });
 
   it('renders the full skill list in the browse section', () => {
@@ -61,12 +73,42 @@ describe('SkillsRegisterComponent', () => {
     expect(text).toContain('Java');
   });
 
-  it('calls searchBySkill when a skill is selected from the dropdown', () => {
+  it('loads all employee skills on init', () => {
     const fixture = TestBed.createComponent(SkillsRegisterComponent);
     fixture.detectChanges();
 
+    expect(serviceSpy.getAllEmployeeSkills).toHaveBeenCalled();
     const comp = fixture.componentInstance as unknown as ComponentInternals;
-    comp.searchControl.setValue('Angular');
+    expect(comp.allEmployeeSkills()).toEqual(mockAllEmployeeSkills);
+  });
+
+  it('renders all employee skills when no skill is selected', () => {
+    const fixture = TestBed.createComponent(SkillsRegisterComponent);
+    fixture.detectChanges();
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('All people and their skills');
+    expect(text).toContain('Jane Doe');
+    expect(text).toContain('Angular');
+    expect(text).toContain('Java');
+  });
+
+  it('shows a placeholder when there are no employee skills', () => {
+    (serviceSpy.getAllEmployeeSkills as ReturnType<typeof vi.fn>).mockReturnValue(of([]));
+    const fixture = TestBed.createComponent(SkillsRegisterComponent);
+    fixture.detectChanges();
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('No employee skills recorded yet.');
+  });
+
+  it('calls searchBySkill when a skill is selected from the skill list', () => {
+    const fixture = TestBed.createComponent(SkillsRegisterComponent);
+    fixture.detectChanges();
+
+    const skillButton = (fixture.nativeElement as HTMLElement).querySelector('[aria-label="All skills"] button') as HTMLButtonElement;
+    expect(skillButton).toBeTruthy();
+    skillButton.click();
     fixture.detectChanges();
 
     expect(serviceSpy.searchBySkill).toHaveBeenCalledWith('Angular');
@@ -74,7 +116,7 @@ describe('SkillsRegisterComponent', () => {
     expect(text).toContain('Jane Doe');
   });
 
-  it('clears results when the default option is selected', () => {
+  it('clears results and reloads all employee skills when the All Skills button is clicked', () => {
     const fixture = TestBed.createComponent(SkillsRegisterComponent);
     fixture.detectChanges();
 
@@ -82,10 +124,14 @@ describe('SkillsRegisterComponent', () => {
     comp.searchControl.setValue('Angular');
     fixture.detectChanges();
 
-    comp.searchControl.setValue('');
+    const allSkillsButton = (fixture.nativeElement as HTMLElement).querySelector('button') as HTMLButtonElement;
+    allSkillsButton.click();
     fixture.detectChanges();
 
     expect(comp.searchResults()).toBeNull();
+    expect(comp.searchControl.value).toBe('');
+    expect(serviceSpy.getAllEmployeeSkills).toHaveBeenCalled();
+    expect(comp.allEmployeeSkills()).toEqual(mockAllEmployeeSkills);
   });
 
   it('shows a placeholder message when search returns empty list', () => {
@@ -93,8 +139,9 @@ describe('SkillsRegisterComponent', () => {
     const fixture = TestBed.createComponent(SkillsRegisterComponent);
     fixture.detectChanges();
 
-    const comp = fixture.componentInstance as unknown as ComponentInternals;
-    comp.searchControl.setValue('COBOL');
+    const skillButton = (fixture.nativeElement as HTMLElement).querySelector('[aria-label="All skills"] button') as HTMLButtonElement;
+    expect(skillButton).toBeTruthy();
+    skillButton.click();
     fixture.detectChanges();
 
     const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
@@ -165,20 +212,4 @@ describe('SkillsRegisterComponent', () => {
     expect(comp.searching()).toBe(false);
   });
 
-  it('does not update searchResults when searchBySkill emits null', () => {
-    const fixture = TestBed.createComponent(SkillsRegisterComponent);
-    fixture.detectChanges();
-
-    const comp = fixture.componentInstance as unknown as ComponentInternals;
-    comp.searchControl.setValue('Angular');
-    fixture.detectChanges();
-    expect(comp.searchResults()).toEqual(mockSearchResults);
-
-    (serviceSpy.searchBySkill as ReturnType<typeof vi.fn>)
-      .mockReturnValue(of(null as unknown as SkillSearchResultResponse[]));
-    comp.searchControl.setValue('React');
-    fixture.detectChanges();
-
-    expect(comp.searchResults()).toEqual(mockSearchResults);
-  });
 });

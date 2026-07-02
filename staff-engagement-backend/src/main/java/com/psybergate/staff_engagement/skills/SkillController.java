@@ -2,6 +2,7 @@ package com.psybergate.staff_engagement.skills;
 
 import com.psybergate.staff_engagement.skills.dto.AddEmployeeSkillRequest;
 import com.psybergate.staff_engagement.skills.dto.EmployeeSkillResponse;
+import com.psybergate.staff_engagement.skills.dto.EmployeeWithSkillsResponse;
 import com.psybergate.staff_engagement.skills.dto.SkillSearchResultResponse;
 import com.psybergate.staff_engagement.skills.dto.SkillSummaryResponse;
 import com.psybergate.staff_engagement.skills.dto.UpdateEmployeeSkillRequest;
@@ -83,5 +84,10 @@ public class SkillController {
     public ResponseEntity<List<SkillSearchResultResponse>> searchBySkill(
             @RequestParam String skill) {
         return ResponseEntity.ok(skillService.searchBySkill(skill));
+    }
+
+    @GetMapping("/skills/employees")
+    public ResponseEntity<List<EmployeeWithSkillsResponse>> getAllEmployeeSkills() {
+        return ResponseEntity.ok(skillService.getAllEmployeeSkills());
     }
 }

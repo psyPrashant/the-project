@@ -6,6 +6,7 @@ import { environment } from '../../environments/environment';
 import {
   AddEmployeeSkillRequest,
   EmployeeSkillResponse,
+  EmployeeWithSkillsResponse,
   SkillSearchResultResponse,
   SkillSummaryResponse
 } from './skills.models';
@@ -42,5 +43,9 @@ export class SkillsService {
       `${environment.apiUrl}/skills/search`,
       { params: { skill: name } }
     );
+  }
+
+  getAllEmployeeSkills(): Observable<EmployeeWithSkillsResponse[]> {
+    return this.http.get<EmployeeWithSkillsResponse[]>(`${environment.apiUrl}/skills/employees`);
   }
 }
