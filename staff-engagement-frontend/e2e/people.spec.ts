@@ -32,7 +32,8 @@ test.describe('People — Show archived toggle', () => {
     await login(page);
 
     const unique = `toggle-${Date.now()}`;
-    await createEmployee(page, 'ToggleTest', 'Person', `${unique}@example.com`);
+    const firstName = `ToggleTest${unique}`;
+    await createEmployee(page, firstName, 'Person', `${unique}@example.com`);
 
     await page.getByRole('button', { name: 'Archive', exact: true }).click();
     await expect(page.getByText('Archived', { exact: true })).toBeVisible();
@@ -40,12 +41,12 @@ test.describe('People — Show archived toggle', () => {
     await page.getByRole('link', { name: 'People' }).first().click();
     await expect(page).toHaveURL(/\/people/);
 
-    await expect(page.getByText('ToggleTest Person')).not.toBeVisible();
+    await expect(page.getByText(`${firstName} Person`)).not.toBeVisible();
 
     await page.getByRole('checkbox', { name: /show archived/i }).check();
-    await expect(page.getByText('ToggleTest Person')).toBeVisible();
+    await expect(page.getByText(`${firstName} Person`)).toBeVisible();
 
-    const archivedCard = page.locator('ul li').filter({ hasText: 'ToggleTest Person' });
+    const archivedCard = page.locator('ul li').filter({ hasText: `${firstName} Person` });
     await expect(archivedCard.getByText('Archived', { exact: true })).toBeVisible();
   });
 
@@ -91,7 +92,8 @@ test.describe('People — Unarchive employee', () => {
     await login(page);
 
     const unique = `relist-${Date.now()}`;
-    await createEmployee(page, 'RelistTest', 'Person', `${unique}@example.com`);
+    const firstName = `RelistTest${unique}`;
+    await createEmployee(page, firstName, 'Person', `${unique}@example.com`);
 
     await page.getByRole('button', { name: 'Archive', exact: true }).click();
     await expect(page.getByText('Archived', { exact: true })).toBeVisible();
@@ -101,6 +103,6 @@ test.describe('People — Unarchive employee', () => {
 
     await page.getByRole('link', { name: 'People' }).first().click();
     await expect(page).toHaveURL(/\/people/);
-    await expect(page.getByText('RelistTest Person')).toBeVisible();
+    await expect(page.getByText(`${firstName} Person`)).toBeVisible();
   });
 });

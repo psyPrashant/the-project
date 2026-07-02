@@ -31,8 +31,8 @@ const mockAllEmployeeSkills: EmployeeWithSkillsResponse[] = [
     employeeId: 1,
     employeeName: 'Jane Doe',
     skills: [
-      { id: 1, skillId: 1, skillName: 'Angular', years: 6, projectCount: 1 },
-      { id: 2, skillId: 2, skillName: 'Java', years: 4, projectCount: 0 }
+      { id: 1, employeeId: 1, skillId: 1, skillName: 'Angular', years: 6, projectCount: 1 },
+      { id: 2, employeeId: 1, skillId: 2, skillName: 'Java', years: 4, projectCount: 0 }
     ]
   }
 ];

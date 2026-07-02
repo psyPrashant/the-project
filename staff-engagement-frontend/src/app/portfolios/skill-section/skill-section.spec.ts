@@ -7,7 +7,7 @@ import { SkillsService } from '../../skills/skills.service';
 import { EmployeeSkillResponse } from '../../skills/skills.models';
 
 const mockSkill: EmployeeSkillResponse = {
-  id: 10, skillId: 1, skillName: 'Angular', years: 4, projectCount: 2
+  id: 10, employeeId: 1, skillId: 1, skillName: 'Angular', years: 4, projectCount: 2
 };
 
 describe('SkillSectionComponent', () => {
