@@ -216,21 +216,33 @@
 				</dependencies>
 				<configuration>
 					<targetClasses>
-						<param>com.psybergate.staff_engagement.skills.*</param>
+						<param>com.psybergate.staff_engagement.*</param>
 					</targetClasses>
 					<targetTests>
-						<param>com.psybergate.staff_engagement.skills.*Test</param>
+						<param>com.psybergate.staff_engagement.*Test</param>
 					</targetTests>
+					<!-- Mutation testing measures the strength of the *unit* suite (targetTests = *Test), so
+					     exclude classes whose behaviour is only meaningfully exercised by integration tests
+					     (*IT): Spring wiring/config, the application bootstrap, and DTO records/boilerplate. -->
+					<excludedClasses>
+						<param>com.psybergate.staff_engagement.StaffEngagementBackendApplication</param>
+						<param>com.psybergate.staff_engagement.config.*</param>
+						<param>com.psybergate.staff_engagement.*.dto.*</param>
+						<param>com.psybergate.staff_engagement.auth.SecurityConfig</param>
+						<param>com.psybergate.staff_engagement.auth.WebMvcConfig</param>
+					</excludedClasses>
 					<mutators>
 						<mutator>DEFAULTS</mutator>
 					</mutators>
+					<!-- Build fails if unit-test mutation coverage regresses below this. Current: 69%. -->
+					<mutationThreshold>65</mutationThreshold>
 					<outputFormats>
 						<outputFormat>HTML</outputFormat>
 						<outputFormat>XML</outputFormat>
 					</outputFormats>
 					<timestampedReports>false</timestampedReports>
-					<historyInputFile>${project.build.directory}/pit-reports/skills-history.txt</historyInputFile>
-					<historyOutputFile>${project.build.directory}/pit-reports/skills-history.txt</historyOutputFile>
+					<historyInputFile>${project.build.directory}/pit-reports/backend-history.txt</historyInputFile>
+					<historyOutputFile>${project.build.directory}/pit-reports/backend-history.txt</historyOutputFile>
 				</configuration>
 			</plugin>
 		</plugins>

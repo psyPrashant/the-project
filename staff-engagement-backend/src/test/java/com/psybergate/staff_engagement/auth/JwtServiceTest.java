@@ -37,6 +37,22 @@ class JwtServiceTest {
 	}
 
 	@Test
+	void generatePopulatesSubjectEmailIssuerAndExpiry() {
+		// Default service uses the real clock (so the token is not treated as expired on parse) with a
+		// 480-minute expiry. Instants are asserted by relationship rather than absolute value.
+		io.jsonwebtoken.Claims claims = jwtService.parse(jwtService.generate(employee));
+
+		assertThat(claims.getSubject()).isEqualTo("42");
+		assertThat(claims.get("employeeId", Long.class)).isEqualTo(42L);
+		assertThat(claims.get("email", String.class)).isEqualTo("jane@psybergate.com");
+		assertThat(claims.getIssuer()).isEqualTo(ISSUER);
+		// expiry-minutes = 480 → expiration is exactly 8 hours after issuance.
+		assertThat(java.time.Duration.between(
+				claims.getIssuedAt().toInstant(), claims.getExpiration().toInstant()))
+				.isEqualTo(java.time.Duration.ofMinutes(480));
+	}
+
+	@Test
 	void tamperedTokenIsInvalid() {
 		String token = jwtService.generate(employee);
 		String tampered = token.substring(0, token.length() - 4) + "AAAA";
