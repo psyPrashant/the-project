@@ -27,16 +27,8 @@
     </nav>
 
     <div class="mt-auto border-t border-hairline-soft pt-3">
-      <div class="px-1 pb-[7px] text-[10.5px] font-semibold uppercase tracking-wider text-muted">Signed in as</div>
-      <div class="flex items-center gap-2.5 px-1">
-        <div
-          class="flex h-[30px] w-[30px] flex-none items-center justify-center rounded-full text-xs font-semibold text-white"
-          [style.background]="userColor()"
-          aria-hidden="true"
-        >{{ userInitials() }}</div>
-        <div class="min-w-0 flex-1">
-          <div class="truncate text-[13px] font-semibold text-ink">{{ userName() }}</div>
-        </div>
+      <div class="flex items-center justify-between px-1">
+        <div class="text-[10.5px] font-semibold uppercase tracking-wider text-muted">Signed in as</div>
         <button
           type="button"
           (click)="signOut()"
@@ -46,6 +38,33 @@
           <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
         </button>
       </div>
+      @if (profileLink(); as link) {
+        <a
+          [routerLink]="link"
+          class="mt-2 flex items-center gap-2.5 rounded-[9px] px-1 py-1 hover:bg-page"
+          aria-label="Open my profile"
+        >
+          <div
+            class="flex h-[30px] w-[30px] flex-none items-center justify-center rounded-full text-xs font-semibold text-white"
+            [style.background]="userColor()"
+            aria-hidden="true"
+          >{{ userInitials() }}</div>
+          <div class="min-w-0 flex-1">
+            <div class="truncate text-[13px] font-semibold text-ink hover:text-brand">{{ userName() }}</div>
+          </div>
+        </a>
+      } @else {
+        <div class="mt-2 flex items-center gap-2.5 px-1">
+          <div
+            class="flex h-[30px] w-[30px] flex-none items-center justify-center rounded-full text-xs font-semibold text-white"
+            [style.background]="userColor()"
+            aria-hidden="true"
+          >{{ userInitials() }}</div>
+          <div class="min-w-0 flex-1">
+            <div class="truncate text-[13px] font-semibold text-ink">{{ userName() }}</div>
+          </div>
+        </div>
+      }
     </div>
   </aside>
 

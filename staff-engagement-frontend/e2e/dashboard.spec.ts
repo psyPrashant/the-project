@@ -29,7 +29,8 @@ test('dashboard loads with pulse tiles and sections after login', async ({ page 
   await expect(page.getByRole('heading', { name: 'Action needed' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Recent activity' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Skill coverage' })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Me' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Quick links' })).not.toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Me' })).not.toBeVisible();
 });
 
 test('dashboard activity filter changes the visible feed', async ({ page }) => {

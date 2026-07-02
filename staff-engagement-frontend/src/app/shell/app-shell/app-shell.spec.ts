@@ -59,4 +59,15 @@ describe('AppShellComponent', () => {
     expect(logout).toHaveBeenCalled();
     expect(navigateSpy).toHaveBeenCalledWith(['/login']);
   });
+
+  it('links the signed-in user name to their profile page', () => {
+    const fixture = TestBed.createComponent(AppShellComponent);
+    fixture.detectChanges();
+
+    const profileLink = (fixture.nativeElement as HTMLElement).querySelector(
+      'a[aria-label="Open my profile"]'
+    ) as HTMLAnchorElement;
+    expect(profileLink).toBeTruthy();
+    expect(profileLink.getAttribute('href')).toBe('/people/7');
+  });
 });

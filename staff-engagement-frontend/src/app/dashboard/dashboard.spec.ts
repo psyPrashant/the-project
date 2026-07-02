@@ -151,15 +151,13 @@ describe('DashboardComponent', () => {
     expect(text).toContain('Rust');
   });
 
-  it('renders the signed-in user Me card', () => {
+  it('does not render the Quick links or Me cards', () => {
     const fixture = TestBed.createComponent(DashboardComponent);
     fixture.detectChanges();
 
     const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
-    expect(text).toContain('Admin User');
-    expect(text).toContain('Skills');
-    expect(text).toContain('Tasks');
-    expect(text).toContain('Interactions');
+    expect(text).not.toContain('Quick links');
+    expect(text).not.toContain('Me');
   });
 
   it('displays an error message when dashboard loading fails', () => {
