@@ -42,7 +42,6 @@ export class DashboardComponent implements OnInit {
   protected readonly pulse = computed(() => this.dashboardData()?.workforcePulse ?? null);
   protected readonly actionNeeded = computed(() => this.dashboardData()?.actionNeeded ?? []);
   protected readonly skillCoverage = computed(() => this.dashboardData()?.skillCoverage ?? null);
-  protected readonly me = computed(() => this.dashboardData()?.me ?? null);
 
   protected readonly filters: (ActivityType | 'all')[] = ['all', 'people', 'skills', 'interactions', 'tasks'];
   protected readonly math = Math;

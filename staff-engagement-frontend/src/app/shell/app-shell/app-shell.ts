@@ -19,12 +19,17 @@ export class AppShellComponent {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
 
+  protected readonly currentUser = this.auth.currentUser;
   protected readonly userName = computed(() => {
     const user = this.auth.currentUser();
     return user ? `${user.firstName} ${user.lastName}`.trim() : '';
   });
   protected readonly userInitials = computed(() => initials(this.userName()));
   protected readonly userColor = computed(() => avatarColor(this.auth.currentUser()?.id ?? ''));
+  protected readonly profileLink = computed(() => {
+    const user = this.auth.currentUser();
+    return user ? ['/people', user.id] : null;
+  });
 
   protected signOut(): void {
     this.auth.logout();
